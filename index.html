@@ -293,11 +293,48 @@
                 font-size: 14px;
             }
         }
+		.home-erp-btn {
+        position: fixed;
+        bottom: 190px; /* Đặt phía trên nút Xem Giá 60px */
+        right: 20px;
+        background-color: #34a853; /* Màu xanh lá của Google */
+        color: white;
+        border: none;
+        border-radius: 8px;
+        width: 120px;
+        height: 50px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        transition: all 0.3s;
+        z-index: 1000;
+        text-decoration: none;
+    }
+    
+    .home-erp-btn:hover {
+        background-color: #2d8e47;
+        transform: scale(1.05);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    @media (max-width: 768px) {
+        .home-erp-btn {
+            width: 60px;
+            height: 60px;
+            font-size: 14px;
+            bottom: 130px; /* Điều chỉnh cho mobile */
+        }
+    }
     </style>
 </head>
 <body>
     <button class="view-price-btn" id="viewPriceBtn">Xem Giá</button>
-    
+    <a href="https://erp-ideco.skyit.vn/#/app/order/index/" class="home-erp-btn" id="homeErpBtn">HOME ERP</a>
     <div class="popup-overlay" id="popupOverlay">
         <div class="popup-content">
             <div class="popup-header">
