@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xem Giá Thuốc</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+      .view-price-btn {
+            position: fixed;
+            bottom: 130px;
+            right: 20px;
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            width: 120px;
+            height: 50px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        
+        .view-price-btn:hover {
+            background-color: #3367d6;
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1001;
+            overflow-y: auto;
+        }
+        
+        .popup-content {
+            background-color: white;
+            margin: 20px auto;
+            padding: 20px;
+            width: 90%;
+            max-width: 1200px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .popup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .popup-title {
+            font-size: 24px;
+            color: #4285f4;
+            margin: 0;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .upload-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            border: 1px dashed #ccc;
+        }
+        
+        .file-input-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .file-input-label {
+            padding: 8px 15px;
+            background-color: #4285f4;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .file-input-label:hover {
+            background-color: #3367d6;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .file-name {
+            flex-grow: 1;
+            color: #666;
+        }
+        
+        .search-section {
+            margin-bottom: 20px;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        .files-list {
+            margin-bottom: 20px;
+        }
+        
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: #f5f5f5;
+            margin-bottom: 5px;
+            border-radius: 4px;
+        }
+        
+        .delete-file-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+        
+        .price-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .price-table th, .price-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        .price-table th {
+            background-color: #4285f4;
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+        
+        .price-table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        
+        .price-table tr:hover {
+            background-color: #e6f2ff;
+        }
+        
+        .highlight {
+            background-color: yellow;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid #4285f4;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        /* Thêm style cho password dialog */
+        .password-dialog {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1002;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .password-dialog-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 300px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .password-dialog-title {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .password-input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        .password-dialog-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .password-dialog-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .password-dialog-cancel {
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .password-dialog-confirm {
+            background-color: #4285f4;
+            color: white;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            .popup-content {
+                width: 95%;
+                padding: 15px;
+            }
+            
+            .price-table {
+                font-size: 14px;
+            }
+            
+            .view-price-btn {
+                width: 60px;
+                height: 60px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="view-price-btn" id="viewPriceBtn">Xem Giá</button>
+    
+    <div class="popup-overlay" id="popupOverlay">
+        <div class="popup-content">
+            <div class="popup-header">
+                <h2 class="popup-title">Xem Giá Thuốc</h2>
+                <button class="close-btn" id="closePopupBtn">&times;</button>
+            </div>
+            
+            <div class="upload-section">
+                <div class="file-input-container">
+                    <label for="excelFileInput" class="file-input-label">Chọn file Excel</label>
+                    <input type="file" id="excelFileInput" class="file-input" accept=".xlsx, .xls" multiple>
+                    <span class="file-name" id="fileNameDisplay">Chưa chọn file</span>
+                </div>
+            </div>
+            
+            <div class="search-section">
+                <input type="text" id="searchInput" class="search-input" placeholder="Tìm kiếm trong bảng giá...">
+            </div>
+            
+            <div class="files-list" id="filesList"></div>
+            
+            <div class="loading" id="loadingIndicator">
+                <div class="spinner"></div>
+                <p>Đang tải dữ liệu...</p>
+            </div>
+            
+            <div class="table-container" id="tableContainer"></div>
+        </div>
+    </div>
+
+    <!-- Thêm dialog xác nhận password -->
+    <div class="password-dialog" id="passwordDialog">
+        <div class="password-dialog-content">
+            <div class="password-dialog-title">Nhập password để xóa file</div>
+            <input type="password" class="password-input" id="passwordInput" placeholder="Nhập password...">
+            <div class="password-dialog-buttons">
+                <button class="password-dialog-btn password-dialog-cancel" id="passwordDialogCancel">Hủy</button>
+                <button class="password-dialog-btn password-dialog-confirm" id="passwordDialogConfirm">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Cấu hình Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBuXjYpTuKpNyZY6ZIfUSA-m4NWBwPWcU0",
+            authDomain: "baica-dae2b.firebaseapp.com",
+            databaseURL: "https://baica-dae2b-default-rtdb.firebaseio.com",
+            projectId: "baica-dae2b",
+            storageBucket: "baica-dae2b.appspot.com",
+            messagingSenderId: "61139094665",
+            appId: "1:61139094665:web:13ebec976cec24e53f8a58",
+            measurementId: "G-VN2S2VVSZB"
+        };
+        
+        // Khởi tạo Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        
+        // Biến toàn cục
+        let uploadedFiles = [];
+        let currentData = [];
+        let fileIndexToRemove = null; // Lưu index của file sẽ xóa
+        const CORRECT_PASSWORD = "minhtriet1973"; // Password cố định
+        
+        // DOM Elements
+        const viewPriceBtn = document.getElementById('viewPriceBtn');
+        const popupOverlay = document.getElementById('popupOverlay');
+        const closePopupBtn = document.getElementById('closePopupBtn');
+        const excelFileInput = document.getElementById('excelFileInput');
+        const fileNameDisplay = document.getElementById('fileNameDisplay');
+        const filesList = document.getElementById('filesList');
+        const searchInput = document.getElementById('searchInput');
+        const tableContainer = document.getElementById('tableContainer');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        
+        // Các element của password dialog
+        const passwordDialog = document.getElementById('passwordDialog');
+        const passwordInput = document.getElementById('passwordInput');
+        const passwordDialogCancel = document.getElementById('passwordDialogCancel');
+        const passwordDialogConfirm = document.getElementById('passwordDialogConfirm');
+        
+        // Sự kiện
+        viewPriceBtn.addEventListener('click', () => {
+            popupOverlay.style.display = 'block';
+            loadDataFromFirebase();
+        });
+        
+        closePopupBtn.addEventListener('click', () => {
+            popupOverlay.style.display = 'none';
+        });
+        
+        popupOverlay.addEventListener('click', (e) => {
+            if (e.target === popupOverlay) {
+                popupOverlay.style.display = 'none';
+            }
+        });
+        
+        excelFileInput.addEventListener('change', handleFileSelect);
+        searchInput.addEventListener('input', performSearch);
+        
+        // Sự kiện cho password dialog
+        passwordDialogCancel.addEventListener('click', () => {
+            passwordDialog.style.display = 'none';
+            passwordInput.value = '';
+            fileIndexToRemove = null;
+        });
+        
+        passwordDialogConfirm.addEventListener('click', () => {
+            const enteredPassword = passwordInput.value;
+            if (enteredPassword === CORRECT_PASSWORD) {
+                if (fileIndexToRemove !== null) {
+                    removeFile(fileIndexToRemove);
+                }
+                passwordDialog.style.display = 'none';
+                passwordInput.value = '';
+                fileIndexToRemove = null;
+            } else {
+                alert('Password không đúng. Vui lòng thử lại.');
+                passwordInput.value = '';
+            }
+        });
+        
+        // Hàm xử lý khi chọn file
+        async function handleFileSelect(event) {
+            const files = event.target.files;
+            if (files.length === 0) return;
+            
+            loadingIndicator.style.display = 'block';
+            tableContainer.innerHTML = '';
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                
+                try {
+                    const data = await readExcelFile(file);
+                    uploadedFiles.push({
+                        name: file.name,
+                        data: data
+                    });
+                    
+                    addFileToList(file.name, uploadedFiles.length - 1);
+                    
+                } catch (error) {
+                    console.error('Lỗi khi đọc file:', file.name, error);
+                    alert(`Lỗi khi đọc file ${file.name}: ${error.message}`);
+                }
+            }
+            
+            updateFileNameDisplay();
+            displayAllData();
+            saveDataToFirebase();
+            loadingIndicator.style.display = 'none';
+        }
+        
+        // Hàm đọc file Excel với lọc hàng/cột trống
+        function readExcelFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { 
+                            type: 'array', 
+                            cellStyles: true
+                        });
+                        
+                        const firstSheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[firstSheetName];
+                        
+                        let jsonData = XLSX.utils.sheet_to_json(worksheet, { 
+                            header: 1, 
+                            defval: '',
+                            raw: false
+                        });
+
+                        // Lọc hàng trống
+                        jsonData = jsonData.filter(row => {
+                            return row.some(cell => String(cell).trim().length > 0);
+                        });
+
+                        // Lọc cột trống
+                        if (jsonData.length > 0) {
+                            const columnsToKeep = [];
+                            const header = jsonData[0];
+                            
+                            for (let col = 0; col < header.length; col++) {
+                                let columnHasData = false;
+                                
+                                for (let row = 1; row < jsonData.length; row++) {
+                                    if (jsonData[row][col] !== undefined && 
+                                        String(jsonData[row][col]).trim().length > 0) {
+                                        columnHasData = true;
+                                        break;
+                                    }
+                                }
+                                
+                                if (columnHasData || (header[col] && String(header[col]).trim().length > 0)) {
+                                    columnsToKeep.push(col);
+                                }
+                            }
+                            
+                            jsonData = jsonData.map(row => {
+                                return row.filter((_, index) => columnsToKeep.includes(index));
+                            });
+                        }
+
+                        resolve(jsonData);
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                
+                reader.onerror = function(error) {
+                    reject(error);
+                };
+                
+                reader.readAsArrayBuffer(file);
+            });
+        }
+        
+        // Hàm thêm file vào danh sách
+        function addFileToList(fileName, index) {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            fileItem.innerHTML = `
+                <span>${fileName}</span>
+                <button class="delete-file-btn" data-index="${index}">Xóa</button>
+            `;
+            
+            filesList.appendChild(fileItem);
+            
+            fileItem.querySelector('.delete-file-btn').addEventListener('click', (e) => {
+                const indexToRemove = parseInt(e.target.getAttribute('data-index'));
+                fileIndexToRemove = indexToRemove;
+                passwordDialog.style.display = 'flex';
+                passwordInput.focus();
+            });
+        }
+        
+        // Hàm xóa file
+        function removeFile(index) {
+            uploadedFiles.splice(index, 1);
+            
+            filesList.innerHTML = '';
+            uploadedFiles.forEach((file, i) => {
+                addFileToList(file.name, i);
+            });
+            
+            updateFileNameDisplay();
+            displayAllData();
+            saveDataToFirebase();
+        }
+        
+        // Hàm cập nhật hiển thị tên file
+        function updateFileNameDisplay() {
+            if (uploadedFiles.length === 0) {
+                fileNameDisplay.textContent = 'Chưa chọn file';
+            } else if (uploadedFiles.length === 1) {
+                fileNameDisplay.textContent = uploadedFiles[0].name;
+            } else {
+                fileNameDisplay.textContent = `${uploadedFiles.length} file đã chọn`;
+            }
+        }
+        
+        // Hàm hiển thị tất cả dữ liệu
+        function displayAllData() {
+            if (uploadedFiles.length === 0) {
+                tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị. Vui lòng tải lên file Excel.</p>';
+                return;
+            }
+            
+            currentData = [];
+            uploadedFiles.forEach(file => {
+                currentData = currentData.concat(file.data);
+            });
+            
+            createTable(currentData);
+        }
+        
+        // Hàm tạo bảng HTML từ dữ liệu
+        function createTable(data) {
+            if (data.length === 0) {
+                tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị.</p>';
+                return;
+            }
+            
+            const table = document.createElement('table');
+            table.className = 'price-table';
+            
+            // Tạo header
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            
+            const headers = data[0] || [];
+            headers.forEach(header => {
+                const th = document.createElement('th');
+                th.textContent = header || '';
+                headerRow.appendChild(th);
+            });
+            
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+            
+            // Tạo body
+            const tbody = document.createElement('tbody');
+            
+            for (let i = 1; i < data.length; i++) {
+                const rowData = data[i] || [];
+                if (rowData.some(cell => String(cell).trim().length > 0)) {
+                    const row = document.createElement('tr');
+                    
+                    rowData.forEach(cell => {
+                        const td = document.createElement('td');
+                        
+                        if (typeof cell === 'string' && cell.includes('%')) {
+                            td.textContent = cell;
+                        } else {
+                            td.textContent = cell || '';
+                        }
+                        
+                        row.appendChild(td);
+                    });
+                    
+                    tbody.appendChild(row);
+                }
+            }
+            
+            table.appendChild(tbody);
+            
+            tableContainer.innerHTML = '';
+            if (tbody.rows.length > 0 || headers.length > 0) {
+                tableContainer.appendChild(table);
+            } else {
+                tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị sau khi lọc.</p>';
+            }
+        }
+        
+        // Hàm tìm kiếm
+        function performSearch() {
+            const searchTerm = searchInput.value.trim().toLowerCase();
+            
+            if (searchTerm === '') {
+                displayAllData();
+                return;
+            }
+            
+            const filteredData = [currentData[0]];
+            
+            for (let i = 1; i < currentData.length; i++) {
+                const row = currentData[i];
+                let rowMatches = false;
+                
+                for (let j = 0; j < row.length; j++) {
+                    const cellValue = String(row[j]).toLowerCase();
+                    if (cellValue.includes(searchTerm)) {
+                        rowMatches = true;
+                        break;
+                    }
+                }
+                
+                if (rowMatches) {
+                    filteredData.push(row);
+                }
+            }
+            
+            createTable(filteredData);
+            highlightSearchResults(searchTerm);
+        }
+        
+        // Hàm highlight kết quả tìm kiếm
+        function highlightSearchResults(searchTerm) {
+            if (searchTerm === '') return;
+            
+            const table = document.querySelector('.price-table');
+            if (!table) return;
+            
+            const cells = table.querySelectorAll('td');
+            
+            cells.forEach(cell => {
+                const cellText = cell.textContent.toLowerCase();
+                if (cellText.includes(searchTerm)) {
+                    const regex = new RegExp(searchTerm, 'gi');
+                    cell.innerHTML = cell.textContent.replace(regex, match => 
+                        `<span class="highlight">${match}</span>`
+                    );
+                }
+            });
+        }
+        
+        // Hàm lưu dữ liệu lên Firebase
+        function saveDataToFirebase() {
+            const dataToSave = {
+                files: uploadedFiles,
+                lastUpdated: new Date().toISOString()
+            };
+            
+            database.ref('priceData').set(dataToSave)
+                .then(() => console.log('Dữ liệu đã được lưu lên Firebase'))
+                .catch(error => console.error('Lỗi khi lưu dữ liệu:', error));
+        }
+        
+        // Hàm tải dữ liệu từ Firebase
+        function loadDataFromFirebase() {
+            loadingIndicator.style.display = 'block';
+            tableContainer.innerHTML = '';
+            filesList.innerHTML = '';
+            
+            database.ref('priceData').once('value')
+                .then(snapshot => {
+                    const data = snapshot.val();
+                    
+                    if (data && data.files) {
+                        uploadedFiles = data.files;
+                        
+                        uploadedFiles.forEach((file, index) => {
+                            addFileToList(file.name, index);
+                        });
+                        
+                        updateFileNameDisplay();
+                        displayAllData();
+                    } else {
+                        tableContainer.innerHTML = '<p>Không có dữ liệu trên server. Vui lòng tải lên file Excel.</p>';
+                    }
+                    
+                    loadingIndicator.style.display = 'none';
+                })
+                .catch(error => {
+                    console.error('Lỗi khi tải dữ liệu:', error);
+                    loadingIndicator.style.display = 'none';
+                    tableContainer.innerHTML = '<p>Lỗi khi tải dữ liệu từ server. Vui lòng thử lại sau.</p>';
+                });
+        }
+    </script>
+</body>
+</html>
