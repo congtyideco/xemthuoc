@@ -8,13 +8,16 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
+        /* CSS chung */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
             background-color: #f5f5f5;
         }
-      .view-price-btn {
+
+        /* Nút Xem Giá */
+        .view-price-btn {
             position: fixed;
             bottom: 130px;
             right: 20px;
@@ -41,7 +44,67 @@
             transform: scale(1.05);
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
         }
+
+        /* Nút HOME ERP */
+        .home-erp-btn {
+            position: fixed;
+            bottom: 190px;
+            right: 20px;
+            background-color: #34a853;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            width: 120px;
+            height: 50px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            transition: all 0.3s;
+            z-index: 1000;
+            text-decoration: none;
+        }
         
+        .home-erp-btn:hover {
+            background-color: #2d8e47;
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Nút Thông báo */
+        .notification-btn {
+            position: fixed;
+            bottom: 250px;
+            right: 20px;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            width: 120px;
+            height: 50px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        
+        .notification-btn:hover {
+            background-color: #d32f2f;
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Popup Xem Giá */
         .popup-overlay {
             display: none;
             position: fixed;
@@ -210,8 +273,8 @@
             animation: spin 1s linear infinite;
             margin: 0 auto;
         }
-        
-        /* Thêm style cho password dialog */
+
+        /* Password Dialog */
         .password-dialog {
             display: none;
             position: fixed;
@@ -271,7 +334,88 @@
             background-color: #4285f4;
             color: white;
         }
+
+        /* Notification Dialog */
+        .notification-dialog {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1003;
+            justify-content: center;
+            align-items: center;
+        }
         
+        .notification-dialog-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 400px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .notification-dialog-title {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #f44336;
+            font-weight: bold;
+        }
+        
+        .notification-textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 16px;
+            resize: vertical;
+        }
+        
+        .notification-dialog-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .notification-dialog-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .notification-dialog-cancel {
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .notification-dialog-save {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .notification-display {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #ffebee;
+            border: 1px solid #f44336;
+            border-radius: 4px;
+            padding: 15px;
+            max-width: 80%;
+            color: #f44336;
+            font-weight: bold;
+            z-index: 1000;
+            display: none;
+            text-align: center;
+        }
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
@@ -287,54 +431,59 @@
                 font-size: 14px;
             }
             
-            .view-price-btn {
+            .view-price-btn, .home-erp-btn, .notification-btn {
                 width: 60px;
                 height: 60px;
                 font-size: 14px;
             }
+            
+            .home-erp-btn {
+                bottom: 130px;
+            }
+            
+            .notification-btn {
+                bottom: 190px;
+            }
+            
+            .notification-dialog-content {
+                width: 90%;
+            }
+            
+            .notification-display {
+                top: 10px;
+                max-width: 95%;
+                font-size: 14px;
+                padding: 10px;
+            }
         }
-		.home-erp-btn {
-        position: fixed;
-        bottom: 190px; /* Đặt phía trên nút Xem Giá 60px */
-        right: 20px;
-        background-color: #34a853; /* Màu xanh lá của Google */
-        color: white;
-        border: none;
-        border-radius: 8px;
-        width: 120px;
-        height: 50px;
-        font-size: 16px;
-        font-weight: bold;
-        cursor: pointer;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        text-align: center;
-        transition: all 0.3s;
-        z-index: 1000;
-        text-decoration: none;
-    }
-    
-    .home-erp-btn:hover {
-        background-color: #2d8e47;
-        transform: scale(1.05);
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-    }
-    
-    @media (max-width: 768px) {
-        .home-erp-btn {
-            width: 60px;
-            height: 60px;
-            font-size: 14px;
-            bottom: 130px; /* Điều chỉnh cho mobile */
-        }
-    }
     </style>
 </head>
 <body>
-    <button class="view-price-btn" id="viewPriceBtn">Xem Giá</button>
+    <!-- Nút Thông báo -->
+    <button class="notification-btn" id="notificationBtn">Thông báo</button>
+    
+    <!-- Nút HOME ERP -->
     <a href="https://erp-ideco.skyit.vn/#/app/order/index/" class="home-erp-btn" id="homeErpBtn">HOME ERP</a>
+    
+    <!-- Nút Xem Giá -->
+    <button class="view-price-btn" id="viewPriceBtn">Xem Giá</button>
+    
+    <!-- Hiển thị thông báo -->
+    <div class="notification-display" id="notificationDisplay"></div>
+
+    <!-- Dialog Thông báo -->
+    <div class="notification-dialog" id="notificationDialog">
+        <div class="notification-dialog-content">
+            <div class="notification-dialog-title">THÔNG BÁO SẢN PHẨM</div>
+            <textarea class="notification-textarea" id="notificationTextarea" placeholder="Nhập thông báo sản phẩm..."></textarea>
+            <div class="notification-dialog-buttons">
+                <button class="notification-dialog-btn notification-dialog-cancel" id="notificationCancelBtn">Hủy</button>
+                <button class="notification-dialog-btn notification-dialog-save" id="notificationSaveBtn">Lưu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Popup Xem Giá -->
     <div class="popup-overlay" id="popupOverlay">
         <div class="popup-content">
             <div class="popup-header">
@@ -365,7 +514,7 @@
         </div>
     </div>
 
-    <!-- Thêm dialog xác nhận password -->
+    <!-- Password Dialog -->
     <div class="password-dialog" id="passwordDialog">
         <div class="password-dialog-content">
             <div class="password-dialog-title">Nhập password để xóa file</div>
@@ -397,8 +546,8 @@
         // Biến toàn cục
         let uploadedFiles = [];
         let currentData = [];
-        let fileIndexToRemove = null; // Lưu index của file sẽ xóa
-        const CORRECT_PASSWORD = "minhtriet1973"; // Password cố định
+        let fileIndexToRemove = null;
+        const CORRECT_PASSWORD = "minhtriet1973";
         
         // DOM Elements
         const viewPriceBtn = document.getElementById('viewPriceBtn');
@@ -417,12 +566,21 @@
         const passwordDialogCancel = document.getElementById('passwordDialogCancel');
         const passwordDialogConfirm = document.getElementById('passwordDialogConfirm');
         
-        // Sự kiện
+        // Các element của notification
+        const notificationBtn = document.getElementById('notificationBtn');
+        const notificationDialog = document.getElementById('notificationDialog');
+        const notificationTextarea = document.getElementById('notificationTextarea');
+        const notificationCancelBtn = document.getElementById('notificationCancelBtn');
+        const notificationSaveBtn = document.getElementById('notificationSaveBtn');
+        const notificationDisplay = document.getElementById('notificationDisplay');
+        
+        // Sự kiện cho nút Xem Giá
         viewPriceBtn.addEventListener('click', () => {
             popupOverlay.style.display = 'block';
             loadDataFromFirebase();
         });
         
+        // Sự kiện cho nút đóng popup
         closePopupBtn.addEventListener('click', () => {
             popupOverlay.style.display = 'none';
         });
@@ -433,7 +591,10 @@
             }
         });
         
+        // Sự kiện cho file input
         excelFileInput.addEventListener('change', handleFileSelect);
+        
+        // Sự kiện cho search input
         searchInput.addEventListener('input', performSearch);
         
         // Sự kiện cho password dialog
@@ -458,7 +619,67 @@
             }
         });
         
-        // Hàm xử lý khi chọn file
+        // Sự kiện cho notification
+        notificationBtn.addEventListener('click', () => {
+            notificationDialog.style.display = 'flex';
+            notificationTextarea.focus();
+            
+            // Load nội dung hiện tại khi mở dialog
+            database.ref('notification').once('value')
+                .then(snapshot => {
+                    const data = snapshot.val();
+                    if (data && data.text) {
+                        notificationTextarea.value = data.text;
+                    }
+                });
+        });
+        
+        notificationCancelBtn.addEventListener('click', () => {
+            notificationDialog.style.display = 'none';
+            notificationDisplay.style.display = 'none';
+        });
+        
+        notificationSaveBtn.addEventListener('click', saveNotification);
+        
+        // Hàm lưu thông báo
+        function saveNotification() {
+            const notificationText = notificationTextarea.value.trim();
+            
+            if (notificationText === '') {
+                alert('Vui lòng nhập nội dung thông báo');
+                return;
+            }
+            
+            database.ref('notification').set({
+                text: notificationText,
+                timestamp: new Date().getTime()
+            })
+            .then(() => {
+                notificationDisplay.textContent = notificationText;
+                notificationDisplay.style.display = 'block';
+                notificationDialog.style.display = 'none';
+            })
+            .catch(error => {
+                alert('Lỗi khi lưu thông báo: ' + error.message);
+            });
+        }
+        
+        // Hàm tải thông báo khi trang được tải
+        function loadNotification() {
+            database.ref('notification').once('value')
+                .then(snapshot => {
+                    const data = snapshot.val();
+                    if (data && data.text) {
+                        notificationDisplay.textContent = data.text;
+                        notificationDisplay.style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    console.error('Lỗi khi tải thông báo:', error);
+                });
+        }
+        
+        // Hàm xử lý khi chọn file Excel
         async function handleFileSelect(event) {
             const files = event.target.files;
             if (files.length === 0) return;
@@ -490,7 +711,7 @@
             loadingIndicator.style.display = 'none';
         }
         
-        // Hàm đọc file Excel với lọc hàng/cột trống
+        // Hàm đọc file Excel
         function readExcelFile(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -769,6 +990,12 @@
                     tableContainer.innerHTML = '<p>Lỗi khi tải dữ liệu từ server. Vui lòng thử lại sau.</p>';
                 });
         }
+        
+        // Khởi tạo ứng dụng
+        document.addEventListener('DOMContentLoaded', () => {
+            loadNotification();
+            loadDataFromFirebase();
+        });
     </script>
 </body>
 </html>
