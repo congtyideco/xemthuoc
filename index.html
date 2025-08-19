@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Xem Giá Thuốc — Nâng cấp</title>
+    <title>Xem Giá Thuốc — Nâng cấp (kéo cột + chọn hàng + lọc đã chọn)</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        /* ====== CSS gốc (giữ nguyên & tinh chỉnh nhẹ) ====== */
         body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f5f5f5; }
         .view-price-btn,.home-erp-btn,.notification-btn{ position:fixed; right:20px; color:#fff; border:none; border-radius:8px; width:120px; height:50px; font-size:16px; font-weight:bold; cursor:pointer; box-shadow:0 4px 8px rgba(0,0,0,.2); display:flex; justify-content:center; align-items:center; text-align:center; transition:all .3s; z-index:1000; }
         .view-price-btn{ bottom:130px; background:#4285f4; } .view-price-btn:hover{ background:#3367d6; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,.3)}
@@ -28,8 +27,11 @@
         .file-input{ display:none }
         .file-name{ flex-grow:1; color:#666 }
 
-        .search-section{ margin-bottom:12px }
-        .search-input{ width:100%; padding:10px; border:1px solid #ddd; border-radius:4px; font-size:16px }
+        .search-section{ margin-bottom:12px; display:flex; gap:8px; flex-wrap:wrap }
+        .search-input{ flex:1; min-width:220px; padding:10px; border:1px solid #ddd; border-radius:4px; font-size:16px }
+        .btn{ padding:10px 12px; border:none; border-radius:6px; font-weight:700; cursor:pointer }
+        .btn-filter{ background:#8e24aa; color:#fff }
+        .btn-clear{ background:#9e9e9e; color:#fff }
 
         .files-list{ margin-bottom:12px }
         .file-item{ display:flex; justify-content:space-between; align-items:center; padding:10px; background:#f5f5f5; margin-bottom:5px; border-radius:4px }
@@ -43,17 +45,22 @@
         .btn-hide{ background:#ff7043; color:#fff } .btn-unhide{ background:#43a047; color:#fff } .btn-showall{ background:#546e7a; color:#fff }
 
         .table-container{ overflow-x:auto; margin-top:12px }
-        .price-table{ width:100%; border-collapse:collapse }
-        .price-table th,.price-table td{ border:1px solid #ddd; padding:8px; text-align:left }
-        .price-table th{ background:#4285f4; color:#fff; position:sticky; top:0 }
+        .price-table{ width:100%; border-collapse:collapse; table-layout: fixed; }
+        .price-table th,.price-table td{ border:1px solid #ddd; padding:8px; text-align:left; white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
+        .price-table th{ background:#4285f4; color:#fff; position:sticky; top:0; z-index:1 }
         .price-table tr:nth-child(even){ background:#f2f2f2 }
         .price-table tr:hover{ background:#e6f2ff }
         .highlight{ background:yellow }
 
+        /* Tay nắm kéo giãn cột */
+        .th-resizable{ position: relative; }
+        .col-resizer{ position:absolute; right:0; top:0; height:100%; width:6px; cursor:col-resize; user-select:none; -webkit-user-select:none; }
+        .col-resizer:hover{ background: rgba(255,255,255,.25); }
+
         .loading{ display:none; text-align:center; margin:20px 0 }
         .spinner{ border:4px solid rgba(0,0,0,.1); border-radius:50%; border-top:4px solid #4285f4; width:30px; height:30px; animation:spin 1s linear infinite; margin:0 auto }
 
-        .footer-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:16px }
+        .footer-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:16px; flex-wrap:wrap }
         .export-btn{ background:#1976d2; color:#fff; border:none; padding:10px 14px; border-radius:6px; font-weight:700; cursor:pointer }
 
         .password-dialog,.notification-dialog{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1002; justify-content:center; align-items:center }
@@ -72,17 +79,12 @@
     </style>
 </head>
 <body>
-    <!-- Nút Thông báo -->
     <button class="notification-btn" id="notificationBtn">Thông báo</button>
-    <!-- Nút HOME ERP -->
     <a href="https://erp-ideco.skyit.vn/#/app/order/index/" class="home-erp-btn" id="homeErpBtn">HOME ERP</a>
-    <!-- Nút Xem Giá -->
     <button class="view-price-btn" id="viewPriceBtn">Xem Giá</button>
 
-    <!-- Hiển thị thông báo -->
     <div class="notification-display" id="notificationDisplay"></div>
 
-    <!-- Dialog Thông báo -->
     <div class="notification-dialog" id="notificationDialog">
         <div class="notification-dialog-content">
             <div class="notification-dialog-title">THÔNG BÁO SẢN PHẨM</div>
@@ -94,7 +96,6 @@
         </div>
     </div>
 
-    <!-- Popup Xem Giá -->
     <div class="popup-overlay" id="popupOverlay">
         <div class="popup-content">
             <div class="popup-header">
@@ -112,9 +113,10 @@
 
             <div class="search-section">
                 <input type="text" id="searchInput" class="search-input" placeholder="Tìm kiếm trong bảng giá..." />
+                <button class="btn btn-filter" id="filterSelectedBtn" title="Chỉ hiển thị các hàng đã tick">Lọc hàng đã chọn</button>
+                <button class="btn btn-clear" id="clearSelectionBtn" title="Xóa mọi tick và trở về danh sách ban đầu">Refresh (xóa chọn)</button>
             </div>
 
-            <!-- ====== Thanh công cụ chọn cột (Ẩn/Hiện) ====== -->
             <div class="toolbar" id="columnToolbar" style="display:none">
                 <span class="section-title">Chọn cột:</span>
                 <div class="column-list" id="columnList"></div>
@@ -132,14 +134,12 @@
 
             <div class="table-container" id="tableContainer"></div>
 
-            <!-- Nút Xuất Excel ở đáy popup -->
             <div class="footer-actions">
                 <button class="export-btn" id="exportBtn">Xuất Excel theo giao diện hiện tại</button>
             </div>
         </div>
     </div>
 
-    <!-- Password Dialog -->
     <div class="password-dialog" id="passwordDialog">
         <div class="password-dialog-content">
             <div class="password-dialog-title">Nhập password để xóa file</div>
@@ -168,13 +168,18 @@
 
         // ========== Biến toàn cục ==========
         let uploadedFiles = [];
-        let currentData = [];
+        let currentData = [];           // mảng AoA, index của phần tử chính là ID hàng toàn cục
         let fileIndexToRemove = null;
         const CORRECT_PASSWORD = "minhtriet1973";
 
-        // Ẩn/Hiện cột
-        let hiddenColumns = new Set(); // lưu index cột đang ẩn
-        let headersCache = []; // cache tiêu đề để render UI chọn cột
+        // Cột
+        let hiddenColumns = new Set(); // index cột đang ẩn
+        let headersCache = [];         // tiêu đề
+        let columnWidths = {};         // {colIndex: widthPx}
+
+        // Hàng được chọn
+        const selectedRowIdx = new Set(); // lưu chỉ số hàng theo currentData (ID ổn định)
+        let showingOnlySelected = false;  // trạng thái lọc xem chỉ hàng đã chọn
 
         // ========== DOM ==========
         const viewPriceBtn = document.getElementById("viewPriceBtn");
@@ -206,6 +211,9 @@
         const btnShowAll = document.getElementById("btnShowAll");
         const exportBtn = document.getElementById("exportBtn");
 
+        const filterSelectedBtn = document.getElementById("filterSelectedBtn");
+        const clearSelectionBtn = document.getElementById("clearSelectionBtn");
+
         // ========== Sự kiện ==========
         viewPriceBtn.addEventListener("click", () => {
             popupOverlay.style.display = "block";
@@ -214,7 +222,7 @@
         closePopupBtn.addEventListener("click", () => (popupOverlay.style.display = "none"));
         popupOverlay.addEventListener("click", (e) => { if (e.target === popupOverlay) popupOverlay.style.display = "none"; });
         excelFileInput.addEventListener("change", handleFileSelect);
-        searchInput.addEventListener("input", performSearch);
+        searchInput.addEventListener("input", ()=>{ showingOnlySelected=false; performSearch(); });
 
         passwordDialogCancel.addEventListener("click", () => { passwordDialog.style.display = "none"; passwordInput.value = ""; fileIndexToRemove = null; });
         passwordDialogConfirm.addEventListener("click", () => {
@@ -240,6 +248,9 @@
         btnShowAll.addEventListener("click", () => { hiddenColumns.clear(); renderColumnSelector(); redrawWithFilters(); });
 
         exportBtn.addEventListener("click", exportCurrentViewToExcel);
+
+        filterSelectedBtn.addEventListener('click', ()=>{ if(selectedRowIdx.size===0){ alert('Chưa có hàng nào được chọn.'); return; } showingOnlySelected=true; renderSelectedOnly(); });
+        clearSelectionBtn.addEventListener('click', ()=>{ selectedRowIdx.clear(); showingOnlySelected=false; searchInput.value=''; createTable(currentData); });
 
         // ========== Thông báo ==========
         function saveNotification(){
@@ -279,9 +290,7 @@
                         const firstSheetName = workbook.SheetNames[0];
                         const worksheet = workbook.Sheets[firstSheetName];
                         let jsonData = XLSX.utils.sheet_to_json(worksheet, { header:1, defval:"", raw:false });
-                        // Lọc hàng trống
                         jsonData = jsonData.filter(row => row.some(cell => String(cell).trim().length > 0));
-                        // Lọc cột trống
                         if(jsonData.length>0){
                             const columnsToKeep = [];
                             const header = jsonData[0];
@@ -328,50 +337,108 @@
         function displayAllData(){
             if(uploadedFiles.length===0){ tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị. Vui lòng tải lên file Excel.</p>'; columnToolbar.style.display='none'; return; }
             currentData = []; uploadedFiles.forEach(file => { currentData = currentData.concat(file.data); });
-            createTable(currentData);
+            // clear chọn khi nạp bộ dữ liệu mới
+            selectedRowIdx.clear(); showingOnlySelected=false; searchInput.value='';
+            createTable(currentData); 
         }
+
         function visibleColumnIndexes(){
             return headersCache.map((_, idx)=> idx).filter(idx => !hiddenColumns.has(idx));
         }
-        function createTable(data){
+
+        // sourceIndexes là mảng chỉ số (trong currentData) tương ứng từng hàng đang render; nếu null thì mặc định 1..N
+        function createTable(data, sourceIndexes=null){
             if(!data.length){ tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị.</p>'; columnToolbar.style.display='none'; return; }
             headersCache = data[0] || [];
             const visibleIdx = visibleColumnIndexes();
 
-            // Render UI chọn cột
             renderColumnSelector();
 
             const table = document.createElement("table"); table.className = "price-table";
             const thead = document.createElement("thead"); const headerRow = document.createElement("tr");
-            visibleIdx.forEach((colIdx)=>{ const th = document.createElement("th"); th.textContent = headersCache[colIdx] || ""; headerRow.appendChild(th); });
+            // Render các cột dữ liệu
+            visibleIdx.forEach((colIdx)=>{ 
+                const th = document.createElement("th"); th.className = 'th-resizable'; th.textContent = headersCache[colIdx] || ""; 
+                if(columnWidths[colIdx]){ th.style.width = columnWidths[colIdx] + 'px'; }
+                headerRow.appendChild(th); 
+            });
+            // Cột chọn
+            const thChoose = document.createElement('th'); thChoose.textContent = 'Chọn'; thChoose.className='th-resizable'; headerRow.appendChild(thChoose);
             thead.appendChild(headerRow); table.appendChild(thead);
 
             const tbody = document.createElement("tbody");
             for(let i=1;i<data.length;i++){
                 const rowData = data[i] || []; if(!rowData.some(cell=> String(cell).trim().length>0)) continue;
                 const tr = document.createElement("tr");
-                visibleIdx.forEach((colIdx)=>{
+                // xác định chỉ số hàng trong currentData
+                const rowIdx = sourceIndexes ? sourceIndexes[i] : i; // i trùng với vị trí trong currentData khi không lọc
+                tr.dataset.rowIndex = rowIdx;
+
+                visibleIdx.forEach((colIdx, visPos)=>{
                     const td = document.createElement("td"); const cell = rowData[colIdx];
-                    if(typeof cell === 'string' && cell.includes('%')) td.textContent = cell; else td.textContent = cell || '';
+                    td.textContent = (typeof cell === 'string' && cell.includes('%')) ? cell : (cell || '');
+                    if(columnWidths[colIdx]){ td.style.width = columnWidths[colIdx] + 'px'; }
                     tr.appendChild(td);
                 });
+                // Ô chọn
+                const tdChoose = document.createElement('td');
+                const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = selectedRowIdx.has(rowIdx);
+                cb.addEventListener('change', ()=>{ if(cb.checked) selectedRowIdx.add(rowIdx); else selectedRowIdx.delete(rowIdx); });
+                tdChoose.style.textAlign='center'; tdChoose.appendChild(cb); tr.appendChild(tdChoose);
+
                 tbody.appendChild(tr);
             }
             table.appendChild(tbody);
             tableContainer.innerHTML = ""; (tbody.rows.length>0 || headersCache.length>0) ? tableContainer.appendChild(table) : (tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị sau khi lọc.</p>');
+
+            enableColumnResize(table, visibleIdx);
+        }
+
+        function renderSelectedOnly(){
+            // dựng dữ liệu hiển thị chỉ gồm các hàng đã chọn
+            const indices = Array.from(selectedRowIdx).sort((a,b)=>a-b);
+            const aoa = [currentData[0]]; // header
+            indices.forEach(idx=>{ if(currentData[idx]) aoa.push(currentData[idx]); });
+            // sourceIndexes: mapping vị trí i -> chỉ số gốc
+            const sourceIdx = [0, ...indices];
+            createTable(aoa, sourceIdx);
+        }
+
+        function enableColumnResize(table, visibleIdx){
+            const headerCells = table.querySelectorAll('thead th');
+            headerCells.forEach((th, visPos)=>{
+                // Bỏ qua cột checkbox ở cuối (không cần resize)
+                const isCheckboxCol = (visPos === visibleIdx.length);
+                if(isCheckboxCol){ return; }
+                let handle = th.querySelector('.col-resizer');
+                if(!handle){ handle = document.createElement('div'); handle.className = 'col-resizer'; th.appendChild(handle); }
+                const originalIndex = visibleIdx[visPos];
+                const minWidth = 60; // px
+                let startX = 0; let startWidth = 0; let dragging = false;
+
+                const onMouseDown = (e)=>{ dragging = true; startX = e.pageX; startWidth = th.offsetWidth; document.body.style.cursor = 'col-resize'; e.preventDefault(); };
+                const onMouseMove = (e)=>{
+                    if(!dragging) return; const delta = e.pageX - startX; let newW = Math.max(minWidth, startWidth + delta);
+                    columnWidths[originalIndex] = newW; th.style.width = newW + 'px';
+                    const rows = table.querySelectorAll('tbody tr'); rows.forEach(r=>{ const td = r.children[visPos]; if(td){ td.style.width = newW + 'px'; } });
+                };
+                const onMouseUp = ()=>{ dragging = false; document.body.style.cursor = ''; };
+                handle.onmousedown = onMouseDown; document.addEventListener('mousemove', onMouseMove); document.addEventListener('mouseup', onMouseUp);
+            });
         }
 
         // ========== Tìm kiếm ==========
         function performSearch(){
             const searchTerm = searchInput.value.trim().toLowerCase();
             if(!searchTerm){ createTable(currentData); return; }
-            const filtered = [currentData[0]];
+            const filtered = [currentData[0]]; // header
+            const sourceIdx = [0];
             for(let i=1;i<currentData.length;i++){
                 const row = currentData[i]; let ok = false;
                 for(let j=0;j<row.length;j++){ const v = String(row[j]).toLowerCase(); if(v.includes(searchTerm)){ ok = true; break; } }
-                if(ok) filtered.push(row);
+                if(ok){ filtered.push(row); sourceIdx.push(i); }
             }
-            createTable(filtered); highlightSearchResults(searchTerm);
+            createTable(filtered, sourceIdx); highlightSearchResults(searchTerm);
         }
         function highlightSearchResults(searchTerm){
             if(!searchTerm) return; const table = document.querySelector('.price-table'); if(!table) return;
@@ -386,7 +453,7 @@
             headersCache.forEach((name, idx)=>{
                 const chip = document.createElement('label'); chip.className = 'column-chip';
                 const cb = document.createElement('input'); cb.type = 'checkbox'; cb.dataset.index = String(idx);
-                cb.checked = !hiddenColumns.has(idx); // checked = đang HIỆN
+                cb.checked = !hiddenColumns.has(idx);
                 const span = document.createElement('span'); span.textContent = name || `Cột ${idx+1}`;
                 chip.appendChild(cb); chip.appendChild(span); columnList.appendChild(chip);
             });
@@ -402,9 +469,8 @@
             renderColumnSelector(); redrawWithFilters();
         }
         function redrawWithFilters(){
-            // vẽ lại theo trạng thái tìm kiếm hiện tại
-            const term = searchInput.value.trim();
-            if(term){ performSearch(); } else { createTable(currentData); }
+            if(showingOnlySelected){ renderSelectedOnly(); return; }
+            const term = searchInput.value.trim(); if(term){ performSearch(); } else { createTable(currentData); }
         }
 
         // ========== Lưu/Tải Firebase ==========
@@ -425,23 +491,15 @@
 
         // ========== Xuất Excel theo giao diện hiện tại ==========
         function exportCurrentViewToExcel(){
-            const table = document.querySelector('.price-table');
-            if(!table){ alert('Không có dữ liệu để xuất.'); return; }
-            // Lấy dữ liệu từ DOM (đúng theo giao diện: cột đã ẩn sẽ không có)
+            const table = document.querySelector('.price-table'); if(!table){ alert('Không có dữ liệu để xuất.'); return; }
             const aoa = [];
             const headerCells = table.querySelectorAll('thead tr th');
             const headerRow = Array.from(headerCells).map(th => th.textContent.trim());
             aoa.push(headerRow);
             const bodyRows = table.querySelectorAll('tbody tr');
-            bodyRows.forEach(tr => {
-                const row = Array.from(tr.querySelectorAll('td')).map(td => td.textContent.replace(/\u00A0/g,' ').trim());
-                aoa.push(row);
-            });
-            const ws = XLSX.utils.aoa_to_sheet(aoa);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'BangGia');
-            const now = new Date();
-            const pad = (n)=> String(n).padStart(2,'0');
+            bodyRows.forEach(tr => { const row = Array.from(tr.querySelectorAll('td')).map(td => td.textContent.replace(/\u00A0/g,' ').trim()); aoa.push(row); });
+            const ws = XLSX.utils.aoa_to_sheet(aoa); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'BangGia');
+            const now = new Date(); const pad = (n)=> String(n).padStart(2,'0');
             const fileName = `BangGia_HienThi_${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}.xlsx`;
             XLSX.writeFile(wb, fileName);
         }
