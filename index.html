@@ -1,473 +1,84 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xem Giá Thuốc</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Xem Giá Thuốc — Nâng cấp</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        /* CSS chung */
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f5f5f5;
-        }
+        /* ====== CSS gốc (giữ nguyên & tinh chỉnh nhẹ) ====== */
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f5f5f5; }
+        .view-price-btn,.home-erp-btn,.notification-btn{ position:fixed; right:20px; color:#fff; border:none; border-radius:8px; width:120px; height:50px; font-size:16px; font-weight:bold; cursor:pointer; box-shadow:0 4px 8px rgba(0,0,0,.2); display:flex; justify-content:center; align-items:center; text-align:center; transition:all .3s; z-index:1000; }
+        .view-price-btn{ bottom:130px; background:#4285f4; } .view-price-btn:hover{ background:#3367d6; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,.3)}
+        .home-erp-btn{ bottom:190px; background:#34a853; text-decoration:none } .home-erp-btn:hover{ background:#2d8e47; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,.3)}
+        .notification-btn{ bottom:250px; background:#f44336 } .notification-btn:hover{ background:#d32f2f; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,.3)}
 
-        /* Nút Xem Giá */
-        .view-price-btn {
-            position: fixed;
-            bottom: 130px;
-            right: 20px;
-            background-color: #4285f4;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            width: 120px;
-            height: 50px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            transition: all 0.3s;
-            z-index: 1000;
-        }
-        
-        .view-price-btn:hover {
-            background-color: #3367d6;
-            transform: scale(1.05);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-        }
+        .popup-overlay{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:1001; overflow-y:auto }
+        .popup-content{ background:#fff; margin:20px auto; padding:20px; width:90%; max-width:1200px; border-radius:8px; box-shadow:0 5px 15px rgba(0,0,0,.3); max-height:90vh; overflow-y:auto; position:relative }
+        .popup-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding-bottom:10px; border-bottom:1px solid #eee }
+        .popup-title{ font-size:24px; color:#4285f4; margin:0 }
+        .close-btn{ background:none; border:none; font-size:24px; cursor:pointer; color:#666 }
 
-        /* Nút HOME ERP */
-        .home-erp-btn {
-            position: fixed;
-            bottom: 190px;
-            right: 20px;
-            background-color: #34a853;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            width: 120px;
-            height: 50px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            transition: all 0.3s;
-            z-index: 1000;
-            text-decoration: none;
-        }
-        
-        .home-erp-btn:hover {
-            background-color: #2d8e47;
-            transform: scale(1.05);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-        }
+        .upload-section{ margin-bottom:16px; padding:15px; background:#f9f9f9; border-radius:5px; border:1px dashed #ccc }
+        .file-input-container{ display:flex; align-items:center; gap:10px }
+        .file-input-label{ padding:8px 15px; background:#4285f4; color:#fff; border-radius:4px; cursor:pointer; transition:.3s }
+        .file-input-label:hover{ background:#3367d6 }
+        .file-input{ display:none }
+        .file-name{ flex-grow:1; color:#666 }
 
-        /* Nút Thông báo */
-        .notification-btn {
-            position: fixed;
-            bottom: 250px;
-            right: 20px;
-            background-color: #f44336;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            width: 120px;
-            height: 50px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            transition: all 0.3s;
-            z-index: 1000;
-        }
-        
-        .notification-btn:hover {
-            background-color: #d32f2f;
-            transform: scale(1.05);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-        }
+        .search-section{ margin-bottom:12px }
+        .search-input{ width:100%; padding:10px; border:1px solid #ddd; border-radius:4px; font-size:16px }
 
-        /* Popup Xem Giá */
-        .popup-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            z-index: 1001;
-            overflow-y: auto;
-        }
-        
-        .popup-content {
-            background-color: white;
-            margin: 20px auto;
-            padding: 20px;
-            width: 90%;
-            max-width: 1200px;
-            border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        
-        .popup-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .popup-title {
-            font-size: 24px;
-            color: #4285f4;
-            margin: 0;
-        }
-        
-        .close-btn {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: #666;
-        }
-        
-        .upload-section {
-            margin-bottom: 20px;
-            padding: 15px;
-            background-color: #f9f9f9;
-            border-radius: 5px;
-            border: 1px dashed #ccc;
-        }
-        
-        .file-input-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .file-input-label {
-            padding: 8px 15px;
-            background-color: #4285f4;
-            color: white;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        
-        .file-input-label:hover {
-            background-color: #3367d6;
-        }
-        
-        .file-input {
-            display: none;
-        }
-        
-        .file-name {
-            flex-grow: 1;
-            color: #666;
-        }
-        
-        .search-section {
-            margin-bottom: 20px;
-        }
-        
-        .search-input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-        
-        .files-list {
-            margin-bottom: 20px;
-        }
-        
-        .file-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            background-color: #f5f5f5;
-            margin-bottom: 5px;
-            border-radius: 4px;
-        }
-        
-        .delete-file-btn {
-            background-color: #f44336;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        
-        .table-container {
-            overflow-x: auto;
-            margin-top: 20px;
-        }
-        
-        .price-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        .price-table th, .price-table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        
-        .price-table th {
-            background-color: #4285f4;
-            color: white;
-            position: sticky;
-            top: 0;
-        }
-        
-        .price-table tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
-        
-        .price-table tr:hover {
-            background-color: #e6f2ff;
-        }
-        
-        .highlight {
-            background-color: yellow;
-        }
-        
-        .loading {
-            display: none;
-            text-align: center;
-            margin: 20px 0;
-        }
-        
-        .spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            border-radius: 50%;
-            border-top: 4px solid #4285f4;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-        }
+        .files-list{ margin-bottom:12px }
+        .file-item{ display:flex; justify-content:space-between; align-items:center; padding:10px; background:#f5f5f5; margin-bottom:5px; border-radius:4px }
+        .delete-file-btn{ background:#f44336; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer }
 
-        /* Password Dialog */
-        .password-dialog {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1002;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        .password-dialog-content {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            width: 300px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-        }
-        
-        .password-dialog-title {
-            font-size: 18px;
-            margin-bottom: 15px;
-            color: #333;
-        }
-        
-        .password-input {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-        
-        .password-dialog-buttons {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-        }
-        
-        .password-dialog-btn {
-            padding: 8px 15px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        
-        .password-dialog-cancel {
-            background-color: #f5f5f5;
-            color: #333;
-        }
-        
-        .password-dialog-confirm {
-            background-color: #4285f4;
-            color: white;
-        }
+        .toolbar{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:12px 0; padding:10px; background:#f9fbff; border:1px solid #e3eeff; border-radius:6px }
+        .toolbar .section-title{ font-weight:bold; color:#3367d6; margin-right:8px }
+        .column-list{ display:flex; flex-wrap:wrap; gap:8px; max-height:120px; overflow:auto; border:1px dashed #cfe1ff; padding:8px; border-radius:6px; background:#fff }
+        .column-chip{ display:inline-flex; align-items:center; gap:6px; background:#eef4ff; border:1px solid #cfe1ff; border-radius:999px; padding:6px 10px; font-size:13px }
+        .toolbar button{ padding:8px 12px; border:none; border-radius:6px; cursor:pointer; font-weight:600 }
+        .btn-hide{ background:#ff7043; color:#fff } .btn-unhide{ background:#43a047; color:#fff } .btn-showall{ background:#546e7a; color:#fff }
 
-        /* Notification Dialog */
-        .notification-dialog {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1003;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        .notification-dialog-content {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            width: 400px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-        }
-        
-        .notification-dialog-title {
-            font-size: 18px;
-            margin-bottom: 15px;
-            color: #f44336;
-            font-weight: bold;
-        }
-        
-        .notification-textarea {
-            width: 100%;
-            height: 150px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            margin-bottom: 15px;
-            font-size: 16px;
-            resize: vertical;
-        }
-        
-        .notification-dialog-buttons {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-        }
-        
-        .notification-dialog-btn {
-            padding: 8px 15px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        
-        .notification-dialog-cancel {
-            background-color: #f5f5f5;
-            color: #333;
-        }
-        
-        .notification-dialog-save {
-            background-color: #4CAF50;
-            color: white;
-        }
-        
-        .notification-display {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #ffebee;
-            border: 1px solid #f44336;
-            border-radius: 4px;
-            padding: 15px;
-            max-width: 80%;
-            color: #f44336;
-            font-weight: bold;
-            z-index: 1000;
-            display: none;
-            text-align: center;
-        }
+        .table-container{ overflow-x:auto; margin-top:12px }
+        .price-table{ width:100%; border-collapse:collapse }
+        .price-table th,.price-table td{ border:1px solid #ddd; padding:8px; text-align:left }
+        .price-table th{ background:#4285f4; color:#fff; position:sticky; top:0 }
+        .price-table tr:nth-child(even){ background:#f2f2f2 }
+        .price-table tr:hover{ background:#e6f2ff }
+        .highlight{ background:yellow }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        @media (max-width: 768px) {
-            .popup-content {
-                width: 95%;
-                padding: 15px;
-            }
-            
-            .price-table {
-                font-size: 14px;
-            }
-            
-            .view-price-btn, .home-erp-btn, .notification-btn {
-                width: 60px;
-                height: 60px;
-                font-size: 14px;
-            }
-            
-            .home-erp-btn {
-                bottom: 130px;
-            }
-            
-            .notification-btn {
-                bottom: 190px;
-            }
-            
-            .notification-dialog-content {
-                width: 90%;
-            }
-            
-            .notification-display {
-                top: 10px;
-                max-width: 95%;
-                font-size: 14px;
-                padding: 10px;
-            }
-        }
+        .loading{ display:none; text-align:center; margin:20px 0 }
+        .spinner{ border:4px solid rgba(0,0,0,.1); border-radius:50%; border-top:4px solid #4285f4; width:30px; height:30px; animation:spin 1s linear infinite; margin:0 auto }
+
+        .footer-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:16px }
+        .export-btn{ background:#1976d2; color:#fff; border:none; padding:10px 14px; border-radius:6px; font-weight:700; cursor:pointer }
+
+        .password-dialog,.notification-dialog{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1002; justify-content:center; align-items:center }
+        .password-dialog-content,.notification-dialog-content{ background:#fff; padding:20px; border-radius:8px; width:300px; box-shadow:0 5px 15px rgba(0,0,0,.3) }
+        .notification-dialog-content{ width:400px }
+        .password-dialog-title,.notification-dialog-title{ font-size:18px; margin-bottom:15px }
+        .password-input,.notification-textarea{ width:100%; padding:10px; border:1px solid #ddd; border-radius:4px; font-size:16px }
+        .notification-textarea{ height:150px; margin-bottom:15px; resize:vertical }
+        .password-dialog-buttons,.notification-dialog-buttons{ display:flex; justify-content:flex-end; gap:10px }
+        .password-dialog-cancel{ background:#f5f5f5 } .password-dialog-confirm{ background:#4285f4; color:#fff }
+        .notification-dialog-cancel{ background:#f5f5f5 } .notification-dialog-save{ background:#4CAF50; color:#fff }
+        .notification-display{ position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#ffebee; border:1px solid #f44336; border-radius:4px; padding:15px; max-width:80%; color:#f44336; font-weight:bold; z-index:1000; display:none; text-align:center }
+
+        @keyframes spin{ 0%{ transform:rotate(0) } 100%{ transform:rotate(360deg) } }
+        @media(max-width:768px){ .popup-content{ width:95%; padding:15px } .price-table{ font-size:14px } .view-price-btn,.home-erp-btn,.notification-btn{ width:60px; height:60px; font-size:14px } .home-erp-btn{ bottom:130px } .notification-btn{ bottom:190px } .notification-dialog-content{ width:90% } .notification-display{ top:10px; max-width:95%; font-size:14px; padding:10px } }
     </style>
 </head>
 <body>
     <!-- Nút Thông báo -->
     <button class="notification-btn" id="notificationBtn">Thông báo</button>
-    
     <!-- Nút HOME ERP -->
     <a href="https://erp-ideco.skyit.vn/#/app/order/index/" class="home-erp-btn" id="homeErpBtn">HOME ERP</a>
-    
     <!-- Nút Xem Giá -->
     <button class="view-price-btn" id="viewPriceBtn">Xem Giá</button>
-    
+
     <!-- Hiển thị thông báo -->
     <div class="notification-display" id="notificationDisplay"></div>
 
@@ -477,8 +88,8 @@
             <div class="notification-dialog-title">THÔNG BÁO SẢN PHẨM</div>
             <textarea class="notification-textarea" id="notificationTextarea" placeholder="Nhập thông báo sản phẩm..."></textarea>
             <div class="notification-dialog-buttons">
-                <button class="notification-dialog-btn notification-dialog-cancel" id="notificationCancelBtn">Hủy</button>
-                <button class="notification-dialog-btn notification-dialog-save" id="notificationSaveBtn">Lưu</button>
+                <button class="notification-dialog-cancel" id="notificationCancelBtn">Hủy</button>
+                <button class="notification-dialog-save" id="notificationSaveBtn">Lưu</button>
             </div>
         </div>
     </div>
@@ -490,27 +101,41 @@
                 <h2 class="popup-title">Xem Giá Thuốc</h2>
                 <button class="close-btn" id="closePopupBtn">&times;</button>
             </div>
-            
+
             <div class="upload-section">
                 <div class="file-input-container">
                     <label for="excelFileInput" class="file-input-label">Chọn file Excel</label>
-                    <input type="file" id="excelFileInput" class="file-input" accept=".xlsx, .xls" multiple>
+                    <input type="file" id="excelFileInput" class="file-input" accept=".xlsx, .xls" multiple />
                     <span class="file-name" id="fileNameDisplay">Chưa chọn file</span>
                 </div>
             </div>
-            
+
             <div class="search-section">
-                <input type="text" id="searchInput" class="search-input" placeholder="Tìm kiếm trong bảng giá...">
+                <input type="text" id="searchInput" class="search-input" placeholder="Tìm kiếm trong bảng giá..." />
             </div>
-            
+
+            <!-- ====== Thanh công cụ chọn cột (Ẩn/Hiện) ====== -->
+            <div class="toolbar" id="columnToolbar" style="display:none">
+                <span class="section-title">Chọn cột:</span>
+                <div class="column-list" id="columnList"></div>
+                <button class="btn-hide" id="btnHide">Ẩn cột đã chọn</button>
+                <button class="btn-unhide" id="btnUnhide">Hiện cột đã chọn</button>
+                <button class="btn-showall" id="btnShowAll">Hiện tất cả</button>
+            </div>
+
             <div class="files-list" id="filesList"></div>
-            
+
             <div class="loading" id="loadingIndicator">
                 <div class="spinner"></div>
                 <p>Đang tải dữ liệu...</p>
             </div>
-            
+
             <div class="table-container" id="tableContainer"></div>
+
+            <!-- Nút Xuất Excel ở đáy popup -->
+            <div class="footer-actions">
+                <button class="export-btn" id="exportBtn">Xuất Excel theo giao diện hiện tại</button>
+            </div>
         </div>
     </div>
 
@@ -518,16 +143,16 @@
     <div class="password-dialog" id="passwordDialog">
         <div class="password-dialog-content">
             <div class="password-dialog-title">Nhập password để xóa file</div>
-            <input type="password" class="password-input" id="passwordInput" placeholder="Nhập password...">
+            <input type="password" class="password-input" id="passwordInput" placeholder="Nhập password..." />
             <div class="password-dialog-buttons">
-                <button class="password-dialog-btn password-dialog-cancel" id="passwordDialogCancel">Hủy</button>
-                <button class="password-dialog-btn password-dialog-confirm" id="passwordDialogConfirm">Xác nhận</button>
+                <button class="password-dialog-cancel" id="passwordDialogCancel">Hủy</button>
+                <button class="password-dialog-confirm" id="passwordDialogConfirm">Xác nhận</button>
             </div>
         </div>
     </div>
 
     <script>
-        // Cấu hình Firebase
+        // ========== Firebase ==========
         const firebaseConfig = {
             apiKey: "AIzaSyBuXjYpTuKpNyZY6ZIfUSA-m4NWBwPWcU0",
             authDomain: "baica-dae2b.firebaseapp.com",
@@ -536,466 +161,293 @@
             storageBucket: "baica-dae2b.appspot.com",
             messagingSenderId: "61139094665",
             appId: "1:61139094665:web:13ebec976cec24e53f8a58",
-            measurementId: "G-VN2S2VVSZB"
+            measurementId: "G-VN2S2VVSZB",
         };
-        
-        // Khởi tạo Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
-        
-        // Biến toàn cục
+
+        // ========== Biến toàn cục ==========
         let uploadedFiles = [];
         let currentData = [];
         let fileIndexToRemove = null;
         const CORRECT_PASSWORD = "minhtriet1973";
-        
-        // DOM Elements
-        const viewPriceBtn = document.getElementById('viewPriceBtn');
-        const popupOverlay = document.getElementById('popupOverlay');
-        const closePopupBtn = document.getElementById('closePopupBtn');
-        const excelFileInput = document.getElementById('excelFileInput');
-        const fileNameDisplay = document.getElementById('fileNameDisplay');
-        const filesList = document.getElementById('filesList');
-        const searchInput = document.getElementById('searchInput');
-        const tableContainer = document.getElementById('tableContainer');
-        const loadingIndicator = document.getElementById('loadingIndicator');
-        
-        // Các element của password dialog
-        const passwordDialog = document.getElementById('passwordDialog');
-        const passwordInput = document.getElementById('passwordInput');
-        const passwordDialogCancel = document.getElementById('passwordDialogCancel');
-        const passwordDialogConfirm = document.getElementById('passwordDialogConfirm');
-        
-        // Các element của notification
-        const notificationBtn = document.getElementById('notificationBtn');
-        const notificationDialog = document.getElementById('notificationDialog');
-        const notificationTextarea = document.getElementById('notificationTextarea');
-        const notificationCancelBtn = document.getElementById('notificationCancelBtn');
-        const notificationSaveBtn = document.getElementById('notificationSaveBtn');
-        const notificationDisplay = document.getElementById('notificationDisplay');
-        
-        // Sự kiện cho nút Xem Giá
-        viewPriceBtn.addEventListener('click', () => {
-            popupOverlay.style.display = 'block';
+
+        // Ẩn/Hiện cột
+        let hiddenColumns = new Set(); // lưu index cột đang ẩn
+        let headersCache = []; // cache tiêu đề để render UI chọn cột
+
+        // ========== DOM ==========
+        const viewPriceBtn = document.getElementById("viewPriceBtn");
+        const popupOverlay = document.getElementById("popupOverlay");
+        const closePopupBtn = document.getElementById("closePopupBtn");
+        const excelFileInput = document.getElementById("excelFileInput");
+        const fileNameDisplay = document.getElementById("fileNameDisplay");
+        const filesList = document.getElementById("filesList");
+        const searchInput = document.getElementById("searchInput");
+        const tableContainer = document.getElementById("tableContainer");
+        const loadingIndicator = document.getElementById("loadingIndicator");
+
+        const passwordDialog = document.getElementById("passwordDialog");
+        const passwordInput = document.getElementById("passwordInput");
+        const passwordDialogCancel = document.getElementById("passwordDialogCancel");
+        const passwordDialogConfirm = document.getElementById("passwordDialogConfirm");
+
+        const notificationBtn = document.getElementById("notificationBtn");
+        const notificationDialog = document.getElementById("notificationDialog");
+        const notificationTextarea = document.getElementById("notificationTextarea");
+        const notificationCancelBtn = document.getElementById("notificationCancelBtn");
+        const notificationSaveBtn = document.getElementById("notificationSaveBtn");
+        const notificationDisplay = document.getElementById("notificationDisplay");
+
+        const columnToolbar = document.getElementById("columnToolbar");
+        const columnList = document.getElementById("columnList");
+        const btnHide = document.getElementById("btnHide");
+        const btnUnhide = document.getElementById("btnUnhide");
+        const btnShowAll = document.getElementById("btnShowAll");
+        const exportBtn = document.getElementById("exportBtn");
+
+        // ========== Sự kiện ==========
+        viewPriceBtn.addEventListener("click", () => {
+            popupOverlay.style.display = "block";
             loadDataFromFirebase();
         });
-        
-        // Sự kiện cho nút đóng popup
-        closePopupBtn.addEventListener('click', () => {
-            popupOverlay.style.display = 'none';
-        });
-        
-        popupOverlay.addEventListener('click', (e) => {
-            if (e.target === popupOverlay) {
-                popupOverlay.style.display = 'none';
-            }
-        });
-        
-        // Sự kiện cho file input
-        excelFileInput.addEventListener('change', handleFileSelect);
-        
-        // Sự kiện cho search input
-        searchInput.addEventListener('input', performSearch);
-        
-        // Sự kiện cho password dialog
-        passwordDialogCancel.addEventListener('click', () => {
-            passwordDialog.style.display = 'none';
-            passwordInput.value = '';
-            fileIndexToRemove = null;
-        });
-        
-        passwordDialogConfirm.addEventListener('click', () => {
+        closePopupBtn.addEventListener("click", () => (popupOverlay.style.display = "none"));
+        popupOverlay.addEventListener("click", (e) => { if (e.target === popupOverlay) popupOverlay.style.display = "none"; });
+        excelFileInput.addEventListener("change", handleFileSelect);
+        searchInput.addEventListener("input", performSearch);
+
+        passwordDialogCancel.addEventListener("click", () => { passwordDialog.style.display = "none"; passwordInput.value = ""; fileIndexToRemove = null; });
+        passwordDialogConfirm.addEventListener("click", () => {
             const enteredPassword = passwordInput.value;
             if (enteredPassword === CORRECT_PASSWORD) {
-                if (fileIndexToRemove !== null) {
-                    removeFile(fileIndexToRemove);
-                }
-                passwordDialog.style.display = 'none';
-                passwordInput.value = '';
-                fileIndexToRemove = null;
-            } else {
-                alert('Password không đúng. Vui lòng thử lại.');
-                passwordInput.value = '';
-            }
+                if (fileIndexToRemove !== null) removeFile(fileIndexToRemove);
+                passwordDialog.style.display = "none"; passwordInput.value = ""; fileIndexToRemove = null;
+            } else { alert("Password không đúng. Vui lòng thử lại."); passwordInput.value = ""; }
         });
-        
-        // Sự kiện cho notification
-        notificationBtn.addEventListener('click', () => {
-            notificationDialog.style.display = 'flex';
+
+        notificationBtn.addEventListener("click", () => {
+            notificationDialog.style.display = "flex";
             notificationTextarea.focus();
-            
-            // Load nội dung hiện tại khi mở dialog
-            database.ref('notification').once('value')
-                .then(snapshot => {
-                    const data = snapshot.val();
-                    if (data && data.text) {
-                        notificationTextarea.value = data.text;
-                    }
-                });
-        });
-        
-        notificationCancelBtn.addEventListener('click', () => {
-            notificationDialog.style.display = 'none';
-            notificationDisplay.style.display = 'none';
-        });
-        
-        notificationSaveBtn.addEventListener('click', saveNotification);
-        
-        // Hàm lưu thông báo
-        function saveNotification() {
-            const notificationText = notificationTextarea.value.trim();
-            
-            if (notificationText === '') {
-                alert('Vui lòng nhập nội dung thông báo');
-                return;
-            }
-            
-            database.ref('notification').set({
-                text: notificationText,
-                timestamp: new Date().getTime()
-            })
-            .then(() => {
-                notificationDisplay.textContent = notificationText;
-                notificationDisplay.style.display = 'block';
-                notificationDialog.style.display = 'none';
-            })
-            .catch(error => {
-                alert('Lỗi khi lưu thông báo: ' + error.message);
+            database.ref("notification").once("value").then((snapshot) => {
+                const data = snapshot.val(); if (data && data.text) notificationTextarea.value = data.text;
             });
+        });
+        notificationCancelBtn.addEventListener("click", () => { notificationDialog.style.display = "none"; notificationDisplay.style.display = "none"; });
+        notificationSaveBtn.addEventListener("click", saveNotification);
+
+        btnHide.addEventListener("click", () => applyColumnSelection("hide"));
+        btnUnhide.addEventListener("click", () => applyColumnSelection("unhide"));
+        btnShowAll.addEventListener("click", () => { hiddenColumns.clear(); renderColumnSelector(); redrawWithFilters(); });
+
+        exportBtn.addEventListener("click", exportCurrentViewToExcel);
+
+        // ========== Thông báo ==========
+        function saveNotification(){
+            const notificationText = notificationTextarea.value.trim();
+            if(!notificationText){ alert("Vui lòng nhập nội dung thông báo"); return; }
+            database.ref("notification").set({ text: notificationText, timestamp: new Date().getTime() })
+                .then(() => { notificationDisplay.textContent = notificationText; notificationDisplay.style.display = "block"; notificationDialog.style.display = "none"; })
+                .catch((error) => alert("Lỗi khi lưu thông báo: " + error.message));
         }
-        
-        // Hàm tải thông báo khi trang được tải
-        function loadNotification() {
-            database.ref('notification').once('value')
-                .then(snapshot => {
-                    const data = snapshot.val();
-                    if (data && data.text) {
-                        notificationDisplay.textContent = data.text;
-                        notificationDisplay.style.display = 'block';
-                    }
-                })
-                .catch(error => {
-                    console.error('Lỗi khi tải thông báo:', error);
-                });
+        function loadNotification(){
+            database.ref("notification").once("value").then((snapshot) => {
+                const data = snapshot.val(); if (data && data.text){ notificationDisplay.textContent = data.text; notificationDisplay.style.display = "block"; }
+            }).catch((error) => console.error("Lỗi khi tải thông báo:", error));
         }
-        
-        // Hàm xử lý khi chọn file Excel
-        async function handleFileSelect(event) {
-            const files = event.target.files;
-            if (files.length === 0) return;
-            
-            loadingIndicator.style.display = 'block';
-            tableContainer.innerHTML = '';
-            
-            for (let i = 0; i < files.length; i++) {
+
+        // ========== Upload/Đọc Excel ==========
+        async function handleFileSelect(event){
+            const files = event.target.files; if(!files.length) return;
+            loadingIndicator.style.display = "block"; tableContainer.innerHTML = "";
+            for(let i=0;i<files.length;i++){
                 const file = files[i];
-                
-                try {
+                try{
                     const data = await readExcelFile(file);
-                    uploadedFiles.push({
-                        name: file.name,
-                        data: data
-                    });
-                    
+                    uploadedFiles.push({ name: file.name, data });
                     addFileToList(file.name, uploadedFiles.length - 1);
-                    
-                } catch (error) {
-                    console.error('Lỗi khi đọc file:', file.name, error);
-                    alert(`Lỗi khi đọc file ${file.name}: ${error.message}`);
-                }
+                }catch(error){ console.error("Lỗi khi đọc file:", file.name, error); alert(`Lỗi khi đọc file ${file.name}: ${error.message}`); }
             }
-            
-            updateFileNameDisplay();
-            displayAllData();
-            saveDataToFirebase();
-            loadingIndicator.style.display = 'none';
+            updateFileNameDisplay(); displayAllData(); saveDataToFirebase(); loadingIndicator.style.display = "none";
         }
-        
-        // Hàm đọc file Excel
-        function readExcelFile(file) {
-            return new Promise((resolve, reject) => {
+        function readExcelFile(file){
+            return new Promise((resolve,reject)=>{
                 const reader = new FileReader();
-                
-                reader.onload = function(e) {
-                    try {
+                reader.onload = function(e){
+                    try{
                         const data = new Uint8Array(e.target.result);
-                        const workbook = XLSX.read(data, { 
-                            type: 'array', 
-                            cellStyles: true
-                        });
-                        
+                        const workbook = XLSX.read(data, { type: "array", cellStyles: true });
                         const firstSheetName = workbook.SheetNames[0];
                         const worksheet = workbook.Sheets[firstSheetName];
-                        
-                        let jsonData = XLSX.utils.sheet_to_json(worksheet, { 
-                            header: 1, 
-                            defval: '',
-                            raw: false
-                        });
-
+                        let jsonData = XLSX.utils.sheet_to_json(worksheet, { header:1, defval:"", raw:false });
                         // Lọc hàng trống
-                        jsonData = jsonData.filter(row => {
-                            return row.some(cell => String(cell).trim().length > 0);
-                        });
-
+                        jsonData = jsonData.filter(row => row.some(cell => String(cell).trim().length > 0));
                         // Lọc cột trống
-                        if (jsonData.length > 0) {
+                        if(jsonData.length>0){
                             const columnsToKeep = [];
                             const header = jsonData[0];
-                            
-                            for (let col = 0; col < header.length; col++) {
+                            for(let col=0; col<header.length; col++){
                                 let columnHasData = false;
-                                
-                                for (let row = 1; row < jsonData.length; row++) {
-                                    if (jsonData[row][col] !== undefined && 
-                                        String(jsonData[row][col]).trim().length > 0) {
-                                        columnHasData = true;
-                                        break;
-                                    }
+                                for(let row=1; row<jsonData.length; row++){
+                                    if(jsonData[row][col] !== undefined && String(jsonData[row][col]).trim().length>0){ columnHasData = true; break; }
                                 }
-                                
-                                if (columnHasData || (header[col] && String(header[col]).trim().length > 0)) {
-                                    columnsToKeep.push(col);
-                                }
+                                if(columnHasData || (header[col] && String(header[col]).trim().length>0)) columnsToKeep.push(col);
                             }
-                            
-                            jsonData = jsonData.map(row => {
-                                return row.filter((_, index) => columnsToKeep.includes(index));
-                            });
+                            jsonData = jsonData.map(row => row.filter((_,index)=> columnsToKeep.includes(index)));
                         }
-
                         resolve(jsonData);
-                    } catch (error) {
-                        reject(error);
-                    }
+                    }catch(error){ reject(error); }
                 };
-                
-                reader.onerror = function(error) {
-                    reject(error);
-                };
-                
+                reader.onerror = function(error){ reject(error); };
                 reader.readAsArrayBuffer(file);
             });
         }
-        
-        // Hàm thêm file vào danh sách
-        function addFileToList(fileName, index) {
-            const fileItem = document.createElement('div');
-            fileItem.className = 'file-item';
-            fileItem.innerHTML = `
-                <span>${fileName}</span>
-                <button class="delete-file-btn" data-index="${index}">Xóa</button>
-            `;
-            
+
+        // ========== Danh sách file ==========
+        function addFileToList(fileName, index){
+            const fileItem = document.createElement("div");
+            fileItem.className = "file-item";
+            fileItem.innerHTML = `<span>${fileName}</span><button class="delete-file-btn" data-index="${index}">Xóa</button>`;
             filesList.appendChild(fileItem);
-            
-            fileItem.querySelector('.delete-file-btn').addEventListener('click', (e) => {
-                const indexToRemove = parseInt(e.target.getAttribute('data-index'));
-                fileIndexToRemove = indexToRemove;
-                passwordDialog.style.display = 'flex';
-                passwordInput.focus();
+            fileItem.querySelector(".delete-file-btn").addEventListener("click", (e)=>{
+                const indexToRemove = parseInt(e.target.getAttribute("data-index"));
+                fileIndexToRemove = indexToRemove; passwordDialog.style.display = "flex"; passwordInput.focus();
             });
         }
-        
-        // Hàm xóa file
-        function removeFile(index) {
-            uploadedFiles.splice(index, 1);
-            
-            filesList.innerHTML = '';
-            uploadedFiles.forEach((file, i) => {
-                addFileToList(file.name, i);
-            });
-            
-            updateFileNameDisplay();
-            displayAllData();
-            saveDataToFirebase();
+        function removeFile(index){
+            uploadedFiles.splice(index,1); filesList.innerHTML = "";
+            uploadedFiles.forEach((file,i)=> addFileToList(file.name,i));
+            updateFileNameDisplay(); displayAllData(); saveDataToFirebase();
         }
-        
-        // Hàm cập nhật hiển thị tên file
-        function updateFileNameDisplay() {
-            if (uploadedFiles.length === 0) {
-                fileNameDisplay.textContent = 'Chưa chọn file';
-            } else if (uploadedFiles.length === 1) {
-                fileNameDisplay.textContent = uploadedFiles[0].name;
-            } else {
-                fileNameDisplay.textContent = `${uploadedFiles.length} file đã chọn`;
-            }
+        function updateFileNameDisplay(){
+            if(uploadedFiles.length===0) fileNameDisplay.textContent = "Chưa chọn file";
+            else if(uploadedFiles.length===1) fileNameDisplay.textContent = uploadedFiles[0].name;
+            else fileNameDisplay.textContent = `${uploadedFiles.length} file đã chọn`;
         }
-        
-        // Hàm hiển thị tất cả dữ liệu
-        function displayAllData() {
-            if (uploadedFiles.length === 0) {
-                tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị. Vui lòng tải lên file Excel.</p>';
-                return;
-            }
-            
-            currentData = [];
-            uploadedFiles.forEach(file => {
-                currentData = currentData.concat(file.data);
-            });
-            
+
+        // ========== Hiển thị bảng ==========
+        function displayAllData(){
+            if(uploadedFiles.length===0){ tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị. Vui lòng tải lên file Excel.</p>'; columnToolbar.style.display='none'; return; }
+            currentData = []; uploadedFiles.forEach(file => { currentData = currentData.concat(file.data); });
             createTable(currentData);
         }
-        
-        // Hàm tạo bảng HTML từ dữ liệu
-        function createTable(data) {
-            if (data.length === 0) {
-                tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị.</p>';
-                return;
-            }
-            
-            const table = document.createElement('table');
-            table.className = 'price-table';
-            
-            // Tạo header
-            const thead = document.createElement('thead');
-            const headerRow = document.createElement('tr');
-            
-            const headers = data[0] || [];
-            headers.forEach(header => {
-                const th = document.createElement('th');
-                th.textContent = header || '';
-                headerRow.appendChild(th);
-            });
-            
-            thead.appendChild(headerRow);
-            table.appendChild(thead);
-            
-            // Tạo body
-            const tbody = document.createElement('tbody');
-            
-            for (let i = 1; i < data.length; i++) {
-                const rowData = data[i] || [];
-                if (rowData.some(cell => String(cell).trim().length > 0)) {
-                    const row = document.createElement('tr');
-                    
-                    rowData.forEach(cell => {
-                        const td = document.createElement('td');
-                        
-                        if (typeof cell === 'string' && cell.includes('%')) {
-                            td.textContent = cell;
-                        } else {
-                            td.textContent = cell || '';
-                        }
-                        
-                        row.appendChild(td);
-                    });
-                    
-                    tbody.appendChild(row);
-                }
-            }
-            
-            table.appendChild(tbody);
-            
-            tableContainer.innerHTML = '';
-            if (tbody.rows.length > 0 || headers.length > 0) {
-                tableContainer.appendChild(table);
-            } else {
-                tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị sau khi lọc.</p>';
-            }
+        function visibleColumnIndexes(){
+            return headersCache.map((_, idx)=> idx).filter(idx => !hiddenColumns.has(idx));
         }
-        
-        // Hàm tìm kiếm
-        function performSearch() {
-            const searchTerm = searchInput.value.trim().toLowerCase();
-            
-            if (searchTerm === '') {
-                displayAllData();
-                return;
-            }
-            
-            const filteredData = [currentData[0]];
-            
-            for (let i = 1; i < currentData.length; i++) {
-                const row = currentData[i];
-                let rowMatches = false;
-                
-                for (let j = 0; j < row.length; j++) {
-                    const cellValue = String(row[j]).toLowerCase();
-                    if (cellValue.includes(searchTerm)) {
-                        rowMatches = true;
-                        break;
-                    }
-                }
-                
-                if (rowMatches) {
-                    filteredData.push(row);
-                }
-            }
-            
-            createTable(filteredData);
-            highlightSearchResults(searchTerm);
-        }
-        
-        // Hàm highlight kết quả tìm kiếm
-        function highlightSearchResults(searchTerm) {
-            if (searchTerm === '') return;
-            
-            const table = document.querySelector('.price-table');
-            if (!table) return;
-            
-            const cells = table.querySelectorAll('td');
-            
-            cells.forEach(cell => {
-                const cellText = cell.textContent.toLowerCase();
-                if (cellText.includes(searchTerm)) {
-                    const regex = new RegExp(searchTerm, 'gi');
-                    cell.innerHTML = cell.textContent.replace(regex, match => 
-                        `<span class="highlight">${match}</span>`
-                    );
-                }
-            });
-        }
-        
-        // Hàm lưu dữ liệu lên Firebase
-        function saveDataToFirebase() {
-            const dataToSave = {
-                files: uploadedFiles,
-                lastUpdated: new Date().toISOString()
-            };
-            
-            database.ref('priceData').set(dataToSave)
-                .then(() => console.log('Dữ liệu đã được lưu lên Firebase'))
-                .catch(error => console.error('Lỗi khi lưu dữ liệu:', error));
-        }
-        
-        // Hàm tải dữ liệu từ Firebase
-        function loadDataFromFirebase() {
-            loadingIndicator.style.display = 'block';
-            tableContainer.innerHTML = '';
-            filesList.innerHTML = '';
-            
-            database.ref('priceData').once('value')
-                .then(snapshot => {
-                    const data = snapshot.val();
-                    
-                    if (data && data.files) {
-                        uploadedFiles = data.files;
-                        
-                        uploadedFiles.forEach((file, index) => {
-                            addFileToList(file.name, index);
-                        });
-                        
-                        updateFileNameDisplay();
-                        displayAllData();
-                    } else {
-                        tableContainer.innerHTML = '<p>Không có dữ liệu trên server. Vui lòng tải lên file Excel.</p>';
-                    }
-                    
-                    loadingIndicator.style.display = 'none';
-                })
-                .catch(error => {
-                    console.error('Lỗi khi tải dữ liệu:', error);
-                    loadingIndicator.style.display = 'none';
-                    tableContainer.innerHTML = '<p>Lỗi khi tải dữ liệu từ server. Vui lòng thử lại sau.</p>';
+        function createTable(data){
+            if(!data.length){ tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị.</p>'; columnToolbar.style.display='none'; return; }
+            headersCache = data[0] || [];
+            const visibleIdx = visibleColumnIndexes();
+
+            // Render UI chọn cột
+            renderColumnSelector();
+
+            const table = document.createElement("table"); table.className = "price-table";
+            const thead = document.createElement("thead"); const headerRow = document.createElement("tr");
+            visibleIdx.forEach((colIdx)=>{ const th = document.createElement("th"); th.textContent = headersCache[colIdx] || ""; headerRow.appendChild(th); });
+            thead.appendChild(headerRow); table.appendChild(thead);
+
+            const tbody = document.createElement("tbody");
+            for(let i=1;i<data.length;i++){
+                const rowData = data[i] || []; if(!rowData.some(cell=> String(cell).trim().length>0)) continue;
+                const tr = document.createElement("tr");
+                visibleIdx.forEach((colIdx)=>{
+                    const td = document.createElement("td"); const cell = rowData[colIdx];
+                    if(typeof cell === 'string' && cell.includes('%')) td.textContent = cell; else td.textContent = cell || '';
+                    tr.appendChild(td);
                 });
+                tbody.appendChild(tr);
+            }
+            table.appendChild(tbody);
+            tableContainer.innerHTML = ""; (tbody.rows.length>0 || headersCache.length>0) ? tableContainer.appendChild(table) : (tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị sau khi lọc.</p>');
         }
-        
-        // Khởi tạo ứng dụng
-        document.addEventListener('DOMContentLoaded', () => {
-            loadNotification();
-            loadDataFromFirebase();
-        });
+
+        // ========== Tìm kiếm ==========
+        function performSearch(){
+            const searchTerm = searchInput.value.trim().toLowerCase();
+            if(!searchTerm){ createTable(currentData); return; }
+            const filtered = [currentData[0]];
+            for(let i=1;i<currentData.length;i++){
+                const row = currentData[i]; let ok = false;
+                for(let j=0;j<row.length;j++){ const v = String(row[j]).toLowerCase(); if(v.includes(searchTerm)){ ok = true; break; } }
+                if(ok) filtered.push(row);
+            }
+            createTable(filtered); highlightSearchResults(searchTerm);
+        }
+        function highlightSearchResults(searchTerm){
+            if(!searchTerm) return; const table = document.querySelector('.price-table'); if(!table) return;
+            const cells = table.querySelectorAll('td');
+            cells.forEach(cell=>{ const t = cell.textContent.toLowerCase(); if(t.includes(searchTerm)){ const r = new RegExp(searchTerm,'gi'); cell.innerHTML = cell.textContent.replace(r, m=>`<span class="highlight">${m}</span>`); } });
+        }
+
+        // ========== Ẩn/Hiện cột ==========
+        function renderColumnSelector(){
+            columnList.innerHTML = ""; if(!headersCache.length){ columnToolbar.style.display = 'none'; return; }
+            columnToolbar.style.display = 'flex';
+            headersCache.forEach((name, idx)=>{
+                const chip = document.createElement('label'); chip.className = 'column-chip';
+                const cb = document.createElement('input'); cb.type = 'checkbox'; cb.dataset.index = String(idx);
+                cb.checked = !hiddenColumns.has(idx); // checked = đang HIỆN
+                const span = document.createElement('span'); span.textContent = name || `Cột ${idx+1}`;
+                chip.appendChild(cb); chip.appendChild(span); columnList.appendChild(chip);
+            });
+        }
+        function getSelectedColumnIndexes(){
+            return Array.from(columnList.querySelectorAll('input[type="checkbox"]:checked')).map(cb => parseInt(cb.dataset.index));
+        }
+        function applyColumnSelection(mode){
+            const selected = getSelectedColumnIndexes();
+            if(!selected.length){ alert('Vui lòng chọn ít nhất một cột.'); return; }
+            if(mode === 'hide'){ selected.forEach(idx => hiddenColumns.add(idx)); }
+            if(mode === 'unhide'){ selected.forEach(idx => hiddenColumns.delete(idx)); }
+            renderColumnSelector(); redrawWithFilters();
+        }
+        function redrawWithFilters(){
+            // vẽ lại theo trạng thái tìm kiếm hiện tại
+            const term = searchInput.value.trim();
+            if(term){ performSearch(); } else { createTable(currentData); }
+        }
+
+        // ========== Lưu/Tải Firebase ==========
+        function saveDataToFirebase(){
+            const dataToSave = { files: uploadedFiles, lastUpdated: new Date().toISOString() };
+            database.ref("priceData").set(dataToSave).then(()=> console.log("Đã lưu Firebase"))
+            .catch(err=> console.error("Lỗi khi lưu dữ liệu:", err));
+        }
+        function loadDataFromFirebase(){
+            loadingIndicator.style.display = 'block'; tableContainer.innerHTML = ''; filesList.innerHTML = '';
+            database.ref('priceData').once('value').then(snapshot=>{
+                const data = snapshot.val();
+                if(data && data.files){ uploadedFiles = data.files; uploadedFiles.forEach((file,index)=> addFileToList(file.name,index)); updateFileNameDisplay(); displayAllData(); }
+                else { tableContainer.innerHTML = '<p>Không có dữ liệu trên server. Vui lòng tải lên file Excel.</p>'; columnToolbar.style.display = 'none'; }
+                loadingIndicator.style.display = 'none';
+            }).catch(error=>{ console.error('Lỗi khi tải dữ liệu:', error); loadingIndicator.style.display = 'none'; tableContainer.innerHTML = '<p>Lỗi khi tải dữ liệu từ server. Vui lòng thử lại sau.</p>'; });
+        }
+
+        // ========== Xuất Excel theo giao diện hiện tại ==========
+        function exportCurrentViewToExcel(){
+            const table = document.querySelector('.price-table');
+            if(!table){ alert('Không có dữ liệu để xuất.'); return; }
+            // Lấy dữ liệu từ DOM (đúng theo giao diện: cột đã ẩn sẽ không có)
+            const aoa = [];
+            const headerCells = table.querySelectorAll('thead tr th');
+            const headerRow = Array.from(headerCells).map(th => th.textContent.trim());
+            aoa.push(headerRow);
+            const bodyRows = table.querySelectorAll('tbody tr');
+            bodyRows.forEach(tr => {
+                const row = Array.from(tr.querySelectorAll('td')).map(td => td.textContent.replace(/\u00A0/g,' ').trim());
+                aoa.push(row);
+            });
+            const ws = XLSX.utils.aoa_to_sheet(aoa);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'BangGia');
+            const now = new Date();
+            const pad = (n)=> String(n).padStart(2,'0');
+            const fileName = `BangGia_HienThi_${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+        }
+
+        // ========== Khởi tạo ==========
+        document.addEventListener('DOMContentLoaded', ()=>{ loadNotification(); loadDataFromFirebase(); });
     </script>
 </body>
 </html>
