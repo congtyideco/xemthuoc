@@ -260,6 +260,64 @@
             font-weight: bold;
             color: #4285f4;
         }
+		/* Thêm style mới cho tính năng tách nền và xóa ảnh */
+        .image-processing-controls {
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .processing-btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .remove-bg-btn {
+            background: #9c27b0;
+            color: white;
+        }
+        
+        .remove-bg-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .remove-image-btn {
+            background: #f44336;
+            color: white;
+        }
+        
+        .processing-status {
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .processing-status.loading {
+            display: block;
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .processing-status.success {
+            display: block;
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .processing-status.error {
+            display: block;
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
     </style>
 </head>
 <body>
@@ -351,7 +409,7 @@
         </div>
     </div>
 
-    <div class="image-manager" id="imageManager">
+   <div class="image-manager" id="imageManager">
         <h3>Quản lý hình ảnh sản phẩm</h3>
         
         <div class="selected-products-filter">
@@ -385,6 +443,13 @@
                 <input type="file" id="imageUploadInput" accept="image/*" style="display: none;" />
                 <button class="upload-image-btn" id="triggerUploadBtn">Chọn hình ảnh</button>
                 <div class="upload-status" id="uploadStatus"></div>
+                
+                <!-- Thêm phần điều khiển xử lý ảnh -->
+                <div class="image-processing-controls">
+                    <button class="processing-btn remove-bg-btn" id="removeBgBtn" disabled>Tách nền tự động</button>
+                    <button class="processing-btn remove-image-btn" id="removeImageBtn">Xóa hình và làm lại</button>
+                    <div class="processing-status" id="processingStatus"></div>
+                </div>
             </div>
         </div>
         
@@ -448,877 +513,996 @@
         </div>
     </div>
 
-    <script>
-        // ========== Firebase ==========
-        const firebaseConfig = {
-            apiKey: "AIzaSyBuXjYpTuKpNyZY6ZIfUSA-m4NWBwPWcU0",
-            authDomain: "baica-dae2b.firebaseapp.com",
-            databaseURL: "https://baica-dae2b-default-rtdb.firebaseio.com",
-            projectId: "baica-dae2b",
-            storageBucket: "baica-dae2b.appspot.com",
-            messagingSenderId: "61139094665",
-            appId: "1:61139094665:web:13ebec976cec24e53f8a58",
-            measurementId: "G-VN2S2VVSZB",
-        };
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+<script>
+    // ========== Firebase ==========
+    const firebaseConfig = {
+        apiKey: "AIzaSyBuXjYpTuKpNyZY6ZIfUSA-m4NWBwPWcU0",
+        authDomain: "baica-dae2b.firebaseapp.com",
+        databaseURL: "https://baica-dae2b-default-rtdb.firebaseio.com",
+        projectId: "baica-dae2b",
+        storageBucket: "baica-dae2b.appspot.com",
+        messagingSenderId: "61139094665",
+        appId: "1:61139094665:web:13ebec976cec24e53f8a58",
+        measurementId: "G-VN2S2VVSZB",
+    };
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
 
-        // ========== Biến toàn cục ==========
-        let uploadedFiles = [];
-        let currentData = [];           // mảng AoA, index của phần tử chính là ID hàng toàn cục
-        let fileIndexToRemove = null;
-        const CORRECT_PASSWORD = "minhtriet1973";
+    // ========== Biến toàn cục ==========
+    let uploadedFiles = [];
+    let currentData = [];           // mảng AoA, index của phần tử chính là ID hàng toàn cục
+    let fileIndexToRemove = null;
+    const CORRECT_PASSWORD = "minhtriet1973";
 
-        // Cột
-        let hiddenColumns = new Set(); // index cột đang ẩn
-        let headersCache = [];         // tiêu đề
-        let columnWidths = {};         // {colIndex: widthPx}
+    // Cột
+    let hiddenColumns = new Set(); // index cột đang ẩn
+    let headersCache = [];         // tiêu đề
+    let columnWidths = {};         // {colIndex: widthPx}
 
-        // Hàng được chọn
-        const selectedRowIdx = new Set(); // lưu chỉ số hàng theo currentData (ID ổn định)
-        let showingOnlySelected = false;  // trạng thái lọc xem chỉ hàng đã chọn
+    // Hàng được chọn
+    const selectedRowIdx = new Set(); // lưu chỉ số hàng theo currentData (ID ổn định)
+    let showingOnlySelected = false;  // trạng thái lọc xem chỉ hàng đã chọn
 
-        // Hình ảnh sản phẩm
-        let productImages = {};        // {productName: imageData (base64 hoặc URL)}
-        let currentImageFile = null;   // File hình ảnh được chọn để upload
+    // Hình ảnh sản phẩm
+    let productImages = {};        // {productName: imageData (base64 hoặc URL)}
+    let currentImageFile = null;   // File hình ảnh được chọn để upload
+    let originalImageFile = null;  // File gốc để có thể làm lại
 
-        // ========== DOM ==========
-        const viewPriceBtn = document.getElementById("viewPriceBtn");
-        const popupOverlay = document.getElementById("popupOverlay");
-        const closePopupBtn = document.getElementById("closePopupBtn");
-        const excelFileInput = document.getElementById("excelFileInput");
-        const fileNameDisplay = document.getElementById("fileNameDisplay");
-        const filesList = document.getElementById("filesList");
-        const searchInput = document.getElementById("searchInput");
-        const tableContainer = document.getElementById("tableContainer");
-        const loadingIndicator = document.getElementById("loadingIndicator");
+    // API Remove.bg - cần thay bằng API key thực
+    const REMOVE_BG_API_KEY = "iHt8DKCwKg4Va63ACXopN7nm"; // Thay bằng API key thực
 
-        const passwordDialog = document.getElementById("passwordDialog");
-        const passwordInput = document.getElementById("passwordInput");
-        const passwordDialogCancel = document.getElementById("passwordDialogCancel");
-        const passwordDialogConfirm = document.getElementById("passwordDialogConfirm");
+    // ========== DOM ==========
+    const viewPriceBtn = document.getElementById("viewPriceBtn");
+    const popupOverlay = document.getElementById("popupOverlay");
+    const closePopupBtn = document.getElementById("closePopupBtn");
+    const excelFileInput = document.getElementById("excelFileInput");
+    const fileNameDisplay = document.getElementById("fileNameDisplay");
+    const filesList = document.getElementById("filesList");
+    const searchInput = document.getElementById("searchInput");
+    const tableContainer = document.getElementById("tableContainer");
+    const loadingIndicator = document.getElementById("loadingIndicator");
 
-        const notificationBtn = document.getElementById("notificationBtn");
-        const notificationDialog = document.getElementById("notificationDialog");
-        const notificationTextarea = document.getElementById("notificationTextarea");
-        const notificationCancelBtn = document.getElementById("notificationCancelBtn");
-        const notificationSaveBtn = document.getElementById("notificationSaveBtn");
-        const notificationDisplay = document.getElementById("notificationDisplay");
+    const passwordDialog = document.getElementById("passwordDialog");
+    const passwordInput = document.getElementById("passwordInput");
+    const passwordDialogCancel = document.getElementById("passwordDialogCancel");
+    const passwordDialogConfirm = document.getElementById("passwordDialogConfirm");
 
-        const columnToolbar = document.getElementById("columnToolbar");
-        const columnList = document.getElementById("columnList");
-        const btnHide = document.getElementById("btnHide");
-        const btnUnhide = document.getElementById("btnUnhide");
-        const btnShowAll = document.getElementById("btnShowAll");
-        const exportBtn = document.getElementById("exportBtn");
-        const manageImagesBtn = document.getElementById("manageImagesBtn");
+    const notificationBtn = document.getElementById("notificationBtn");
+    const notificationDialog = document.getElementById("notificationDialog");
+    const notificationTextarea = document.getElementById("notificationTextarea");
+    const notificationCancelBtn = document.getElementById("notificationCancelBtn");
+    const notificationSaveBtn = document.getElementById("notificationSaveBtn");
+    const notificationDisplay = document.getElementById("notificationDisplay");
 
-        const filterSelectedBtn = document.getElementById("filterSelectedBtn");
-        const clearSelectionBtn = document.getElementById("clearSelectionBtn");
+    const columnToolbar = document.getElementById("columnToolbar");
+    const columnList = document.getElementById("columnList");
+    const btnHide = document.getElementById("btnHide");
+    const btnUnhide = document.getElementById("btnUnhide");
+    const btnShowAll = document.getElementById("btnShowAll");
+    const exportBtn = document.getElementById("exportBtn");
+    const manageImagesBtn = document.getElementById("manageImagesBtn");
 
-        const createQuoteBtn = document.getElementById("createQuoteBtn");
-        const quoteDialog = document.getElementById("quoteDialog");
-        const customerNameInput = document.getElementById("customerNameInput");
-        const customerContactInput = document.getElementById("customerContactInput");
-        const customerPhoneInput = document.getElementById("customerPhoneInput");
-        const customerAddressInput = document.getElementById("customerAddressInput");
-        const quoteDialogCancel = document.getElementById("quoteDialogCancel");
-        const quoteDialogCreate = document.getElementById("quoteDialogCreate");
+    const filterSelectedBtn = document.getElementById("filterSelectedBtn");
+    const clearSelectionBtn = document.getElementById("clearSelectionBtn");
 
-        const imageManager = document.getElementById("imageManager");
-        const productSelect = document.getElementById("productSelect");
-        const imageUrlInput = document.getElementById("imageUrlInput");
-        const imagePreview = document.getElementById("imagePreview");
-        const previewImageBtn = document.getElementById("previewImageBtn");
-        const imageManagerCancel = document.getElementById("imageManagerCancel");
-        const imageManagerSave = document.getElementById("imageManagerSave");
-        const imageUploadInput = document.getElementById("imageUploadInput");
-        const triggerUploadBtn = document.getElementById("triggerUploadBtn");
-        const uploadStatus = document.getElementById("uploadStatus");
-        const tabs = document.querySelectorAll('.tab');
-        const tabContents = document.querySelectorAll('.tab-content');
-        const showOnlySelectedCheckbox = document.getElementById("showOnlySelectedProducts");
+    const createQuoteBtn = document.getElementById("createQuoteBtn");
+    const quoteDialog = document.getElementById("quoteDialog");
+    const customerNameInput = document.getElementById("customerNameInput");
+    const customerContactInput = document.getElementById("customerContactInput");
+    const customerPhoneInput = document.getElementById("customerPhoneInput");
+    const customerAddressInput = document.getElementById("customerAddressInput");
+    const quoteDialogCancel = document.getElementById("quoteDialogCancel");
+    const quoteDialogCreate = document.getElementById("quoteDialogCreate");
 
-        const quotePage = document.getElementById("quotePage");
-        const quoteCustomerName = document.getElementById("quoteCustomerName");
-        const quoteCustomerContact = document.getElementById("quoteCustomerContact");
-        const quoteCustomerPhone = document.getElementById("quoteCustomerPhone");
-        const quoteCustomerAddress = document.getElementById("quoteCustomerAddress");
-        const quoteDate = document.getElementById("quoteDate");
-        const quoteTableContainer = document.getElementById("quoteTableContainer");
-        const quoteBackBtn = document.getElementById("quoteBackBtn");
-        const quotePrintBtn = document.getElementById("quotePrintBtn");
-        const quotePdfBtn = document.getElementById("quotePdfBtn");
+    const imageManager = document.getElementById("imageManager");
+    const productSelect = document.getElementById("productSelect");
+    const imageUrlInput = document.getElementById("imageUrlInput");
+    const imagePreview = document.getElementById("imagePreview");
+    const previewImageBtn = document.getElementById("previewImageBtn");
+    const imageManagerCancel = document.getElementById("imageManagerCancel");
+    const imageManagerSave = document.getElementById("imageManagerSave");
+    const imageUploadInput = document.getElementById("imageUploadInput");
+    const triggerUploadBtn = document.getElementById("triggerUploadBtn");
+    const uploadStatus = document.getElementById("uploadStatus");
+    const tabs = document.querySelectorAll('.tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+    const showOnlySelectedCheckbox = document.getElementById("showOnlySelectedProducts");
 
-        // ========== Sự kiện ==========
-        viewPriceBtn.addEventListener("click", () => {
-            popupOverlay.style.display = "block";
-            loadDataFromFirebase();
+    const quotePage = document.getElementById("quotePage");
+    const quoteCustomerName = document.getElementById("quoteCustomerName");
+    const quoteCustomerContact = document.getElementById("quoteCustomerContact");
+    const quoteCustomerPhone = document.getElementById("quoteCustomerPhone");
+    const quoteCustomerAddress = document.getElementById("quoteCustomerAddress");
+    const quoteDate = document.getElementById("quoteDate");
+    const quoteTableContainer = document.getElementById("quoteTableContainer");
+    const quoteBackBtn = document.getElementById("quoteBackBtn");
+    const quotePrintBtn = document.getElementById("quotePrintBtn");
+    const quotePdfBtn = document.getElementById("quotePdfBtn");
+
+    // Thêm các phần tử DOM mới cho xử lý ảnh
+    const removeBgBtn = document.getElementById("removeBgBtn");
+    const removeImageBtn = document.getElementById("removeImageBtn");
+    const processingStatus = document.getElementById("processingStatus");
+
+    // ========== Sự kiện ==========
+    viewPriceBtn.addEventListener("click", () => {
+        popupOverlay.style.display = "block";
+        loadDataFromFirebase();
+    });
+    closePopupBtn.addEventListener("click", () => (popupOverlay.style.display = "none"));
+    popupOverlay.addEventListener("click", (e) => { if (e.target === popupOverlay) popupOverlay.style.display = "none"; });
+    excelFileInput.addEventListener("change", handleFileSelect);
+    searchInput.addEventListener("input", ()=>{ showingOnlySelected=false; performSearch(); });
+
+    passwordDialogCancel.addEventListener("click", () => { passwordDialog.style.display = "none"; passwordInput.value = ""; fileIndexToRemove = null; });
+    passwordDialogConfirm.addEventListener("click", () => {
+        const enteredPassword = passwordInput.value;
+        if (enteredPassword === CORRECT_PASSWORD) {
+            if (fileIndexToRemove !== null) removeFile(fileIndexToRemove);
+            passwordDialog.style.display = "none"; passwordInput.value = ""; fileIndexToRemove = null;
+        } else { alert("Password không đúng. Vui lòng thử lại."); passwordInput.value = ""; }
+    });
+
+    notificationBtn.addEventListener("click", () => {
+        notificationDialog.style.display = "flex";
+        notificationTextarea.focus();
+        database.ref("notification").once("value").then((snapshot) => {
+            const data = snapshot.val(); if (data && data.text) notificationTextarea.value = data.text;
         });
-        closePopupBtn.addEventListener("click", () => (popupOverlay.style.display = "none"));
-        popupOverlay.addEventListener("click", (e) => { if (e.target === popupOverlay) popupOverlay.style.display = "none"; });
-        excelFileInput.addEventListener("change", handleFileSelect);
-        searchInput.addEventListener("input", ()=>{ showingOnlySelected=false; performSearch(); });
+    });
+    notificationCancelBtn.addEventListener("click", () => { notificationDialog.style.display = "none"; notificationDisplay.style.display = "none"; });
+    notificationSaveBtn.addEventListener("click", saveNotification);
 
-        passwordDialogCancel.addEventListener("click", () => { passwordDialog.style.display = "none"; passwordInput.value = ""; fileIndexToRemove = null; });
-        passwordDialogConfirm.addEventListener("click", () => {
-            const enteredPassword = passwordInput.value;
-            if (enteredPassword === CORRECT_PASSWORD) {
-                if (fileIndexToRemove !== null) removeFile(fileIndexToRemove);
-                passwordDialog.style.display = "none"; passwordInput.value = ""; fileIndexToRemove = null;
-            } else { alert("Password không đúng. Vui lòng thử lại."); passwordInput.value = ""; }
+    btnHide.addEventListener("click", () => applyColumnSelection("hide"));
+    btnUnhide.addEventListener("click", () => applyColumnSelection("unhide"));
+    btnShowAll.addEventListener("click", () => { hiddenColumns.clear(); renderColumnSelector(); redrawWithFilters(); });
+
+    exportBtn.addEventListener("click", exportCurrentViewToExcel);
+    manageImagesBtn.addEventListener("click", openImageManager);
+
+    filterSelectedBtn.addEventListener('click', ()=>{ if(selectedRowIdx.size===0){ alert('Chưa có hàng nào được chọn.'); return; } showingOnlySelected=true; renderSelectedOnly(); });
+    clearSelectionBtn.addEventListener('click', ()=>{ selectedRowIdx.clear(); showingOnlySelected=false; searchInput.value=''; createTable(currentData); });
+
+    createQuoteBtn.addEventListener('click', () => {
+        if (selectedRowIdx.size === 0) {
+            alert('Vui lòng chọn ít nhất một sản phẩm để tạo báo giá.');
+            return;
+        }
+        quoteDialog.style.display = 'flex';
+        customerNameInput.focus();
+    });
+
+    quoteDialogCancel.addEventListener('click', () => {
+        quoteDialog.style.display = 'none';
+        clearQuoteForm();
+    });
+
+    quoteDialogCreate.addEventListener('click', createQuote);
+
+    quoteBackBtn.addEventListener('click', () => {
+        quotePage.style.display = 'none';
+        popupOverlay.style.display = 'block';
+    });
+
+    quotePrintBtn.addEventListener('click', () => {
+        window.print();
+    });
+
+    quotePdfBtn.addEventListener('click', generatePdf);
+
+    previewImageBtn.addEventListener('click', previewImage);
+    imageManagerCancel.addEventListener('click', () => { 
+        imageManager.style.display = 'none'; 
+        imageUrlInput.value = '';
+        imagePreview.style.display = 'none';
+        currentImageFile = null;
+        originalImageFile = null;
+        uploadStatus.textContent = '';
+        resetProcessingUI();
+    });
+    imageManagerSave.addEventListener('click', saveProductImage);
+    
+    triggerUploadBtn.addEventListener('click', () => {
+        imageUploadInput.click();
+    });
+    
+    imageUploadInput.addEventListener('change', handleImageUpload);
+    
+    // Tab switching
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const tabId = tab.getAttribute('data-tab');
+            
+            // Deactivate all tabs
+            tabs.forEach(t => t.classList.remove('active'));
+            tabContents.forEach(tc => tc.classList.remove('active'));
+            
+            // Activate current tab
+            tab.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
         });
+    });
 
-        notificationBtn.addEventListener("click", () => {
-            notificationDialog.style.display = "flex";
-            notificationTextarea.focus();
-            database.ref("notification").once("value").then((snapshot) => {
-                const data = snapshot.val(); if (data && data.text) notificationTextarea.value = data.text;
-            });
-        });
-        notificationCancelBtn.addEventListener("click", () => { notificationDialog.style.display = "none"; notificationDisplay.style.display = "none"; });
-        notificationSaveBtn.addEventListener("click", saveNotification);
+    // Lọc sản phẩm đã chọn trong quản lý hình ảnh
+    showOnlySelectedCheckbox.addEventListener('change', () => {
+        if (imageManager.style.display === 'block') {
+            populateProductSelect();
+        }
+    });
 
-        btnHide.addEventListener("click", () => applyColumnSelection("hide"));
-        btnUnhide.addEventListener("click", () => applyColumnSelection("unhide"));
-        btnShowAll.addEventListener("click", () => { hiddenColumns.clear(); renderColumnSelector(); redrawWithFilters(); });
+    // Thêm sự kiện mới cho xử lý ảnh
+    removeBgBtn.addEventListener("click", removeImageBackground);
+    removeImageBtn.addEventListener("click", resetImageUpload);
 
-        exportBtn.addEventListener("click", exportCurrentViewToExcel);
-        manageImagesBtn.addEventListener("click", openImageManager);
-
-        filterSelectedBtn.addEventListener('click', ()=>{ if(selectedRowIdx.size===0){ alert('Chưa có hàng nào được chọn.'); return; } showingOnlySelected=true; renderSelectedOnly(); });
-        clearSelectionBtn.addEventListener('click', ()=>{ selectedRowIdx.clear(); showingOnlySelected=false; searchInput.value=''; createTable(currentData); });
-
-        createQuoteBtn.addEventListener('click', () => {
-            if (selectedRowIdx.size === 0) {
-                alert('Vui lòng chọn ít nhất một sản phẩm để tạo báo giá.');
-                return;
-            }
-            quoteDialog.style.display = 'flex';
-            customerNameInput.focus();
-        });
-
-        quoteDialogCancel.addEventListener('click', () => {
-            quoteDialog.style.display = 'none';
-            clearQuoteForm();
-        });
-
-        quoteDialogCreate.addEventListener('click', createQuote);
-
-        quoteBackBtn.addEventListener('click', () => {
-            quotePage.style.display = 'none';
-            popupOverlay.style.display = 'block';
-        });
-
-        quotePrintBtn.addEventListener('click', () => {
-            window.print();
-        });
-
-        quotePdfBtn.addEventListener('click', generatePdf);
-
-        previewImageBtn.addEventListener('click', previewImage);
-        imageManagerCancel.addEventListener('click', () => { 
-            imageManager.style.display = 'none'; 
+    // ========== Quản lý hình ảnh ==========
+    function openImageManager() {
+        if (currentData.length === 0) {
+            alert('Vui lòng tải dữ liệu sản phẩm trước.');
+            return;
+        }
+        
+        populateProductSelect();
+        
+        // Hiển thị hình ảnh hiện tại nếu có
+        const selectedProduct = productSelect.value;
+        if (productImages[selectedProduct]) {
+            imageUrlInput.value = productImages[selectedProduct];
+            imagePreview.src = productImages[selectedProduct];
+            imagePreview.style.display = 'block';
+        } else {
             imageUrlInput.value = '';
             imagePreview.style.display = 'none';
+        }
+        
+        // Reset trạng thái upload
+        currentImageFile = null;
+        originalImageFile = null;
+        uploadStatus.textContent = '';
+        
+        // Reset trạng thái xử lý ảnh
+        resetProcessingUI();
+        
+        imageManager.style.display = 'block';
+    }
+    
+    function populateProductSelect() {
+        // Xóa options cũ
+        productSelect.innerHTML = '';
+        
+        // Thêm các sản phẩm vào dropdown
+        const productNameIndex = findProductNameColumnIndex();
+        if (productNameIndex === -1) {
+            alert('Không tìm thấy cột tên sản phẩm trong dữ liệu.');
+            return;
+        }
+        
+        // Lấy danh sách sản phẩm
+        const products = new Set();
+        const showOnlySelected = showOnlySelectedCheckbox.checked;
+        
+        for (let i = 1; i < currentData.length; i++) {
+            // Nếu chỉ hiển thị sản phẩm đã chọn, kiểm tra xem hàng này có được chọn không
+            if (showOnlySelected && !selectedRowIdx.has(i)) {
+                continue;
+            }
+            
+            const productName = currentData[i][productNameIndex] || '';
+            if (productName.trim() !== '') {
+                products.add(productName);
+            }
+        }
+        
+        // Nếu không có sản phẩm nào được chọn và đang ở chế độ chỉ hiển thị sản phẩm đã chọn
+        if (products.size === 0 && showOnlySelected) {
+            alert('Không có sản phẩm nào được chọn. Vui lòng chọn ít nhất một sản phẩm trước.');
+            showOnlySelectedCheckbox.checked = false;
+            populateProductSelect(); // Load lại với tất cả sản phẩm
+            return;
+        }
+        
+        // Thêm vào dropdown
+        products.forEach(product => {
+            const option = document.createElement('option');
+            option.value = product;
+            option.textContent = product;
+            productSelect.appendChild(option);
+        });
+    }
+    
+    function findProductNameColumnIndex() {
+        for (let i = 0; i < headersCache.length; i++) {
+            const header = headersCache[i].toLowerCase();
+            if (header.includes('tên') || header.includes('name') || header.includes('sản phẩm') || header.includes('product')) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    
+    function previewImage() {
+        const url = imageUrlInput.value.trim();
+        if (url) {
+            imagePreview.src = url;
+            imagePreview.style.display = 'block';
+            // Khi xem trước từ URL, reset file upload
             currentImageFile = null;
+            originalImageFile = null;
             uploadStatus.textContent = '';
-        });
-        imageManagerSave.addEventListener('click', saveProductImage);
+            resetProcessingUI();
+        }
+    }
+    
+    function handleImageUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
         
-        triggerUploadBtn.addEventListener('click', () => {
-            imageUploadInput.click();
-        });
+        // Kiểm tra loại file
+        if (!file.type.match('image.*')) {
+            alert('Vui lòng chọn file hình ảnh (JPEG, PNG, GIF, v.v.)');
+            return;
+        }
         
-        imageUploadInput.addEventListener('change', handleImageUpload);
+        // Kiểm tra kích thước file (tối đa 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Kích thước file không được vượt quá 5MB');
+            return;
+        }
         
-        // Tab switching
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                const tabId = tab.getAttribute('data-tab');
-                
-                // Deactivate all tabs
-                tabs.forEach(t => t.classList.remove('active'));
-                tabContents.forEach(tc => tc.classList.remove('active'));
-                
-                // Activate current tab
-                tab.classList.add('active');
-                document.getElementById(tabId).classList.add('active');
+        currentImageFile = file;
+        originalImageFile = file; // Lưu file gốc
+        uploadStatus.textContent = `Đã chọn: ${file.name} (${Math.round(file.size/1024)} KB)`;
+        uploadStatus.style.color = '#4CAF50';
+        
+        // Kích hoạt nút tách nền
+        removeBgBtn.disabled = false;
+        
+        // Hiển thị xem trước
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            imagePreview.src = e.target.result;
+            imagePreview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+        
+        // Reset URL input
+        imageUrlInput.value = '';
+    }
+    
+    function resetImageUpload() {
+        if (!confirm('Bạn có chắc muốn xóa hình hiện tại và chọn lại?')) {
+            return;
+        }
+        
+        // Reset tất cả trạng thái liên quan đến ảnh
+        currentImageFile = null;
+        originalImageFile = null;
+        imageUploadInput.value = '';
+        uploadStatus.textContent = '';
+        imagePreview.style.display = 'none';
+        removeBgBtn.disabled = true;
+        
+        // Reset trạng thái xử lý
+        resetProcessingUI();
+        
+        // Cho phép chọn ảnh mới
+        triggerUploadBtn.click();
+    }
+    
+    function resetProcessingUI() {
+        processingStatus.className = 'processing-status';
+        processingStatus.textContent = '';
+        removeBgBtn.disabled = (currentImageFile === null);
+    }
+    
+    async function removeImageBackground() {
+        if (!currentImageFile) {
+            alert('Vui lòng chọn hình ảnh trước.');
+            return;
+        }
+        
+        // Hiển thị trạng thái đang xử lý
+        processingStatus.className = 'processing-status loading';
+        processingStatus.textContent = 'Đang xử lý tách nền...';
+        removeBgBtn.disabled = true;
+        
+        try {
+            // Tạo FormData để gửi đến API
+            const formData = new FormData();
+            formData.append('image_file', currentImageFile);
+            formData.append('size', 'auto');
+            
+            // Gọi API Remove.bg
+            const response = await fetch('https://api.remove.bg/v1.0/removebg', {
+                method: 'POST',
+                headers: {
+                    'X-Api-Key': REMOVE_BG_API_KEY
+                },
+                body: formData
             });
-        });
-
-        // Lọc sản phẩm đã chọn trong quản lý hình ảnh
-        showOnlySelectedCheckbox.addEventListener('change', () => {
-            if (imageManager.style.display === 'block') {
-                populateProductSelect();
-            }
-        });
-
-        // ========== Quản lý hình ảnh ==========
-        function openImageManager() {
-            if (currentData.length === 0) {
-                alert('Vui lòng tải dữ liệu sản phẩm trước.');
-                return;
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.errors ? errorData.errors[0].title : 'Lỗi khi tách nền');
             }
             
-            populateProductSelect();
+            // Chuyển đổi phản hồi thành blob
+            const blob = await response.blob();
             
-            // Hiển thị hình ảnh hiện tại nếu có
-            const selectedProduct = productSelect.value;
-            if (productImages[selectedProduct]) {
-                imageUrlInput.value = productImages[selectedProduct];
-                imagePreview.src = productImages[selectedProduct];
-                imagePreview.style.display = 'block';
-            } else {
-                imageUrlInput.value = '';
-                imagePreview.style.display = 'none';
-            }
-            
-            // Reset trạng thái upload
-            currentImageFile = null;
-            uploadStatus.textContent = '';
-            
-            imageManager.style.display = 'block';
-        }
-        
-        function populateProductSelect() {
-            // Xóa options cũ
-            productSelect.innerHTML = '';
-            
-            // Thêm các sản phẩm vào dropdown
-            const productNameIndex = findProductNameColumnIndex();
-            if (productNameIndex === -1) {
-                alert('Không tìm thấy cột tên sản phẩm trong dữ liệu.');
-                return;
-            }
-            
-            // Lấy danh sách sản phẩm
-            const products = new Set();
-            const showOnlySelected = showOnlySelectedCheckbox.checked;
-            
-            for (let i = 1; i < currentData.length; i++) {
-                // Nếu chỉ hiển thị sản phẩm đã chọn, kiểm tra xem hàng này có được chọn không
-                if (showOnlySelected && !selectedRowIdx.has(i)) {
-                    continue;
-                }
-                
-                const productName = currentData[i][productNameIndex] || '';
-                if (productName.trim() !== '') {
-                    products.add(productName);
-                }
-            }
-            
-            // Nếu không có sản phẩm nào được chọn và đang ở chế độ chỉ hiển thị sản phẩm đã chọn
-            if (products.size === 0 && showOnlySelected) {
-                alert('Không có sản phẩm nào được chọn. Vui lòng chọn ít nhất một sản phẩm trước.');
-                showOnlySelectedCheckbox.checked = false;
-                populateProductSelect(); // Load lại với tất cả sản phẩm
-                return;
-            }
-            
-            // Thêm vào dropdown
-            products.forEach(product => {
-                const option = document.createElement('option');
-                option.value = product;
-                option.textContent = product;
-                productSelect.appendChild(option);
+            // Tạo file mới từ blob
+            const processedFile = new File([blob], `nobg_${currentImageFile.name}`, {
+                type: 'image/png'
             });
-        }
-        
-        function findProductNameColumnIndex() {
-            for (let i = 0; i < headersCache.length; i++) {
-                const header = headersCache[i].toLowerCase();
-                if (header.includes('tên') || header.includes('name') || header.includes('sản phẩm') || header.includes('product')) {
-                    return i;
-                }
-            }
-            return -1;
-        }
-        
-        function previewImage() {
-            const url = imageUrlInput.value.trim();
-            if (url) {
-                imagePreview.src = url;
-                imagePreview.style.display = 'block';
-                // Khi xem trước từ URL, reset file upload
-                currentImageFile = null;
-                uploadStatus.textContent = '';
-            }
-        }
-        
-        function handleImageUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
             
-            // Kiểm tra loại file
-            if (!file.type.match('image.*')) {
-                alert('Vui lòng chọn file hình ảnh (JPEG, PNG, GIF, v.v.)');
-                return;
-            }
+            // Cập nhật file hiện tại
+            currentImageFile = processedFile;
             
-            // Kiểm tra kích thước file (tối đa 5MB)
-            if (file.size > 5 * 1024 * 1024) {
-                alert('Kích thước file không được vượt quá 5MB');
-                return;
-            }
-            
-            currentImageFile = file;
-            uploadStatus.textContent = `Đã chọn: ${file.name} (${Math.round(file.size/1024)} KB)`;
-            uploadStatus.style.color = '#4CAF50';
-            
-            // Hiển thị xem trước
+            // Hiển thị ảnh đã xử lý
             const reader = new FileReader();
             reader.onload = function(e) {
                 imagePreview.src = e.target.result;
-                imagePreview.style.display = 'block';
+                
+                // Hiển thị thông báo thành công
+                processingStatus.className = 'processing-status success';
+                processingStatus.textContent = 'Tách nền thành công!';
+                
+                // Kích hoạt lại nút tách nền
+                removeBgBtn.disabled = false;
             };
-            reader.readAsDataURL(file);
+            reader.readAsDataURL(blob);
             
-            // Reset URL input
-            imageUrlInput.value = '';
+        } catch (error) {
+            console.error('Lỗi khi tách nền:', error);
+            
+            // Hiển thị thông báo lỗi
+            processingStatus.className = 'processing-status error';
+            processingStatus.textContent = `Lỗi: ${error.message || 'Không thể tách nền'}`;
+            
+            // Kích hoạt lại nút tách nền
+            removeBgBtn.disabled = false;
+        }
+    }
+    
+    function saveProductImage() {
+        const productName = productSelect.value;
+        
+        if (!productName) {
+            alert('Vui lòng chọn sản phẩm.');
+            return;
         }
         
-        function saveProductImage() {
-            const productName = productSelect.value;
+        // Nếu có file ảnh được chọn, lưu dưới dạng base64 vào Local Storage
+        if (currentImageFile) {
+            uploadStatus.textContent = 'Đang xử lý hình ảnh...';
+            uploadStatus.style.color = '#FF9800';
             
-            if (!productName) {
-                alert('Vui lòng chọn sản phẩm.');
-                return;
-            }
-            
-            // Nếu có file ảnh được chọn, lưu dưới dạng base64 vào Local Storage
-            if (currentImageFile) {
-                uploadStatus.textContent = 'Đang xử lý hình ảnh...';
-                uploadStatus.style.color = '#FF9800';
-                
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    // Lưu dữ liệu base64 vào Local Storage
-                    productImages[productName] = e.target.result;
-                    saveImagesToLocalStorage();
-                    
-                    uploadStatus.textContent = 'Lưu hình ảnh thành công!';
-                    uploadStatus.style.color = '#4CAF50';
-                    
-                    setTimeout(() => {
-                        imageManager.style.display = 'none';
-                        uploadStatus.textContent = '';
-                    }, 1000);
-                };
-                reader.onerror = function(error) {
-                    console.error('Lỗi đọc file:', error);
-                    uploadStatus.textContent = 'Lỗi khi xử lý hình ảnh';
-                    uploadStatus.style.color = '#F44336';
-                };
-                reader.readAsDataURL(currentImageFile);
-            } 
-            // Nếu không có file nhưng có URL
-            else if (imageUrlInput.value.trim()) {
-                const imageUrl = imageUrlInput.value.trim();
-                
-                // Kiểm tra URL hợp lệ
-                if (!isValidUrl(imageUrl)) {
-                    alert('URL hình ảnh không hợp lệ. Vui lòng nhập URL đúng định dạng.');
-                    return;
-                }
-                
-                productImages[productName] = imageUrl;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // Lưu dữ liệu base64 vào Local Storage
+                productImages[productName] = e.target.result;
                 saveImagesToLocalStorage();
-                alert('Đã lưu hình ảnh cho sản phẩm: ' + productName);
-                imageManager.style.display = 'none';
-            }
-            else {
-                alert('Vui lòng chọn hình ảnh từ máy tính hoặc nhập URL hình ảnh.');
-            }
-        }
-        
-        function isValidUrl(string) {
-            try {
-                new URL(string);
-                return true;
-            } catch (_) {
-                return false;
-            }
-        }
-        
-        function saveImagesToLocalStorage() {
-            try {
-                localStorage.setItem("productImages", JSON.stringify(productImages));
-                console.log("Đã lưu hình ảnh vào Local Storage");
-            } catch (error) {
-                console.error('Lỗi khi lưu hình ảnh:', error);
-                alert('Lỗi khi lưu hình ảnh: ' + error.message);
-            }
-        }
-        
-        function loadProductImages() {
-            try {
-                const imagesData = localStorage.getItem("productImages");
-                if (imagesData) {
-                    productImages = JSON.parse(imagesData);
-                }
-            } catch (error) {
-                console.error("Lỗi khi tải hình ảnh sản phẩm:", error);
-            }
-        }
-
-        // ========== Thông báo ==========
-        function saveNotification(){
-            const notificationText = notificationTextarea.value.trim();
-            if(!notificationText){ alert("Vui lòng nhập nội dung thông báo"); return; }
-            database.ref("notification").set({ text: notificationText, timestamp: new Date().getTime() })
-                .then(() => { notificationDisplay.textContent = notificationText; notificationDisplay.style.display = "block"; notificationDialog.style.display = "none"; })
-                .catch((error) => alert("Lỗi khi lưu thông báo: " + error.message));
-        }
-        function loadNotification(){
-            database.ref("notification").once("value").then((snapshot) => {
-                const data = snapshot.val(); if (data && data.text){ notificationDisplay.textContent = data.text; notificationDisplay.style.display = "block"; }
-            }).catch((error) => console.error("Lỗi khi tải thông báo:", error));
-        }
-
-        // ========== Upload/Đọc Excel ==========
-        async function handleFileSelect(event){
-            const files = event.target.files; if(!files.length) return;
-            loadingIndicator.style.display = "block"; tableContainer.innerHTML = "";
-            for(let i=0;i<files.length;i++){
-                const file = files[i];
-                try{
-                    const data = await readExcelFile(file);
-                    uploadedFiles.push({ name: file.name, data });
-                    addFileToList(file.name, uploadedFiles.length - 1);
-                }catch(error){ console.error("Lỗi khi đọc file:", file.name, error); alert(`Lỗi khi đọc file ${file.name}: ${error.message}`); }
-            }
-            updateFileNameDisplay(); displayAllData(); saveDataToFirebase(); loadingIndicator.style.display = "none";
-        }
-        function readExcelFile(file){
-            return new Promise((resolve,reject)=>{
-                const reader = new FileReader();
-                reader.onload = function(e){
-                    try{
-                        const data = new Uint8Array(e.target.result);
-                        const workbook = XLSX.read(data, { type: "array", cellStyles: true });
-                        const firstSheetName = workbook.SheetNames[0];
-                        const worksheet = workbook.Sheets[firstSheetName];
-                        let jsonData = XLSX.utils.sheet_to_json(worksheet, { header:1, defval:"", raw:false });
-                        jsonData = jsonData.filter(row => row.some(cell => String(cell).trim().length > 0));
-                        if(jsonData.length>0){
-                            const columnsToKeep = [];
-                            const header = jsonData[0];
-                            for(let col=0; col<header.length; col++){
-                                let columnHasData = false;
-                                for(let row=1; row<jsonData.length; row++){
-                                    if(jsonData[row][col] !== undefined && String(jsonData[row][col]).trim().length>0){ columnHasData = true; break; }
-                                }
-                                if(columnHasData || (header[col] && String(header[col]).trim().length>0)) columnsToKeep.push(col);
-                            }
-                            jsonData = jsonData.map(row => row.filter((_,index)=> columnsToKeep.includes(index)));
-                        }
-                        resolve(jsonData);
-                    }catch(error){ reject(error); }
-                };
-                reader.onerror = function(error){ reject(error); };
-                reader.readAsArrayBuffer(file);
-            });
-        }
-
-        // ========== Danh sách file ==========
-        function addFileToList(fileName, index){
-            const fileItem = document.createElement("div");
-            fileItem.className = "file-item";
-            fileItem.innerHTML = `<span>${fileName}</span><button class="delete-file-btn" data-index="${index}">Xóa</button>`;
-            filesList.appendChild(fileItem);
-            fileItem.querySelector(".delete-file-btn").addEventListener("click", (e)=>{
-                const indexToRemove = parseInt(e.target.getAttribute("data-index"));
-                fileIndexToRemove = indexToRemove; passwordDialog.style.display = "flex"; passwordInput.focus();
-            });
-        }
-        function removeFile(index){
-            uploadedFiles.splice(index,1); filesList.innerHTML = "";
-            uploadedFiles.forEach((file,i)=> addFileToList(file.name,i));
-            updateFileNameDisplay(); displayAllData(); saveDataToFirebase();
-        }
-        function updateFileNameDisplay(){
-            if(uploadedFiles.length===0) fileNameDisplay.textContent = "Chưa chọn file";
-            else if(uploadedFiles.length===1) fileNameDisplay.textContent = uploadedFiles[0].name;
-            else fileNameDisplay.textContent = `${uploadedFiles.length} file đã chọn`;
-        }
-
-        // ========== Hiển thị bảng ==========
-        function displayAllData(){
-            if(uploadedFiles.length===0){ tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị. Vui lòng tải lên file Excel.</p>'; columnToolbar.style.display='none'; return; }
-            currentData = []; uploadedFiles.forEach(file => { currentData = currentData.concat(file.data); });
-            // clear chọn khi nạp bộ dữ liệu mới
-            selectedRowIdx.clear(); showingOnlySelected=false; searchInput.value='';
-            createTable(currentData); 
-        }
-
-        function visibleColumnIndexes(){
-            return headersCache.map((_, idx)=> idx).filter(idx => !hiddenColumns.has(idx));
-        }
-
-        // sourceIndexes là mảng chỉ số (trong currentData) tương ứng từng hàng đang render; nếu null thì mặc định 1..N
-        function createTable(data, sourceIndexes=null){
-            if(!data.length){ tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị.</p>'; columnToolbar.style.display='none'; return; }
-            headersCache = data[0] || [];
-            const visibleIdx = visibleColumnIndexes();
-
-            renderColumnSelector();
-
-            const table = document.createElement("table"); table.className = "price-table";
-            const thead = document.createElement("thead"); const headerRow = document.createElement("tr");
-            // Render các cột dữ liệu
-            visibleIdx.forEach((colIdx)=>{ 
-                const th = document.createElement("th"); th.className = 'th-resizable'; th.textContent = headersCache[colIdx] || ""; 
-                if(columnWidths[colIdx]){ th.style.width = columnWidths[colIdx] + 'px'; }
-                headerRow.appendChild(th); 
-            });
-            // Cột chọn
-            const thChoose = document.createElement('th'); thChoose.textContent = 'Chọn'; thChoose.className='th-resizable'; headerRow.appendChild(thChoose);
-            thead.appendChild(headerRow); table.appendChild(thead);
-
-            const tbody = document.createElement("tbody");
-            for(let i=1;i<data.length;i++){
-                const rowData = data[i] || []; if(!rowData.some(cell=> String(cell).trim().length>0)) continue;
-                const tr = document.createElement("tr");
-                // xác định chỉ số hàng trong currentData
-                const rowIdx = sourceIndexes ? sourceIndexes[i] : i; // i trùng với vị trí trong currentData khi không lọc
-                tr.dataset.rowIndex = rowIdx;
-
-                visibleIdx.forEach((colIdx, visPos)=>{
-                    const td = document.createElement("td"); const cell = rowData[colIdx];
-                    td.textContent = (typeof cell === 'string' && cell.includes('%')) ? cell : (cell || '');
-                    if(columnWidths[colIdx]){ td.style.width = columnWidths[colIdx] + 'px'; }
-                    tr.appendChild(td);
-                });
-                // Ô chọn
-                const tdChoose = document.createElement('td');
-                const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = selectedRowIdx.has(rowIdx);
-                cb.addEventListener('change', ()=>{ if(cb.checked) selectedRowIdx.add(rowIdx); else selectedRowIdx.delete(rowIdx); });
-                tdChoose.style.textAlign='center'; tdChoose.appendChild(cb); tr.appendChild(tdChoose);
-
-                tbody.appendChild(tr);
-            }
-            table.appendChild(tbody);
-            tableContainer.innerHTML = ""; (tbody.rows.length>0 || headersCache.length>0) ? tableContainer.appendChild(table) : (tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị sau khi lọc.</p>');
-
-            enableColumnResize(table, visibleIdx);
-        }
-
-        function renderSelectedOnly(){
-            // dựng dữ liệu hiển thị chỉ gồm các hàng đã chọn
-            const indices = Array.from(selectedRowIdx).sort((a,b)=>a-b);
-            const aoa = [currentData[0]]; // header
-            indices.forEach(idx=>{ if(currentData[idx]) aoa.push(currentData[idx]); });
-            // sourceIndexes: mapping vị trí i -> chỉ số gốc
-            const sourceIdx = [0, ...indices];
-            createTable(aoa, sourceIdx);
-        }
-
-        function enableColumnResize(table, visibleIdx){
-            const headerCells = table.querySelectorAll('thead th');
-            headerCells.forEach((th, visPos)=>{
-                // Bỏ qua cột checkbox ở cuối (không cần resize)
-                const isCheckboxCol = (visPos === visibleIdx.length);
-                if(isCheckboxCol){ return; }
-                let handle = th.querySelector('.col-resizer');
-                if(!handle){ handle = document.createElement('div'); handle.className = 'col-resizer'; th.appendChild(handle); }
-                const originalIndex = visibleIdx[visPos];
-                const minWidth = 60; // px
-                let startX = 0; let startWidth = 0; let dragging = false;
-
-                const onMouseDown = (e)=>{ dragging = true; startX = e.pageX; startWidth = th.offsetWidth; document.body.style.cursor = 'col-resize'; e.preventDefault(); };
-                const onMouseMove = (e)=>{
-                    if(!dragging) return; const delta = e.pageX - startX; let newW = Math.max(minWidth, startWidth + delta);
-                    columnWidths[originalIndex] = newW; th.style.width = newW + 'px';
-                    const rows = table.querySelectorAll('tbody tr'); rows.forEach(r=>{ const td = r.children[visPos]; if(td){ td.style.width = newW + 'px'; } });
-                };
-                const onMouseUp = ()=>{ dragging = false; document.body.style.cursor = ''; };
-                handle.onmousedown = onMouseDown; document.addEventListener('mousemove', onMouseMove); document.addEventListener('mouseup', onMouseUp);
-            });
-        }
-
-        // ========== Tìm kiếma ==========
-        function performSearch(){
-            const searchTerm = searchInput.value.trim().toLowerCase();
-            if(!searchTerm){ createTable(currentData); return; }
-            const filtered = [currentData[0]]; // header
-            const sourceIdx = [0];
-            for(let i=1;i<currentData.length;i++){
-                const row = currentData[i]; let ok = false;
-                for(let j=0;j<row.length;j++){ const v = String(row[j]).toLowerCase(); if(v.includes(searchTerm)){ ok = true; break; } }
-                if(ok){ filtered.push(row); sourceIdx.push(i); }
-            }
-            createTable(filtered, sourceIdx); highlightSearchResults(searchTerm);
-        }
-        function highlightSearchResults(searchTerm){
-            if(!searchTerm) return; const table = document.querySelector('.price-table'); if(!table) return;
-            const cells = table.querySelectorAll('td');
-            cells.forEach(cell=>{ const t = cell.textContent.toLowerCase(); if(t.includes(searchTerm)){ const r = new RegExp(searchTerm,'gi'); cell.innerHTML = cell.textContent.replace(r, m=>`<span class="highlight">${m}</span>`); } });
-        }
-
-        // ========== Ẩn/Hiện cột ==========
-        function renderColumnSelector(){
-            columnList.innerHTML = ""; if(!headersCache.length){ columnToolbar.style.display = 'none'; return; }
-            columnToolbar.style.display = 'flex';
-            headersCache.forEach((name, idx)=>{
-                const chip = document.createElement('label'); chip.className = 'column-chip';
-                const cb = document.createElement('input'); cb.type = 'checkbox'; cb.dataset.index = String(idx);
-                cb.checked = !hiddenColumns.has(idx);
-                const span = document.createElement('span'); span.textContent = name || `Cột ${idx+1}`;
-                chip.appendChild(cb); chip.appendChild(span); columnList.appendChild(chip);
-            });
-        }
-        function getSelectedColumnIndexes(){
-            return Array.from(columnList.querySelectorAll('input[type="checkbox"]:checked')).map(cb => parseInt(cb.dataset.index));
-        }
-        function applyColumnSelection(mode){
-            const selected = getSelectedColumnIndexes();
-            if(!selected.length){ alert('Vui lòng chọn ít nhất một cột.'); return; }
-            if(mode === 'hide'){ selected.forEach(idx => hiddenColumns.add(idx)); }
-            if(mode === 'unhide'){ selected.forEach(idx => hiddenColumns.delete(idx)); }
-            renderColumnSelector(); redrawWithFilters();
-        }
-        function redrawWithFilters(){
-            if(showingOnlySelected){ renderSelectedOnly(); return; }
-            const term = searchInput.value.trim(); if(term){ performSearch(); } else { createTable(currentData); }
-        }
-
-        // ========== Lưu/Tải Firebase ==========
-        function saveDataToFirebase(){
-            const dataToSave = { files: uploadedFiles, lastUpdated: new Date().toISOString() };
-            database.ref("priceData").set(dataToSave).then(()=> console.log("Đã lưu Firebase"))
-            .catch(err=> console.error("Lỗi khi lưu dữ liệu:", err));
-        }
-        function loadDataFromFirebase(){
-            loadingIndicator.style.display = 'block'; tableContainer.innerHTML = ''; filesList.innerHTML = '';
-            database.ref('priceData').once('value').then(snapshot=>{
-                const data = snapshot.val();
-                if(data && data.files){ uploadedFiles = data.files; uploadedFiles.forEach((file,index)=> addFileToList(file.name,index)); updateFileNameDisplay(); displayAllData(); }
-                else { tableContainer.innerHTML = '<p>Không có dữ liệu trên server. Vui lòng tải lên file Excel.</p>'; columnToolbar.style.display = 'none'; }
-                loadingIndicator.style.display = 'none';
-            }).catch(error=>{ console.error('Lỗi khi tải dữ liệu:', error); loadingIndicator.style.display = 'none'; tableContainer.innerHTML = '<p>Lỗi khi tải dữ liệu từ server. Vui lòng thử lại sau.</p>'; });
-        }
-
-        // ========== Xuất Excel theo giao diện hiện tại ==========
-        function exportCurrentViewToExcel(){
-            const table = document.querySelector('.price-table'); if(!table){ alert('Không có dữ liệu để xuất.'); return; }
-            const aoa = [];
-            const headerCells = table.querySelectorAll('thead tr th');
-            const headerRow = Array.from(headerCells).map(th => th.textContent.trim());
-            aoa.push(headerRow);
-            const bodyRows = table.querySelectorAll('tbody tr');
-            bodyRows.forEach(tr => { const row = Array.from(tr.querySelectorAll('td')).map(td => td.textContent.replace(/\u00A0/g,' ').trim()); aoa.push(row); });
-            const ws = XLSX.utils.aoa_to_sheet(aoa); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'BangGia');
-            const now = new Date(); const pad = (n)=> String(n).padStart(2,'0');
-            const fileName = `BangGia_HienThi_${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}.xlsx`;
-            XLSX.writeFile(wb, fileName);
-        }
-
-        // ========== Tạo báo giá ==========
-        function clearQuoteForm() {
-            customerNameInput.value = '';
-            customerContactInput.value = '';
-            customerPhoneInput.value = '';
-            customerAddressInput.value = '';
-        }
-
-        function createQuote() {
-            const customerName = customerNameInput.value.trim();
-            const customerContact = customerContactInput.value.trim();
-            const customerPhone = customerPhoneInput.value.trim();
-            const customerAddress = customerAddressInput.value.trim();
-
-            if (!customerName) {
-                alert('Vui lòng nhập tên khách hàng');
+                
+                uploadStatus.textContent = 'Lưu hình ảnh thành công!';
+                uploadStatus.style.color = '#4CAF50';
+                
+                setTimeout(() => {
+                    imageManager.style.display = 'none';
+                    uploadStatus.textContent = '';
+                }, 1000);
+            };
+            reader.onerror = function(error) {
+                console.error('Lỗi đọc file:', error);
+                uploadStatus.textContent = 'Lỗi khi xử lý hình ảnh';
+                uploadStatus.style.color = '#F44336';
+            };
+            reader.readAsDataURL(currentImageFile);
+        } 
+        // Nếu không có file nhưng có URL
+        else if (imageUrlInput.value.trim()) {
+            const imageUrl = imageUrlInput.value.trim();
+            
+            // Kiểm tra URL hợp lệ
+            if (!isValidUrl(imageUrl)) {
+                alert('URL hình ảnh không hợp lệ. Vui lòng nhập URL đúng định dạng.');
                 return;
             }
+            
+            productImages[productName] = imageUrl;
+            saveImagesToLocalStorage();
+            alert('Đã lưu hình ảnh cho sản phẩm: ' + productName);
+            imageManager.style.display = 'none';
+        }
+        else {
+            alert('Vui lòng chọn hình ảnh từ máy tính hoặc nhập URL hình ảnh.');
+        }
+    }
+    
+    function isValidUrl(string) {
+        try {
+            new URL(string);
+            return true;
+        } catch (_) {
+            return false;
+        }
+    }
+    
+    function saveImagesToLocalStorage() {
+        try {
+            localStorage.setItem("productImages", JSON.stringify(productImages));
+            console.log("Đã lưu hình ảnh vào Local Storage");
+        } catch (error) {
+            console.error('Lỗi khi lưu hình ảnh:', error);
+            alert('Lỗi khi lưu hình ảnh: ' + error.message);
+        }
+    }
+    
+    function loadProductImages() {
+        try {
+            const imagesData = localStorage.getItem("productImages");
+            if (imagesData) {
+                productImages = JSON.parse(imagesData);
+            }
+        } catch (error) {
+            console.error("Lỗi khi tải hình ảnh sản phẩm:", error);
+        }
+    }
 
-            // Hiển thị thông tin khách hàng
-            quoteCustomerName.textContent = customerName;
-            quoteCustomerContact.textContent = customerContact;
-            quoteCustomerPhone.textContent = customerPhone;
-            quoteCustomerAddress.textContent = customerAddress;
+    // ========== Thông báo ==========
+    function saveNotification(){
+        const notificationText = notificationTextarea.value.trim();
+        if(!notificationText){ alert("Vui lòng nhập nội dung thông báo"); return; }
+        database.ref("notification").set({ text: notificationText, timestamp: new Date().getTime() })
+            .then(() => { notificationDisplay.textContent = notificationText; notificationDisplay.style.display = "block"; notificationDialog.style.display = "none"; })
+            .catch((error) => alert("Lỗi khi lưu thông báo: " + error.message));
+    }
+    function loadNotification(){
+        database.ref("notification").once("value").then((snapshot) => {
+            const data = snapshot.val(); if (data && data.text){ notificationDisplay.textContent = data.text; notificationDisplay.style.display = "block"; }
+        }).catch((error) => console.error("Lỗi khi tải thông báo:", error));
+    }
 
-            // Hiển thị ngày hiện tại
-            const now = new Date();
-            const day = String(now.getDate()).padStart(2, '0');
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const year = now.getFullYear();
-            quoteDate.textContent = `${day}/${month}/${year}`;
+    // ========== Upload/Đọc Excel ==========
+    async function handleFileSelect(event){
+        const files = event.target.files; if(!files.length) return;
+        loadingIndicator.style.display = "block"; tableContainer.innerHTML = "";
+        for(let i=0;i<files.length;i++){
+            const file = files[i];
+            try{
+                const data = await readExcelFile(file);
+                uploadedFiles.push({ name: file.name, data });
+                addFileToList(file.name, uploadedFiles.length - 1);
+            }catch(error){ console.error("Lỗi khi đọc file:", file.name, error); alert(`Lỗi khi đọc file ${file.name}: ${error.message}`); }
+        }
+        updateFileNameDisplay(); displayAllData(); saveDataToFirebase(); loadingIndicator.style.display = "none";
+    }
+    function readExcelFile(file){
+        return new Promise((resolve,reject)=>{
+            const reader = new FileReader();
+            reader.onload = function(e){
+                try{
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: "array", cellStyles: true });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    let jsonData = XLSX.utils.sheet_to_json(worksheet, { header:1, defval:"", raw:false });
+                    jsonData = jsonData.filter(row => row.some(cell => String(cell).trim().length > 0));
+                    if(jsonData.length>0){
+                        const columnsToKeep = [];
+                        const header = jsonData[0];
+                        for(let col=0; col<header.length; col++){
+                            let columnHasData = false;
+                            for(let row=1; row<jsonData.length; row++){
+                                if(jsonData[row][col] !== undefined && String(jsonData[row][col]).trim().length>0){ columnHasData = true; break; }
+                            }
+                            if(columnHasData || (header[col] && String(header[col]).trim().length>0)) columnsToKeep.push(col);
+                        }
+                        jsonData = jsonData.map(row => row.filter((_,index)=> columnsToKeep.includes(index)));
+                    }
+                    resolve(jsonData);
+                }catch(error){ reject(error); }
+            };
+            reader.onerror = function(error){ reject(error); };
+            reader.readAsArrayBuffer(file);
+        });
+    }
 
-            // Tạo bảng sản phẩm trong báo giá
-            createQuoteTable();
+    // ========== Danh sách file ==========
+    function addFileToList(fileName, index){
+        const fileItem = document.createElement("div");
+        fileItem.className = "file-item";
+        fileItem.innerHTML = `<span>${fileName}</span><button class="delete-file-btn" data-index="${index}">Xóa</button>`;
+        filesList.appendChild(fileItem);
+        fileItem.querySelector(".delete-file-btn").addEventListener("click", (e)=>{
+            const indexToRemove = parseInt(e.target.getAttribute("data-index"));
+            fileIndexToRemove = indexToRemove; passwordDialog.style.display = "flex"; passwordInput.focus();
+        });
+    }
+    function removeFile(index){
+        uploadedFiles.splice(index,1); filesList.innerHTML = "";
+        uploadedFiles.forEach((file,i)=> addFileToList(file.name,i));
+        updateFileNameDisplay(); displayAllData(); saveDataToFirebase();
+    }
+    function updateFileNameDisplay(){
+        if(uploadedFiles.length===0) fileNameDisplay.textContent = "Chưa chọn file";
+        else if(uploadedFiles.length===1) fileNameDisplay.textContent = uploadedFiles[0].name;
+        else fileNameDisplay.textContent = `${uploadedFiles.length} file đã chọn`;
+    }
 
-            // Hiển thị trang báo giá
-            quotePage.style.display = 'block';
-            popupOverlay.style.display = 'none';
-            quoteDialog.style.display = 'none';
-            clearQuoteForm();
+    // ========== Hiển thị bảng ==========
+    function displayAllData(){
+        if(uploadedFiles.length===0){ tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị. Vui lòng tải lên file Excel.</p>'; columnToolbar.style.display='none'; return; }
+        currentData = []; uploadedFiles.forEach(file => { currentData = currentData.concat(file.data); });
+        // clear chọn khi nạp bộ dữ liệu mới
+        selectedRowIdx.clear(); showingOnlySelected=false; searchInput.value='';
+        createTable(currentData); 
+    }
+
+    function visibleColumnIndexes(){
+        return headersCache.map((_, idx)=> idx).filter(idx => !hiddenColumns.has(idx));
+    }
+
+    // sourceIndexes là mảng chỉ số (trong currentData) tương ứng từng hàng đang render; nếu null thì mặc định 1..N
+    function createTable(data, sourceIndexes=null){
+        if(!data.length){ tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị.</p>'; columnToolbar.style.display='none'; return; }
+        headersCache = data[0] || [];
+        const visibleIdx = visibleColumnIndexes();
+
+        renderColumnSelector();
+
+        const table = document.createElement("table"); table.className = "price-table";
+        const thead = document.createElement("thead"); const headerRow = document.createElement("tr");
+        // Render các cột dữ liệu
+        visibleIdx.forEach((colIdx)=>{ 
+            const th = document.createElement("th"); th.className = 'th-resizable'; th.textContent = headersCache[colIdx] || ""; 
+            if(columnWidths[colIdx]){ th.style.width = columnWidths[colIdx] + 'px'; }
+            headerRow.appendChild(th); 
+        });
+        // Cột chọn
+        const thChoose = document.createElement('th'); thChoose.textContent = 'Chọn'; thChoose.className='th-resizable'; headerRow.appendChild(thChoose);
+        thead.appendChild(headerRow); table.appendChild(thead);
+
+        const tbody = document.createElement("tbody");
+        for(let i=1;i<data.length;i++){
+            const rowData = data[i] || []; if(!rowData.some(cell=> String(cell).trim().length>0)) continue;
+            const tr = document.createElement("tr");
+            // xác định chỉ số hàng trong currentData
+            const rowIdx = sourceIndexes ? sourceIndexes[i] : i; // i trùng với vị trí trong currentData khi không lọc
+            tr.dataset.rowIndex = rowIdx;
+
+            visibleIdx.forEach((colIdx, visPos)=>{
+                const td = document.createElement("td"); const cell = rowData[colIdx];
+                td.textContent = (typeof cell === 'string' && cell.includes('%')) ? cell : (cell || '');
+                if(columnWidths[colIdx]){ td.style.width = columnWidths[colIdx] + 'px'; }
+                tr.appendChild(td);
+            });
+            // Ô chọn
+            const tdChoose = document.createElement('td');
+            const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = selectedRowIdx.has(rowIdx);
+            cb.addEventListener('change', ()=>{ if(cb.checked) selectedRowIdx.add(rowIdx); else selectedRowIdx.delete(rowIdx); });
+            tdChoose.style.textAlign='center'; tdChoose.appendChild(cb); tr.appendChild(tdChoose);
+
+            tbody.appendChild(tr);
+        }
+        table.appendChild(tbody);
+        tableContainer.innerHTML = ""; (tbody.rows.length>0 || headersCache.length>0) ? tableContainer.appendChild(table) : (tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị sau khi lọc.</p>');
+
+        enableColumnResize(table, visibleIdx);
+    }
+
+    function renderSelectedOnly(){
+        // dựng dữ liệu hiển thị chỉ gồm các hàng đã chọn
+        const indices = Array.from(selectedRowIdx).sort((a,b)=>a-b);
+        const aoa = [currentData[0]]; // header
+        indices.forEach(idx=>{ if(currentData[idx]) aoa.push(currentData[idx]); });
+        // sourceIndexes: mapping vị trí i -> chỉ số gốc
+        const sourceIdx = [0, ...indices];
+        createTable(aoa, sourceIdx);
+    }
+
+    function enableColumnResize(table, visibleIdx){
+        const headerCells = table.querySelectorAll('thead th');
+        headerCells.forEach((th, visPos)=>{
+            // Bỏ qua cột checkbox ở cuối (không cần resize)
+            const isCheckboxCol = (visPos === visibleIdx.length);
+            if(isCheckboxCol){ return; }
+            let handle = th.querySelector('.col-resizer');
+            if(!handle){ handle = document.createElement('div'); handle.className = 'col-resizer'; th.appendChild(handle); }
+            const originalIndex = visibleIdx[visPos];
+            const minWidth = 60; // px
+            let startX = 0; let startWidth = 0; let dragging = false;
+
+            const onMouseDown = (e)=>{ dragging = true; startX = e.pageX; startWidth = th.offsetWidth; document.body.style.cursor = 'col-resize'; e.preventDefault(); };
+            const onMouseMove = (e)=>{
+                if(!dragging) return; const delta = e.pageX - startX; let newW = Math.max(minWidth, startWidth + delta);
+                columnWidths[originalIndex] = newW; th.style.width = newW + 'px';
+                const rows = table.querySelectorAll('tbody tr'); rows.forEach(r=>{ const td = r.children[visPos]; if(td){ td.style.width = newW + 'px'; } });
+            };
+            const onMouseUp = ()=>{ dragging = false; document.body.style.cursor = ''; };
+            handle.onmousedown = onMouseDown; document.addEventListener('mousemove', onMouseMove); document.addEventListener('mouseup', onMouseUp);
+        });
+    }
+
+    // ========== Tìm kiếm ==========
+    function performSearch(){
+        const searchTerm = searchInput.value.trim().toLowerCase();
+        if(!searchTerm){ createTable(currentData); return; }
+        const filtered = [currentData[0]]; // header
+        const sourceIdx = [0];
+        for(let i=1;i<currentData.length;i++){
+            const row = currentData[i]; let ok = false;
+            for(let j=0;j<row.length;j++){ const v = String(row[j]).toLowerCase(); if(v.includes(searchTerm)){ ok = true; break; } }
+            if(ok){ filtered.push(row); sourceIdx.push(i); }
+        }
+        createTable(filtered, sourceIdx); highlightSearchResults(searchTerm);
+    }
+    function highlightSearchResults(searchTerm){
+        if(!searchTerm) return; const table = document.querySelector('.price-table'); if(!table) return;
+        const cells = table.querySelectorAll('td');
+        cells.forEach(cell=>{ const t = cell.textContent.toLowerCase(); if(t.includes(searchTerm)){ const r = new RegExp(searchTerm,'gi'); cell.innerHTML = cell.textContent.replace(r, m=>`<span class="highlight">${m}</span>`); } });
+    }
+
+    // ========== Ẩn/Hiện cột ==========
+    function renderColumnSelector(){
+        columnList.innerHTML = ""; if(!headersCache.length){ columnToolbar.style.display = 'none'; return; }
+        columnToolbar.style.display = 'flex';
+        headersCache.forEach((name, idx)=>{
+            const chip = document.createElement('label'); chip.className = 'column-chip';
+            const cb = document.createElement('input'); cb.type = 'checkbox'; cb.dataset.index = String(idx);
+            cb.checked = !hiddenColumns.has(idx);
+            const span = document.createElement('span'); span.textContent = name || `Cột ${idx+1}`;
+            chip.appendChild(cb); chip.appendChild(span); columnList.appendChild(chip);
+        });
+    }
+    function getSelectedColumnIndexes(){
+        return Array.from(columnList.querySelectorAll('input[type="checkbox"]:checked')).map(cb => parseInt(cb.dataset.index));
+    }
+    function applyColumnSelection(mode){
+        const selected = getSelectedColumnIndexes();
+        if(!selected.length){ alert('Vui lòng chọn ít nhất một cột.'); return; }
+        if(mode === 'hide'){ selected.forEach(idx => hiddenColumns.add(idx)); }
+        if(mode === 'unhide'){ selected.forEach(idx => hiddenColumns.delete(idx)); }
+        renderColumnSelector(); redrawWithFilters();
+    }
+    function redrawWithFilters(){
+        if(showingOnlySelected){ renderSelectedOnly(); return; }
+        const term = searchInput.value.trim(); if(term){ performSearch(); } else { createTable(currentData); }
+    }
+
+    // ========== Lưu/Tải Firebase ==========
+    function saveDataToFirebase(){
+        const dataToSave = { files: uploadedFiles, lastUpdated: new Date().toISOString() };
+        database.ref("priceData").set(dataToSave).then(()=> console.log("Đã lưu Firebase"))
+        .catch(err=> console.error("Lỗi khi lưu dữ liệu:", err));
+    }
+    function loadDataFromFirebase(){
+        loadingIndicator.style.display = 'block'; tableContainer.innerHTML = ''; filesList.innerHTML = '';
+        database.ref('priceData').once('value').then(snapshot=>{
+            const data = snapshot.val();
+            if(data && data.files){ uploadedFiles = data.files; uploadedFiles.forEach((file,index)=> addFileToList(file.name,index)); updateFileNameDisplay(); displayAllData(); }
+            else { tableContainer.innerHTML = '<p>Không có dữ liệu trên server. Vui lòng tải lên file Excel.</p>'; columnToolbar.style.display = 'none'; }
+            loadingIndicator.style.display = 'none';
+        }).catch(error=>{ console.error('Lỗi khi tải dữ liệu:', error); loadingIndicator.style.display = 'none'; tableContainer.innerHTML = '<p>Lỗi khi tải dữ liệu từ server. Vui lòng thử lại sau.</p>'; });
+    }
+
+    // ========== Xuất Excel theo giao diện hiện tại ==========
+    function exportCurrentViewToExcel(){
+        const table = document.querySelector('.price-table'); if(!table){ alert('Không có dữ liệu để xuất.'); return; }
+        const aoa = [];
+        const headerCells = table.querySelectorAll('thead tr th');
+        const headerRow = Array.from(headerCells).map(th => th.textContent.trim());
+        aoa.push(headerRow);
+        const bodyRows = table.querySelectorAll('tbody tr');
+        bodyRows.forEach(tr => { const row = Array.from(tr.querySelectorAll('td')).map(td => td.textContent.replace(/\u00A0/g,' ').trim()); aoa.push(row); });
+        const ws = XLSX.utils.aoa_to_sheet(aoa); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'BangGia');
+        const now = new Date(); const pad = (n)=> String(n).padStart(2,'0');
+        const fileName = `BangGia_HienThi_${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+    }
+
+    // ========== Tạo báo giá ==========
+    function clearQuoteForm() {
+        customerNameInput.value = '';
+        customerContactInput.value = '';
+        customerPhoneInput.value = '';
+        customerAddressInput.value = '';
+    }
+
+    function createQuote() {
+        const customerName = customerNameInput.value.trim();
+        const customerContact = customerContactInput.value.trim();
+        const customerPhone = customerPhoneInput.value.trim();
+        const customerAddress = customerAddressInput.value.trim();
+
+        if (!customerName) {
+            alert('Vui lòng nhập tên khách hàng');
+            return;
         }
 
-        function createQuoteTable() {
-            // Lấy dữ liệu từ các hàng đã chọn
-            const indices = Array.from(selectedRowIdx).sort((a,b)=>a-b);
-            const aoa = [currentData[0]]; // header
-            indices.forEach(idx=>{ if(currentData[idx]) aoa.push(currentData[idx]); });
+        // Hiển thị thông tin khách hàng
+        quoteCustomerName.textContent = customerName;
+        quoteCustomerContact.textContent = customerContact;
+        quoteCustomerPhone.textContent = customerPhone;
+        quoteCustomerAddress.textContent = customerAddress;
 
-            // Chỉ hiển thị các cột đang hiển thị (không bị ẩn)
-            const visibleIdx = visibleColumnIndexes();
-            const filteredAoa = aoa.map(row => row.filter((_, idx) => visibleIdx.includes(idx)));
+        // Hiển thị ngày hiện tại
+        const now = new Date();
+        const day = String(now.getDate()).padStart(2, '0');
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const year = now.getFullYear();
+        quoteDate.textContent = `${day}/${month}/${year}`;
 
-            // Tìm cột tên sản phẩm
-            const productNameIndex = findProductNameColumnIndex();
+        // Tạo bảng sản phẩm trong báo giá
+        createQuoteTable();
+
+        // Hiển thị trang báo giá
+        quotePage.style.display = 'block';
+        popupOverlay.style.display = 'none';
+        quoteDialog.style.display = 'none';
+        clearQuoteForm();
+    }
+
+    function createQuoteTable() {
+        // Lấy dữ liệu từ các hàng đã chọn
+        const indices = Array.from(selectedRowIdx).sort((a,b)=>a-b);
+        const aoa = [currentData[0]]; // header
+        indices.forEach(idx=>{ if(currentData[idx]) aoa.push(currentData[idx]); });
+
+        // Chỉ hiển thị các cột đang hiển thị (không bị ẩn)
+        const visibleIdx = visibleColumnIndexes();
+        const filteredAoa = aoa.map(row => row.filter((_, idx) => visibleIdx.includes(idx)));
+
+        // Tìm cột tên sản phẩm
+        const productNameIndex = findProductNameColumnIndex();
+        
+        // Tạo bảng
+        const table = document.createElement("table");
+        table.className = "quote-table";
+
+        // Tạo header
+        const thead = document.createElement("thead");
+        const headerRow = document.createElement("tr");
+        
+        // Thêm cột STT
+        const thStt = document.createElement("th");
+        thStt.textContent = "STT";
+        thStt.style.width = "50px";
+        headerRow.appendChild(thStt);
+        
+        // Thêm cột hình ảnh nếu có
+        const thImage = document.createElement("th");
+        thImage.textContent = "Hình ảnh";
+        thImage.style.width = "100px";
+        headerRow.appendChild(thImage);
+
+        // Thêm các cột dữliệu
+        visibleIdx.forEach(colIdx => {
+            const th = document.createElement("th");
+            th.textContent = headersCache[colIdx] || "";
+            headerRow.appendChild(th);
+        });
+
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        // Tạo body
+        const tbody = document.createElement("tbody");
+        for (let i = 1; i < filteredAoa.length; i++) {
+            const rowData = filteredAoa[i] || [];
+            if (!rowData.some(cell => String(cell).trim().length > 0)) continue;
+
+            const tr = document.createElement("tr");
+
+            // Cột STT
+            const tdStt = document.createElement("td");
+            tdStt.textContent = i;
+            tdStt.style.textAlign = "center";
+            tr.appendChild(tdStt);
             
-            // Tạo bảng
-            const table = document.createElement("table");
-            table.className = "quote-table";
-
-            // Tạo header
-            const thead = document.createElement("thead");
-            const headerRow = document.createElement("tr");
+            // Cột hình ảnh
+            const tdImage = document.createElement("td");
+            tdImage.style.textAlign = "center";
             
-            // Thêm cột STT
-            const thStt = document.createElement("th");
-            thStt.textContent = "STT";
-            thStt.style.width = "50px";
-            headerRow.appendChild(thStt);
+            // Tìm hình ảnh cho sản phẩm này
+            if (productNameIndex !== -1) {
+                const productName = aoa[i][productNameIndex] || '';
+                if (productImages[productName]) {
+                    const img = document.createElement('img');
+                    img.src = productImages[productName];
+                    img.className = 'product-image';
+                    img.alt = productName;
+                    tdImage.appendChild(img);
+                }
+            }
             
-            // Thêm cột hình ảnh nếu có
-            const thImage = document.createElement("th");
-            thImage.textContent = "Hình ảnh";
-            thImage.style.width = "100px";
-            headerRow.appendChild(thImage);
+            tr.appendChild(tdImage);
 
-            // Thêm các cột dữliệu
-            visibleIdx.forEach(colIdx => {
-                const th = document.createElement("th");
-                th.textContent = headersCache[colIdx] || "";
-                headerRow.appendChild(th);
+            // Các cột dữ liệu
+            rowData.forEach(cell => {
+                const td = document.createElement("td");
+                td.textContent = (typeof cell === 'string' && cell.includes('%')) ? cell : (cell || '');
+                tr.appendChild(td);
             });
 
-            thead.appendChild(headerRow);
-            table.appendChild(thead);
-
-            // Tạo body
-            const tbody = document.createElement("tbody");
-            for (let i = 1; i < filteredAoa.length; i++) {
-                const rowData = filteredAoa[i] || [];
-                if (!rowData.some(cell => String(cell).trim().length > 0)) continue;
-
-                const tr = document.createElement("tr");
-
-                // Cột STT
-                const tdStt = document.createElement("td");
-                tdStt.textContent = i;
-                tdStt.style.textAlign = "center";
-                tr.appendChild(tdStt);
-                
-                // Cột hình ảnh
-                const tdImage = document.createElement("td");
-                tdImage.style.textAlign = "center";
-                
-                // Tìm hình ảnh cho sản phẩm này
-                if (productNameIndex !== -1) {
-                    const productName = aoa[i][productNameIndex] || '';
-                    if (productImages[productName]) {
-                        const img = document.createElement('img');
-                        img.src = productImages[productName];
-                        img.className = 'product-image';
-                        img.alt = productName;
-                        tdImage.appendChild(img);
-                    }
-                }
-                
-                tr.appendChild(tdImage);
-
-                // Các cột dữ liệu
-                rowData.forEach(cell => {
-                    const td = document.createElement("td");
-                    td.textContent = (typeof cell === 'string' && cell.includes('%')) ? cell : (cell || '');
-                    tr.appendChild(td);
-                });
-
-                tbody.appendChild(tr);
-            }
-
-            table.appendChild(tbody);
-            quoteTableContainer.innerHTML = "";
-            quoteTableContainer.appendChild(table);
+            tbody.appendChild(tr);
         }
 
-        // ========== Xuất PDF ==========
-        function generatePdf() {
-            // Tạo một bản sao của trang báo giá để in, ẩn các nút hành động
-            const printQuotePage = quotePage.cloneNode(true);
-            const actionsDiv = printQuotePage.querySelector('.quote-actions');
-            if (actionsDiv) {
-                actionsDiv.style.display = 'none';
-            }
+        table.appendChild(tbody);
+        quoteTableContainer.innerHTML = "";
+        quoteTableContainer.appendChild(table);
+    }
+
+    // ========== Xuất PDF ==========
+    function generatePdf() {
+        // Tạo một bản sao của trang báo giá để in, ẩn các nút hành động
+        const printQuotePage = quotePage.cloneNode(true);
+        const actionsDiv = printQuotePage.querySelector('.quote-actions');
+        if (actionsDiv) {
+            actionsDiv.style.display = 'none';
+        }
+        
+        // Ẩn các phần không cần thiết khác
+        document.body.appendChild(printQuotePage);
+        printQuotePage.style.display = 'block';
+        printQuotePage.style.position = 'absolute';
+        printQuotePage.style.left = '0';
+        printQuotePage.style.top = '0';
+        printQuotePage.style.zIndex = '9999';
+        printQuotePage.style.background = 'white';
+        
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+        
+        // Sử dụng html2canvas để chụp ảnh nội dung
+        html2canvas(printQuotePage, {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            width: printQuotePage.scrollWidth,
+            height: printQuotePage.scrollHeight
+        }).then(canvas => {
+            const imgData = canvas.toDataURL('image/jpeg', 1.0);
+            const imgWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const imgHeight = canvas.height * imgWidth / canvas.width;
             
-            // Ẩn các phần không cần thiết khác
-            document.body.appendChild(printQuotePage);
-            printQuotePage.style.display = 'block';
-            printQuotePage.style.position = 'absolute';
-            printQuotePage.style.left = '0';
-            printQuotePage.style.top = '0';
-            printQuotePage.style.zIndex = '9999';
-            printQuotePage.style.background = 'white';
+            let heightLeft = imgHeight;
+            let position = 0;
             
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('p', 'mm', 'a4');
+            // Thêm trang đầu tiên
+            doc.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
             
-            // Sử dụng html2canvas để chụp ảnh nội dung
-            html2canvas(printQuotePage, {
-                scale: 2,
-                useCORS: true,
-                logging: false,
-                width: printQuotePage.scrollWidth,
-                height: printQuotePage.scrollHeight
-            }).then(canvas => {
-                const imgData = canvas.toDataURL('image/jpeg', 1.0);
-                const imgWidth = doc.internal.pageSize.getWidth();
-                const pageHeight = doc.internal.pageSize.getHeight();
-                const imgHeight = canvas.height * imgWidth / canvas.width;
-                
-                let heightLeft = imgHeight;
-                let position = 0;
-                
-                // Thêm trang đầu tiên
+            // Thêm các trang tiếp theo nếu nội dung dài
+            while (heightLeft >= 0) {
+                position = heightLeft - imgHeight;
+                doc.addPage();
                 doc.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
                 heightLeft -= pageHeight;
-                
-                // Thêm các trang tiếp theo nếu nội dung dài
-                while (heightLeft >= 0) {
-                    position = heightLeft - imgHeight;
-                    doc.addPage();
-                    doc.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-                    heightLeft -= pageHeight;
-                }
-                
-                // Xóa bản sao tạm thời
+            }
+            
+            // Xóa bản sao tạm thời
+            document.body.removeChild(printQuotePage);
+            
+            // Lưu file PDF
+            const now = new Date();
+            const fileName = `Bao_Gia_${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}_${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}.pdf`;
+            
+            doc.save(fileName);
+        }).catch(error => {
+            console.error('Lỗi khi tạo PDF:', error);
+            // Đảm bảo xóa bản sao ngay cả khi có lỗi
+            if (document.body.contains(printQuotePage)) {
                 document.body.removeChild(printQuotePage);
-                
-                // Lưu file PDF
-                const now = new Date();
-                const fileName = `Bao_Gia_${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}_${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}.pdf`;
-                
-                doc.save(fileName);
-            }).catch(error => {
-                console.error('Lỗi khi tạo PDF:', error);
-                // Đảm bảo xóa bản sao ngay cả khi có lỗi
-                if (document.body.contains(printQuotePage)) {
-                    document.body.removeChild(printQuotePage);
-                }
-                alert('Có lỗi xảy ra khi tạo PDF. Vui lòng thử lại.');
-            });
-        }
-
-        // ========== Khởi tạo ==========
-        document.addEventListener('DOMContentLoaded', ()=>{ 
-            loadNotification(); 
-            loadDataFromFirebase();
-            loadProductImages();
+            }
+            alert('Có lỗi xảy ra khi tạo PDF. Vui lòng thử lại.');
         });
-    </script>
+    }
+
+    // ========== Khởi tạo ==========
+    document.addEventListener('DOMContentLoaded', ()=>{ 
+        loadNotification(); 
+        loadDataFromFirebase();
+        loadProductImages();
+    });
+</script>
 </body>
 </html>
