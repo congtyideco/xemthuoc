@@ -3,16 +3,19 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Xem Giá Thuốc — Nâng cấp (kéo cột + chọn hàng + lọc đã chọn)</title>
+    <title>Xem Giá Thuốc — Upload hình ảnh trực tiếp</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f5f5f5; }
-        .view-price-btn,.home-erp-btn,.notification-btn{ position:fixed; right:20px; color:#fff; border:none; border-radius:8px; width:120px; height:50px; font-size:16px; font-weight:bold; cursor:pointer; box-shadow:0 4px 8px rgba(0,0,0,.2); display:flex; justify-content:center; align-items:center; text-align:center; transition:all .3s; z-index:1000; }
+        .view-price-btn,.home-erp-btn,.notification-btn,.create-quote-btn{ position:fixed; right:20px; color:#fff; border:none; border-radius:8px; width:120px; height:50px; font-size:16px; font-weight:bold; cursor:pointer; box-shadow:0 4px 8px rgba(0,0,0,.2); display:flex; justify-content:center; align-items:center; text-align:center; transition:all .3s; z-index:1000; }
         .view-price-btn{ bottom:130px; background:#4285f4; } .view-price-btn:hover{ background:#3367d6; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,.3)}
         .home-erp-btn{ bottom:190px; background:#34a853; text-decoration:none } .home-erp-btn:hover{ background:#2d8e47; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,.3)}
         .notification-btn{ bottom:250px; background:#f44336 } .notification-btn:hover{ background:#d32f2f; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,.3)}
+        .create-quote-btn{ bottom:310px; background:#ff9800 } .create-quote-btn:hover{ background:#f57c00; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,.3)}
 
         .popup-overlay{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:1001; overflow-y:auto }
         .popup-content{ background:#fff; margin:20px auto; padding:20px; width:90%; max-width:1200px; border-radius:8px; box-shadow:0 5px 15px rgba(0,0,0,.3); max-height:90vh; overflow-y:auto; position:relative }
@@ -63,25 +66,207 @@
         .footer-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:16px; flex-wrap:wrap }
         .export-btn{ background:#1976d2; color:#fff; border:none; padding:10px 14px; border-radius:6px; font-weight:700; cursor:pointer }
 
-        .password-dialog,.notification-dialog{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1002; justify-content:center; align-items:center }
-        .password-dialog-content,.notification-dialog-content{ background:#fff; padding:20px; border-radius:8px; width:300px; box-shadow:0 5px 15px rgba(0,0,0,.3) }
-        .notification-dialog-content{ width:400px }
-        .password-dialog-title,.notification-dialog-title{ font-size:18px; margin-bottom:15px }
-        .password-input,.notification-textarea{ width:100%; padding:10px; border:1px solid #ddd; border-radius:4px; font-size:16px }
+        .password-dialog,.notification-dialog,.quote-dialog{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1002; justify-content:center; align-items:center }
+        .password-dialog-content,.notification-dialog-content,.quote-dialog-content{ background:#fff; padding:20px; border-radius:8px; width:300px; box-shadow:0 5px 15px rgba(0,0,0,.3) }
+        .notification-dialog-content,.quote-dialog-content{ width:400px }
+        .password-dialog-title,.notification-dialog-title,.quote-dialog-title{ font-size:18px; margin-bottom:15px }
+        .password-input,.notification-textarea,.quote-input{ width:100%; padding:10px; border:1px solid #ddd; border-radius:4px; font-size:16px }
         .notification-textarea{ height:150px; margin-bottom:15px; resize:vertical }
-        .password-dialog-buttons,.notification-dialog-buttons{ display:flex; justify-content:flex-end; gap:10px }
+        .password-dialog-buttons,.notification-dialog-buttons,.quote-dialog-buttons{ display:flex; justify-content:flex-end; gap:10px }
         .password-dialog-cancel{ background:#f5f5f5 } .password-dialog-confirm{ background:#4285f4; color:#fff }
         .notification-dialog-cancel{ background:#f5f5f5 } .notification-dialog-save{ background:#4CAF50; color:#fff }
+        .quote-dialog-cancel{ background:#f5f5f5 } .quote-dialog-create{ background:#ff9800; color:#fff }
         .notification-display{ position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#ffebee; border:1px solid #f44336; border-radius:4px; padding:15px; max-width:80%; color:#f44336; font-weight:bold; z-index:1000; display:none; text-align:center }
 
+        /* Image manager */
+        .image-manager { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); z-index: 1003; width: 500px; max-width: 90%; }
+        .image-manager h3 { margin-top: 0; color: #4285f4; }
+        .image-url-input { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 4px; }
+        .image-manager-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; }
+        .image-manager-cancel { background: #f5f5f5; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
+        .image-manager-save { background: #4285f4; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
+        .image-preview { max-width: 100%; max-height: 200px; margin-top: 10px; display: none; border: 1px solid #eee; border-radius: 4px; }
+        .upload-section-image { margin: 15px 0; padding: 15px; border: 2px dashed #ccc; border-radius: 5px; text-align: center; background: #f9f9f9; }
+        .upload-image-btn { background: #ff9800; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-top: 10px; }
+        .upload-image-btn:hover { background: #f57c00; }
+        .upload-status { margin-top: 10px; font-size: 14px; color: #666; }
+        .tab-container { display: flex; border-bottom: 1px solid #ddd; margin-bottom: 15px; }
+        .tab { padding: 10px 15px; cursor: pointer; border-bottom: 2px solid transparent; }
+        .tab.active { border-bottom: 2px solid #4285f4; color: #4285f4; font-weight: bold; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Quote page styles */
+        .quote-page { 
+            display: none; 
+            background: white; 
+            padding: 20px; 
+            margin: 20px auto; 
+            max-width: 1000px; 
+            box-shadow: 0 0 10px rgba(0,0,0,0.1); 
+            page-break-after: always;
+        }
+        .quote-header { 
+            display: flex; 
+            margin-bottom: 20px; 
+            flex-direction: column;
+        }
+        .company-logo-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .company-logo { 
+            width: 80px; 
+            height: auto;
+            margin-right: 20px;
+        }
+        .company-info { 
+            text-align: left;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .quote-title { 
+            text-align: center; 
+            font-size: 24px; 
+            font-weight: bold; 
+            margin: 20px 0; 
+            color: #4285f4; 
+            text-transform: uppercase;
+        }
+        .customer-info { 
+            margin-bottom: 20px; 
+            padding: 15px; 
+            background: #f9f9f9; 
+            border-radius: 5px; 
+            border: 1px solid #ddd;
+        }
+        .customer-info-row { 
+            display: flex; 
+            margin-bottom: 10px; 
+            font-size: 14px;
+        }
+        .customer-info-label { 
+            width: 150px; 
+            font-weight: bold; 
+        }
+        .quote-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 20px; 
+            font-size: 14px;
+        }
+        .quote-table th, .quote-table td { 
+            border: 1px solid #ddd; 
+            padding: 8px; 
+            text-align: left; 
+            vertical-align: top;
+        }
+        .quote-table th { 
+            background: #4285f4; 
+            color: white; 
+        }
+        .product-image { 
+            max-width: 80px; 
+            max-height: 80px; 
+            display: block; 
+            margin-bottom: 5px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+        }
+        .quote-footer { 
+            margin-top: 30px; 
+            display: flex; 
+            justify-content: space-between; 
+            font-size: 14px;
+        }
+        .quote-actions { 
+            margin-top: 20px; 
+            text-align: center; 
+            padding: 20px 0;
+        }
+        .quote-back-btn { 
+            background: #4285f4; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            margin-right: 10px; 
+        }
+        .quote-print-btn { 
+            background: #34a853; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            margin-right: 10px;
+        }
+        .quote-pdf-btn {
+            background: #f44336; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 5px; 
+            cursor: pointer;
+        }
+
+        /* For PDF printing */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .quote-page, .quote-page * {
+                visibility: visible;
+            }
+            .quote-page {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin: 0;
+                padding: 20px;
+                box-shadow: none;
+            }
+            .quote-actions {
+                display: none !important;
+            }
+        }
+
         @keyframes spin{ 0%{ transform:rotate(0) } 100%{ transform:rotate(360deg) } }
-        @media(max-width:768px){ .popup-content{ width:95%; padding:15px } .price-table{ font-size:14px } .view-price-btn,.home-erp-btn,.notification-btn{ width:60px; height:60px; font-size:14px } .home-erp-btn{ bottom:130px } .notification-btn{ bottom:190px } .notification-dialog-content{ width:90% } .notification-display{ top:10px; max-width:95%; font-size:14px; padding:10px } }
+        @media(max-width:768px){ 
+            .popup-content{ width:95%; padding:15px } 
+            .price-table{ font-size:14px } 
+            .view-price-btn,.home-erp-btn,.notification-btn,.create-quote-btn{ width:60px; height:60px; font-size:14px } 
+            .home-erp-btn{ bottom:130px } 
+            .notification-btn{ bottom:190px } 
+            .create-quote-btn{ bottom:250px }
+            .notification-dialog-content,.quote-dialog-content{ width:90% } 
+            .notification-display{ top:10px; max-width:95%; font-size:14px; padding:10px } 
+            .customer-info-row { flex-direction: column; }
+            .customer-info-label { width: 100%; margin-bottom: 5px; }
+            .image-manager { width: 95%; padding: 15px; }
+        }
+        
+        /* Selected products filter */
+        .selected-products-filter {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .selected-products-filter label {
+            font-weight: bold;
+            color: #4285f4;
+        }
     </style>
 </head>
 <body>
     <button class="notification-btn" id="notificationBtn">Thông báo</button>
     <a href="https://erp-ideco.skyit.vn/#/app/order/index/" class="home-erp-btn" id="homeErpBtn">HOME ERP</a>
     <button class="view-price-btn" id="viewPriceBtn">Xem Giá</button>
+    <button class="create-quote-btn" id="createQuoteBtn">Tạo Báo Giá</button>
 
     <div class="notification-display" id="notificationDisplay"></div>
 
@@ -136,6 +321,7 @@
 
             <div class="footer-actions">
                 <button class="export-btn" id="exportBtn">Xuất Excel theo giao diện hiện tại</button>
+                <button class="export-btn" id="manageImagesBtn" style="background: #9c27b0;">Quản lý hình ảnh</button>
             </div>
         </div>
     </div>
@@ -148,6 +334,117 @@
                 <button class="password-dialog-cancel" id="passwordDialogCancel">Hủy</button>
                 <button class="password-dialog-confirm" id="passwordDialogConfirm">Xác nhận</button>
             </div>
+        </div>
+    </div>
+
+    <div class="quote-dialog" id="quoteDialog">
+        <div class="quote-dialog-content">
+            <div class="quote-dialog-title">THÔNG TIN KHÁCH HÀNG</div>
+            <input type="text" class="quote-input" id="customerNameInput" placeholder="Tên khách hàng" />
+            <input type="text" class="quote-input" id="customerContactInput" placeholder="Người phụ trách" />
+            <input type="text" class="quote-input" id="customerPhoneInput" placeholder="Điện thoại" />
+            <input type="text" class="quote-input" id="customerAddressInput" placeholder="Địa chỉ" />
+            <div class="quote-dialog-buttons">
+                <button class="quote-dialog-cancel" id="quoteDialogCancel">Hủy</button>
+                <button class="quote-dialog-create" id="quoteDialogCreate">Tạo Báo Giá</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="image-manager" id="imageManager">
+        <h3>Quản lý hình ảnh sản phẩm</h3>
+        
+        <div class="selected-products-filter">
+            <label>
+                <input type="checkbox" id="showOnlySelectedProducts" checked />
+                Chỉ hiển thị sản phẩm đã chọn
+            </label>
+        </div>
+        
+        <div>
+            <label for="productSelect">Chọn sản phẩm:</label>
+            <select id="productSelect" class="quote-input"></select>
+        </div>
+        
+        <div class="tab-container">
+            <div class="tab active" data-tab="url-tab">Dán URL</div>
+            <div class="tab" data-tab="upload-tab">Upload từ máy tính</div>
+        </div>
+        
+        <div class="tab-content active" id="url-tab">
+            <div style="margin-top: 15px;">
+                <label for="imageUrlInput">URL hình ảnh:</label>
+                <input type="text" id="imageUrlInput" class="image-url-input" placeholder="Dán URL hình ảnh tại đây..." />
+                <button id="previewImageBtn" style="margin-top: 10px; padding: 5px 10px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer;">Xem trước</button>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="upload-tab">
+            <div class="upload-section-image">
+                <p>Chọn hình ảnh từ máy tính của bạn:</p>
+                <input type="file" id="imageUploadInput" accept="image/*" style="display: none;" />
+                <button class="upload-image-btn" id="triggerUploadBtn">Chọn hình ảnh</button>
+                <div class="upload-status" id="uploadStatus"></div>
+            </div>
+        </div>
+        
+        <img id="imagePreview" class="image-preview" />
+        
+        <div class="image-manager-buttons">
+            <button class="image-manager-cancel" id="imageManagerCancel">Hủy</button>
+            <button class="image-manager-save" id="imageManagerSave">Lưu hình ảnh</button>
+        </div>
+    </div>
+
+    <div class="quote-page" id="quotePage">
+        <div class="quote-header">
+            <div class="company-logo-container">
+                <img src="https://cdn.imgpile.com/f/GK3nMDF_xl.png" alt="Company Logo" class="company-logo" />
+                <div class="company-info">
+                    <div><strong>CÔNG TY TNHH THƯƠNG MẠI DƯỢC PHẨM IDECO</strong></div>
+                    <div>Địa chỉ: 123 Đường ABC, Quận XYZ, TP.HCM</div>
+                    <div>Điện thoại: 0123 456 789</div>
+                    <div>Email: info@ideco.com</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="quote-title">BÁO GIÁ SẢN PHẨM THUỐC</div>
+        
+        <div class="customer-info">
+            <div class="customer-info-row">
+                <div class="customer-info-label">Khách hàng:</div>
+                <div id="quoteCustomerName"></div>
+            </div>
+            <div class="customer-info-row">
+                <div class="customer-info-label">Người phụ trách:</div>
+                <div id="quoteCustomerContact"></div>
+            </div>
+            <div class="customer-info-row">
+                <div class="customer-info-label">Điện thoại:</div>
+                <div id="quoteCustomerPhone"></div>
+            </div>
+            <div class="customer-info-row">
+                <div class="customer-info-label">Địa chỉ:</div>
+                <div id="quoteCustomerAddress"></div>
+            </div>
+        </div>
+        
+        <div class="table-container" id="quoteTableContainer"></div>
+        
+        <div class="quote-footer">
+            <div></div>
+            <div>
+                <div>Ngày lập: <span id="quoteDate"></span></div>
+                <div style="margin-top: 50px; text-align: center;">Người lập báo giá</div>
+                <div style="margin-top: 50px; text-align: center; font-weight: bold;">(Ký và ghi rõ họ tên)</div>
+            </div>
+        </div>
+        
+        <div class="quote-actions">
+            <button class="quote-back-btn" id="quoteBackBtn">Quay lại</button>
+            <button class="quote-print-btn" id="quotePrintBtn">In Báo Giá</button>
+            <button class="quote-pdf-btn" id="quotePdfBtn">Xuất PDF</button>
         </div>
     </div>
 
@@ -181,6 +478,10 @@
         const selectedRowIdx = new Set(); // lưu chỉ số hàng theo currentData (ID ổn định)
         let showingOnlySelected = false;  // trạng thái lọc xem chỉ hàng đã chọn
 
+        // Hình ảnh sản phẩm
+        let productImages = {};        // {productName: imageData (base64 hoặc URL)}
+        let currentImageFile = null;   // File hình ảnh được chọn để upload
+
         // ========== DOM ==========
         const viewPriceBtn = document.getElementById("viewPriceBtn");
         const popupOverlay = document.getElementById("popupOverlay");
@@ -210,9 +511,44 @@
         const btnUnhide = document.getElementById("btnUnhide");
         const btnShowAll = document.getElementById("btnShowAll");
         const exportBtn = document.getElementById("exportBtn");
+        const manageImagesBtn = document.getElementById("manageImagesBtn");
 
         const filterSelectedBtn = document.getElementById("filterSelectedBtn");
         const clearSelectionBtn = document.getElementById("clearSelectionBtn");
+
+        const createQuoteBtn = document.getElementById("createQuoteBtn");
+        const quoteDialog = document.getElementById("quoteDialog");
+        const customerNameInput = document.getElementById("customerNameInput");
+        const customerContactInput = document.getElementById("customerContactInput");
+        const customerPhoneInput = document.getElementById("customerPhoneInput");
+        const customerAddressInput = document.getElementById("customerAddressInput");
+        const quoteDialogCancel = document.getElementById("quoteDialogCancel");
+        const quoteDialogCreate = document.getElementById("quoteDialogCreate");
+
+        const imageManager = document.getElementById("imageManager");
+        const productSelect = document.getElementById("productSelect");
+        const imageUrlInput = document.getElementById("imageUrlInput");
+        const imagePreview = document.getElementById("imagePreview");
+        const previewImageBtn = document.getElementById("previewImageBtn");
+        const imageManagerCancel = document.getElementById("imageManagerCancel");
+        const imageManagerSave = document.getElementById("imageManagerSave");
+        const imageUploadInput = document.getElementById("imageUploadInput");
+        const triggerUploadBtn = document.getElementById("triggerUploadBtn");
+        const uploadStatus = document.getElementById("uploadStatus");
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const showOnlySelectedCheckbox = document.getElementById("showOnlySelectedProducts");
+
+        const quotePage = document.getElementById("quotePage");
+        const quoteCustomerName = document.getElementById("quoteCustomerName");
+        const quoteCustomerContact = document.getElementById("quoteCustomerContact");
+        const quoteCustomerPhone = document.getElementById("quoteCustomerPhone");
+        const quoteCustomerAddress = document.getElementById("quoteCustomerAddress");
+        const quoteDate = document.getElementById("quoteDate");
+        const quoteTableContainer = document.getElementById("quoteTableContainer");
+        const quoteBackBtn = document.getElementById("quoteBackBtn");
+        const quotePrintBtn = document.getElementById("quotePrintBtn");
+        const quotePdfBtn = document.getElementById("quotePdfBtn");
 
         // ========== Sự kiện ==========
         viewPriceBtn.addEventListener("click", () => {
@@ -248,9 +584,283 @@
         btnShowAll.addEventListener("click", () => { hiddenColumns.clear(); renderColumnSelector(); redrawWithFilters(); });
 
         exportBtn.addEventListener("click", exportCurrentViewToExcel);
+        manageImagesBtn.addEventListener("click", openImageManager);
 
         filterSelectedBtn.addEventListener('click', ()=>{ if(selectedRowIdx.size===0){ alert('Chưa có hàng nào được chọn.'); return; } showingOnlySelected=true; renderSelectedOnly(); });
         clearSelectionBtn.addEventListener('click', ()=>{ selectedRowIdx.clear(); showingOnlySelected=false; searchInput.value=''; createTable(currentData); });
+
+        createQuoteBtn.addEventListener('click', () => {
+            if (selectedRowIdx.size === 0) {
+                alert('Vui lòng chọn ít nhất một sản phẩm để tạo báo giá.');
+                return;
+            }
+            quoteDialog.style.display = 'flex';
+            customerNameInput.focus();
+        });
+
+        quoteDialogCancel.addEventListener('click', () => {
+            quoteDialog.style.display = 'none';
+            clearQuoteForm();
+        });
+
+        quoteDialogCreate.addEventListener('click', createQuote);
+
+        quoteBackBtn.addEventListener('click', () => {
+            quotePage.style.display = 'none';
+            popupOverlay.style.display = 'block';
+        });
+
+        quotePrintBtn.addEventListener('click', () => {
+            window.print();
+        });
+
+        quotePdfBtn.addEventListener('click', generatePdf);
+
+        previewImageBtn.addEventListener('click', previewImage);
+        imageManagerCancel.addEventListener('click', () => { 
+            imageManager.style.display = 'none'; 
+            imageUrlInput.value = '';
+            imagePreview.style.display = 'none';
+            currentImageFile = null;
+            uploadStatus.textContent = '';
+        });
+        imageManagerSave.addEventListener('click', saveProductImage);
+        
+        triggerUploadBtn.addEventListener('click', () => {
+            imageUploadInput.click();
+        });
+        
+        imageUploadInput.addEventListener('change', handleImageUpload);
+        
+        // Tab switching
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabId = tab.getAttribute('data-tab');
+                
+                // Deactivate all tabs
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(tc => tc.classList.remove('active'));
+                
+                // Activate current tab
+                tab.classList.add('active');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+        // Lọc sản phẩm đã chọn trong quản lý hình ảnh
+        showOnlySelectedCheckbox.addEventListener('change', () => {
+            if (imageManager.style.display === 'block') {
+                populateProductSelect();
+            }
+        });
+
+        // ========== Quản lý hình ảnh ==========
+        function openImageManager() {
+            if (currentData.length === 0) {
+                alert('Vui lòng tải dữ liệu sản phẩm trước.');
+                return;
+            }
+            
+            populateProductSelect();
+            
+            // Hiển thị hình ảnh hiện tại nếu có
+            const selectedProduct = productSelect.value;
+            if (productImages[selectedProduct]) {
+                imageUrlInput.value = productImages[selectedProduct];
+                imagePreview.src = productImages[selectedProduct];
+                imagePreview.style.display = 'block';
+            } else {
+                imageUrlInput.value = '';
+                imagePreview.style.display = 'none';
+            }
+            
+            // Reset trạng thái upload
+            currentImageFile = null;
+            uploadStatus.textContent = '';
+            
+            imageManager.style.display = 'block';
+        }
+        
+        function populateProductSelect() {
+            // Xóa options cũ
+            productSelect.innerHTML = '';
+            
+            // Thêm các sản phẩm vào dropdown
+            const productNameIndex = findProductNameColumnIndex();
+            if (productNameIndex === -1) {
+                alert('Không tìm thấy cột tên sản phẩm trong dữ liệu.');
+                return;
+            }
+            
+            // Lấy danh sách sản phẩm
+            const products = new Set();
+            const showOnlySelected = showOnlySelectedCheckbox.checked;
+            
+            for (let i = 1; i < currentData.length; i++) {
+                // Nếu chỉ hiển thị sản phẩm đã chọn, kiểm tra xem hàng này có được chọn không
+                if (showOnlySelected && !selectedRowIdx.has(i)) {
+                    continue;
+                }
+                
+                const productName = currentData[i][productNameIndex] || '';
+                if (productName.trim() !== '') {
+                    products.add(productName);
+                }
+            }
+            
+            // Nếu không có sản phẩm nào được chọn và đang ở chế độ chỉ hiển thị sản phẩm đã chọn
+            if (products.size === 0 && showOnlySelected) {
+                alert('Không có sản phẩm nào được chọn. Vui lòng chọn ít nhất một sản phẩm trước.');
+                showOnlySelectedCheckbox.checked = false;
+                populateProductSelect(); // Load lại với tất cả sản phẩm
+                return;
+            }
+            
+            // Thêm vào dropdown
+            products.forEach(product => {
+                const option = document.createElement('option');
+                option.value = product;
+                option.textContent = product;
+                productSelect.appendChild(option);
+            });
+        }
+        
+        function findProductNameColumnIndex() {
+            for (let i = 0; i < headersCache.length; i++) {
+                const header = headersCache[i].toLowerCase();
+                if (header.includes('tên') || header.includes('name') || header.includes('sản phẩm') || header.includes('product')) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+        
+        function previewImage() {
+            const url = imageUrlInput.value.trim();
+            if (url) {
+                imagePreview.src = url;
+                imagePreview.style.display = 'block';
+                // Khi xem trước từ URL, reset file upload
+                currentImageFile = null;
+                uploadStatus.textContent = '';
+            }
+        }
+        
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // Kiểm tra loại file
+            if (!file.type.match('image.*')) {
+                alert('Vui lòng chọn file hình ảnh (JPEG, PNG, GIF, v.v.)');
+                return;
+            }
+            
+            // Kiểm tra kích thước file (tối đa 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Kích thước file không được vượt quá 5MB');
+                return;
+            }
+            
+            currentImageFile = file;
+            uploadStatus.textContent = `Đã chọn: ${file.name} (${Math.round(file.size/1024)} KB)`;
+            uploadStatus.style.color = '#4CAF50';
+            
+            // Hiển thị xem trước
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imagePreview.src = e.target.result;
+                imagePreview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+            
+            // Reset URL input
+            imageUrlInput.value = '';
+        }
+        
+        function saveProductImage() {
+            const productName = productSelect.value;
+            
+            if (!productName) {
+                alert('Vui lòng chọn sản phẩm.');
+                return;
+            }
+            
+            // Nếu có file ảnh được chọn, lưu dưới dạng base64 vào Local Storage
+            if (currentImageFile) {
+                uploadStatus.textContent = 'Đang xử lý hình ảnh...';
+                uploadStatus.style.color = '#FF9800';
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // Lưu dữ liệu base64 vào Local Storage
+                    productImages[productName] = e.target.result;
+                    saveImagesToLocalStorage();
+                    
+                    uploadStatus.textContent = 'Lưu hình ảnh thành công!';
+                    uploadStatus.style.color = '#4CAF50';
+                    
+                    setTimeout(() => {
+                        imageManager.style.display = 'none';
+                        uploadStatus.textContent = '';
+                    }, 1000);
+                };
+                reader.onerror = function(error) {
+                    console.error('Lỗi đọc file:', error);
+                    uploadStatus.textContent = 'Lỗi khi xử lý hình ảnh';
+                    uploadStatus.style.color = '#F44336';
+                };
+                reader.readAsDataURL(currentImageFile);
+            } 
+            // Nếu không có file nhưng có URL
+            else if (imageUrlInput.value.trim()) {
+                const imageUrl = imageUrlInput.value.trim();
+                
+                // Kiểm tra URL hợp lệ
+                if (!isValidUrl(imageUrl)) {
+                    alert('URL hình ảnh không hợp lệ. Vui lòng nhập URL đúng định dạng.');
+                    return;
+                }
+                
+                productImages[productName] = imageUrl;
+                saveImagesToLocalStorage();
+                alert('Đã lưu hình ảnh cho sản phẩm: ' + productName);
+                imageManager.style.display = 'none';
+            }
+            else {
+                alert('Vui lòng chọn hình ảnh từ máy tính hoặc nhập URL hình ảnh.');
+            }
+        }
+        
+        function isValidUrl(string) {
+            try {
+                new URL(string);
+                return true;
+            } catch (_) {
+                return false;
+            }
+        }
+        
+        function saveImagesToLocalStorage() {
+            try {
+                localStorage.setItem("productImages", JSON.stringify(productImages));
+                console.log("Đã lưu hình ảnh vào Local Storage");
+            } catch (error) {
+                console.error('Lỗi khi lưu hình ảnh:', error);
+                alert('Lỗi khi lưu hình ảnh: ' + error.message);
+            }
+        }
+        
+        function loadProductImages() {
+            try {
+                const imagesData = localStorage.getItem("productImages");
+                if (imagesData) {
+                    productImages = JSON.parse(imagesData);
+                }
+            } catch (error) {
+                console.error("Lỗi khi tải hình ảnh sản phẩm:", error);
+            }
+        }
 
         // ========== Thông báo ==========
         function saveNotification(){
@@ -427,7 +1037,7 @@
             });
         }
 
-        // ========== Tìm kiếm ==========
+        // ========== Tìm kiếma ==========
         function performSearch(){
             const searchTerm = searchInput.value.trim().toLowerCase();
             if(!searchTerm){ createTable(currentData); return; }
@@ -504,8 +1114,211 @@
             XLSX.writeFile(wb, fileName);
         }
 
+        // ========== Tạo báo giá ==========
+        function clearQuoteForm() {
+            customerNameInput.value = '';
+            customerContactInput.value = '';
+            customerPhoneInput.value = '';
+            customerAddressInput.value = '';
+        }
+
+        function createQuote() {
+            const customerName = customerNameInput.value.trim();
+            const customerContact = customerContactInput.value.trim();
+            const customerPhone = customerPhoneInput.value.trim();
+            const customerAddress = customerAddressInput.value.trim();
+
+            if (!customerName) {
+                alert('Vui lòng nhập tên khách hàng');
+                return;
+            }
+
+            // Hiển thị thông tin khách hàng
+            quoteCustomerName.textContent = customerName;
+            quoteCustomerContact.textContent = customerContact;
+            quoteCustomerPhone.textContent = customerPhone;
+            quoteCustomerAddress.textContent = customerAddress;
+
+            // Hiển thị ngày hiện tại
+            const now = new Date();
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const year = now.getFullYear();
+            quoteDate.textContent = `${day}/${month}/${year}`;
+
+            // Tạo bảng sản phẩm trong báo giá
+            createQuoteTable();
+
+            // Hiển thị trang báo giá
+            quotePage.style.display = 'block';
+            popupOverlay.style.display = 'none';
+            quoteDialog.style.display = 'none';
+            clearQuoteForm();
+        }
+
+        function createQuoteTable() {
+            // Lấy dữ liệu từ các hàng đã chọn
+            const indices = Array.from(selectedRowIdx).sort((a,b)=>a-b);
+            const aoa = [currentData[0]]; // header
+            indices.forEach(idx=>{ if(currentData[idx]) aoa.push(currentData[idx]); });
+
+            // Chỉ hiển thị các cột đang hiển thị (không bị ẩn)
+            const visibleIdx = visibleColumnIndexes();
+            const filteredAoa = aoa.map(row => row.filter((_, idx) => visibleIdx.includes(idx)));
+
+            // Tìm cột tên sản phẩm
+            const productNameIndex = findProductNameColumnIndex();
+            
+            // Tạo bảng
+            const table = document.createElement("table");
+            table.className = "quote-table";
+
+            // Tạo header
+            const thead = document.createElement("thead");
+            const headerRow = document.createElement("tr");
+            
+            // Thêm cột STT
+            const thStt = document.createElement("th");
+            thStt.textContent = "STT";
+            thStt.style.width = "50px";
+            headerRow.appendChild(thStt);
+            
+            // Thêm cột hình ảnh nếu có
+            const thImage = document.createElement("th");
+            thImage.textContent = "Hình ảnh";
+            thImage.style.width = "100px";
+            headerRow.appendChild(thImage);
+
+            // Thêm các cột dữliệu
+            visibleIdx.forEach(colIdx => {
+                const th = document.createElement("th");
+                th.textContent = headersCache[colIdx] || "";
+                headerRow.appendChild(th);
+            });
+
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+
+            // Tạo body
+            const tbody = document.createElement("tbody");
+            for (let i = 1; i < filteredAoa.length; i++) {
+                const rowData = filteredAoa[i] || [];
+                if (!rowData.some(cell => String(cell).trim().length > 0)) continue;
+
+                const tr = document.createElement("tr");
+
+                // Cột STT
+                const tdStt = document.createElement("td");
+                tdStt.textContent = i;
+                tdStt.style.textAlign = "center";
+                tr.appendChild(tdStt);
+                
+                // Cột hình ảnh
+                const tdImage = document.createElement("td");
+                tdImage.style.textAlign = "center";
+                
+                // Tìm hình ảnh cho sản phẩm này
+                if (productNameIndex !== -1) {
+                    const productName = aoa[i][productNameIndex] || '';
+                    if (productImages[productName]) {
+                        const img = document.createElement('img');
+                        img.src = productImages[productName];
+                        img.className = 'product-image';
+                        img.alt = productName;
+                        tdImage.appendChild(img);
+                    }
+                }
+                
+                tr.appendChild(tdImage);
+
+                // Các cột dữ liệu
+                rowData.forEach(cell => {
+                    const td = document.createElement("td");
+                    td.textContent = (typeof cell === 'string' && cell.includes('%')) ? cell : (cell || '');
+                    tr.appendChild(td);
+                });
+
+                tbody.appendChild(tr);
+            }
+
+            table.appendChild(tbody);
+            quoteTableContainer.innerHTML = "";
+            quoteTableContainer.appendChild(table);
+        }
+
+        // ========== Xuất PDF ==========
+        function generatePdf() {
+            // Tạo một bản sao của trang báo giá để in, ẩn các nút hành động
+            const printQuotePage = quotePage.cloneNode(true);
+            const actionsDiv = printQuotePage.querySelector('.quote-actions');
+            if (actionsDiv) {
+                actionsDiv.style.display = 'none';
+            }
+            
+            // Ẩn các phần không cần thiết khác
+            document.body.appendChild(printQuotePage);
+            printQuotePage.style.display = 'block';
+            printQuotePage.style.position = 'absolute';
+            printQuotePage.style.left = '0';
+            printQuotePage.style.top = '0';
+            printQuotePage.style.zIndex = '9999';
+            printQuotePage.style.background = 'white';
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            
+            // Sử dụng html2canvas để chụp ảnh nội dung
+            html2canvas(printQuotePage, {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                width: printQuotePage.scrollWidth,
+                height: printQuotePage.scrollHeight
+            }).then(canvas => {
+                const imgData = canvas.toDataURL('image/jpeg', 1.0);
+                const imgWidth = doc.internal.pageSize.getWidth();
+                const pageHeight = doc.internal.pageSize.getHeight();
+                const imgHeight = canvas.height * imgWidth / canvas.width;
+                
+                let heightLeft = imgHeight;
+                let position = 0;
+                
+                // Thêm trang đầu tiên
+                doc.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+                
+                // Thêm các trang tiếp theo nếu nội dung dài
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight;
+                    doc.addPage();
+                    doc.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+                
+                // Xóa bản sao tạm thời
+                document.body.removeChild(printQuotePage);
+                
+                // Lưu file PDF
+                const now = new Date();
+                const fileName = `Bao_Gia_${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}_${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}.pdf`;
+                
+                doc.save(fileName);
+            }).catch(error => {
+                console.error('Lỗi khi tạo PDF:', error);
+                // Đảm bảo xóa bản sao ngay cả khi có lỗi
+                if (document.body.contains(printQuotePage)) {
+                    document.body.removeChild(printQuotePage);
+                }
+                alert('Có lỗi xảy ra khi tạo PDF. Vui lòng thử lại.');
+            });
+        }
+
         // ========== Khởi tạo ==========
-        document.addEventListener('DOMContentLoaded', ()=>{ loadNotification(); loadDataFromFirebase(); });
+        document.addEventListener('DOMContentLoaded', ()=>{ 
+            loadNotification(); 
+            loadDataFromFirebase();
+            loadProductImages();
+        });
     </script>
 </body>
 </html>
