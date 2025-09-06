@@ -54,6 +54,8 @@
         .price-table tr:nth-child(even){ background:#f2f2f2 }
         .price-table tr:hover{ background:#e6f2ff }
         .highlight{ background:yellow }
+        .editing-cell { background-color: #fffde7; outline: 2px solid #ffc107; }
+
 
         /* Tay nắm kéo giãn cột */
         .th-resizable{ position: relative; }
@@ -65,6 +67,8 @@
 
         .footer-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:16px; flex-wrap:wrap }
         .export-btn{ background:#1976d2; color:#fff; border:none; padding:10px 14px; border-radius:6px; font-weight:700; cursor:pointer }
+        .export-btn:disabled { background-color: #ccc; cursor: not-allowed; }
+
 
         .password-dialog,.notification-dialog,.quote-dialog{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1002; justify-content:center; align-items:center }
         .password-dialog-content,.notification-dialog-content,.quote-dialog-content{ background:#fff; padding:20px; border-radius:8px; width:300px; box-shadow:0 5px 15px rgba(0,0,0,.3) }
@@ -378,6 +382,9 @@
             <div class="table-container" id="tableContainer"></div>
 
             <div class="footer-actions">
+                <button class="export-btn" id="addNewRowBtn" style="background: #4caf50;">Thêm hàng mới</button>
+                <button class="export-btn" id="editRowBtn" style="background: #ffc107;" disabled>Sửa hàng đã chọn</button>
+                <button class="export-btn" id="deleteRowBtn" style="background: #f44336;" disabled>Xóa hàng đã chọn</button>
                 <button class="export-btn" id="exportBtn">Xuất Excel theo giao diện hiện tại</button>
                 <button class="export-btn" id="manageImagesBtn" style="background: #9c27b0;">Quản lý hình ảnh</button>
             </div>
@@ -444,7 +451,6 @@
                 <button class="upload-image-btn" id="triggerUploadBtn">Chọn hình ảnh</button>
                 <div class="upload-status" id="uploadStatus"></div>
                 
-                <!-- Thêm phần điều khiển xử lý ảnh -->
                 <div class="image-processing-controls">
                     <button class="processing-btn remove-bg-btn" id="removeBgBtn" disabled>Tách nền tự động</button>
                     <button class="processing-btn remove-image-btn" id="removeImageBtn">Xóa hình và làm lại</button>
@@ -549,6 +555,11 @@
     let currentImageFile = null;   // File hình ảnh được chọn để upload
     let originalImageFile = null;  // File gốc để có thể làm lại
 
+    // --- Biến mới cho chức năng CRUD ---
+    let rowIndexMap = []; // Map từ index của currentData về {fileIndex, rowIndexInFile}
+    let editingRowState = { index: null, originalData: [] }; // Lưu trạng thái hàng đang sửa
+
+
     // API Remove.bg - cần thay bằng API key thực
     const REMOVE_BG_API_KEY = "iHt8DKCwKg4Va63ACXopN7nm"; // Thay bằng API key thực
 
@@ -625,6 +636,11 @@
     const removeImageBtn = document.getElementById("removeImageBtn");
     const processingStatus = document.getElementById("processingStatus");
 
+    // --- DOM mới cho CRUD ---
+    const addNewRowBtn = document.getElementById("addNewRowBtn");
+    const editRowBtn = document.getElementById("editRowBtn");
+    const deleteRowBtn = document.getElementById("deleteRowBtn");
+
     // ========== Sự kiện ==========
     viewPriceBtn.addEventListener("click", () => {
         popupOverlay.style.display = "block";
@@ -662,7 +678,7 @@
     manageImagesBtn.addEventListener("click", openImageManager);
 
     filterSelectedBtn.addEventListener('click', ()=>{ if(selectedRowIdx.size===0){ alert('Chưa có hàng nào được chọn.'); return; } showingOnlySelected=true; renderSelectedOnly(); });
-    clearSelectionBtn.addEventListener('click', ()=>{ selectedRowIdx.clear(); showingOnlySelected=false; searchInput.value=''; createTable(currentData); });
+    clearSelectionBtn.addEventListener('click', ()=>{ selectedRowIdx.clear(); showingOnlySelected=false; searchInput.value=''; createTable(currentData); updateActionButtonsState(); });
 
     createQuoteBtn.addEventListener('click', () => {
         if (selectedRowIdx.size === 0) {
@@ -734,6 +750,189 @@
     // Thêm sự kiện mới cho xử lý ảnh
     removeBgBtn.addEventListener("click", removeImageBackground);
     removeImageBtn.addEventListener("click", resetImageUpload);
+
+    // --- Sự kiện mới cho CRUD ---
+    addNewRowBtn.addEventListener("click", handleAddNewRow);
+    editRowBtn.addEventListener("click", handleEditRow);
+    deleteRowBtn.addEventListener("click", handleDeleteRows);
+
+
+    // ========== CRUD Functions (Thêm, Sửa, Xóa) ==========
+    
+    function updateActionButtonsState() {
+        if (editingRowState.index !== null) {
+            // Đang trong chế độ sửa
+            addNewRowBtn.disabled = true;
+            deleteRowBtn.disabled = true;
+            editRowBtn.disabled = false; // Nút này giờ là "Lưu" hoặc "Hủy"
+        } else {
+            // Chế độ bình thường
+            addNewRowBtn.disabled = false;
+            deleteRowBtn.disabled = (selectedRowIdx.size === 0);
+            editRowBtn.disabled = (selectedRowIdx.size !== 1);
+        }
+    }
+    
+    async function handleAddNewRow() {
+        if (headersCache.length === 0) {
+            alert("Không có dữ liệu (tiêu đề cột) để thêm hàng mới. Vui lòng tải file Excel trước.");
+            return;
+        }
+
+        const userAddedFileName = "User Added Data";
+        let userFile = uploadedFiles.find(f => f.name === userAddedFileName);
+
+        if (!userFile) {
+            userFile = { name: userAddedFileName, data: [headersCache] };
+            uploadedFiles.push(userFile);
+            addFileToList(userAddedFileName, uploadedFiles.length - 1);
+        }
+
+        const newRow = Array(headersCache.length).fill('');
+        userFile.data.push(newRow);
+
+        await saveDataToFirebase();
+        await displayAllData();
+
+        // Tự động cuộn xuống hàng mới
+        tableContainer.scrollTop = tableContainer.scrollHeight;
+        
+        // Tự động chọn hàng mới và bật chế độ sửa
+        const newRowIndexInCurrentData = currentData.length - 1;
+        selectedRowIdx.clear();
+        selectedRowIdx.add(newRowIndexInCurrentData);
+        handleEditRow();
+    }
+
+    function handleEditRow() {
+        const btn = editRowBtn;
+
+        if (editingRowState.index !== null) { // Đang ở chế độ sửa -> Lưu thay đổi
+            const rowIndex = editingRowState.index;
+            const tr = tableContainer.querySelector(`tr[data-row-index='${rowIndex}']`);
+            if (!tr) return;
+
+            const newRowData = [];
+            const cells = tr.querySelectorAll('td');
+            const visibleIdx = visibleColumnIndexes();
+            
+            let dataIndex = 0;
+            for (let i = 0; i < cells.length -1; i++) { // Bỏ qua ô checkbox cuối
+                 newRowData.push(cells[i].textContent.trim());
+            }
+
+            // Cập nhật lại toàn bộ dữ liệu của hàng trong currentData
+            let fullNewRow = [...currentData[rowIndex]];
+            visibleIdx.forEach((originalColIdx, i) => {
+                fullNewRow[originalColIdx] = newRowData[i] || '';
+            });
+
+            // Tìm vị trí gốc trong uploadedFiles và cập nhật
+            const mapping = rowIndexMap[rowIndex];
+            if (mapping) {
+                uploadedFiles[mapping.fileIndex].data[mapping.rowIndexInFile] = fullNewRow;
+                saveDataToFirebase().then(() => {
+                    console.log("Lưu thành công!");
+                    currentData[rowIndex] = fullNewRow; // Cập nhật cả currentData
+                });
+            }
+
+            // Tắt chế độ sửa
+            cells.forEach(td => {
+                td.contentEditable = 'false';
+                td.classList.remove('editing-cell');
+            });
+            editingRowState = { index: null, originalData: [] };
+            btn.textContent = 'Sửa hàng đã chọn';
+            btn.style.background = '#ffc107';
+            document.getElementById('cancelEditBtn')?.remove(); // Xóa nút hủy nếu có
+
+        } else { // Bắt đầu chế độ sửa
+            if (selectedRowIdx.size !== 1) return;
+            const rowIndex = selectedRowIdx.values().next().value;
+            const tr = tableContainer.querySelector(`tr[data-row-index='${rowIndex}']`);
+            if (!tr) return;
+
+            editingRowState.index = rowIndex;
+            editingRowState.originalData = [...currentData[rowIndex]];
+
+            const cells = tr.querySelectorAll('td');
+            cells.forEach((td, i) => {
+                if (i < cells.length - 1) { // không cho sửa ô checkbox
+                    td.contentEditable = 'true';
+                    td.classList.add('editing-cell');
+                }
+            });
+            cells[0].focus();
+
+            btn.textContent = 'Lưu thay đổi';
+            btn.style.background = '#4caf50';
+            
+            // Thêm nút Hủy
+            const cancelBtn = document.createElement('button');
+            cancelBtn.id = 'cancelEditBtn';
+            cancelBtn.textContent = 'Hủy';
+            cancelBtn.className = 'export-btn';
+            cancelBtn.style.background = '#9e9e9e';
+            cancelBtn.onclick = () => {
+                // Khôi phục dữ liệu gốc
+                const originalTr = tableContainer.querySelector(`tr[data-row-index='${editingRowState.index}']`);
+                if(originalTr) {
+                     const originalCells = originalTr.querySelectorAll('td');
+                     const visibleIdx = visibleColumnIndexes();
+                     visibleIdx.forEach((originalColIdx, i) => {
+                         originalCells[i].textContent = editingRowState.originalData[originalColIdx] || '';
+                     });
+                }
+                 // Tắt chế độ sửa
+                const allCells = originalTr.querySelectorAll('td');
+                allCells.forEach(td => {
+                    td.contentEditable = 'false';
+                    td.classList.remove('editing-cell');
+                });
+                editingRowState = { index: null, originalData: [] };
+                btn.textContent = 'Sửa hàng đã chọn';
+                btn.style.background = '#ffc107';
+                cancelBtn.remove();
+                updateActionButtonsState();
+            };
+            btn.parentNode.insertBefore(cancelBtn, btn.nextSibling);
+
+        }
+        updateActionButtonsState();
+    }
+    
+    async function handleDeleteRows() {
+        if (selectedRowIdx.size === 0) return;
+        if (!confirm(`Bạn có chắc muốn xóa ${selectedRowIdx.size} hàng đã chọn? Hành động này không thể hoàn tác.`)) return;
+
+        // Nhóm các hàng cần xóa theo file gốc
+        const toDeleteByFile = {};
+        for (const rowIndex of selectedRowIdx) {
+            const mapping = rowIndexMap[rowIndex];
+            if (mapping) {
+                if (!toDeleteByFile[mapping.fileIndex]) {
+                    toDeleteByFile[mapping.fileIndex] = [];
+                }
+                toDeleteByFile[mapping.fileIndex].push(mapping.rowIndexInFile);
+            }
+        }
+
+        // Sắp xếp các index cần xóa theo thứ tự giảm dần để không bị lỗi khi splice
+        for (const fileIndex in toDeleteByFile) {
+            toDeleteByFile[fileIndex].sort((a, b) => b - a);
+            // Xóa
+            for (const rowIndexInFile of toDeleteByFile[fileIndex]) {
+                uploadedFiles[fileIndex].data.splice(rowIndexInFile, 1);
+            }
+        }
+
+        selectedRowIdx.clear();
+        await saveDataToFirebase();
+        await displayAllData();
+        updateActionButtonsState();
+    }
+
 
     // ========== Quản lý hình ảnh ==========
     function openImageManager() {
@@ -817,7 +1016,7 @@
                 return i;
             }
         }
-        return -1;
+        return 0; // Mặc định cột đầu tiên nếu không tìm thấy
     }
     
     function previewImage() {
@@ -1130,14 +1329,49 @@
 
     // ========== Hiển thị bảng ==========
     function displayAllData(){
+        if (editingRowState.index !== null) {
+            // Nếu đang sửa, hủy chế độ sửa trước khi render lại
+            handleEditRow(); // Gọi để lưu hoặc hủy
+        }
+
         if(uploadedFiles.length===0){ tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị. Vui lòng tải lên file Excel.</p>'; columnToolbar.style.display='none'; return; }
-        currentData = []; uploadedFiles.forEach(file => { currentData = currentData.concat(file.data); });
+        
+        // Hợp nhất dữ liệu và tạo map
+        currentData = [];
+        rowIndexMap = [];
+        let isFirstFile = true;
+        
+        uploadedFiles.forEach((file, fileIndex) => {
+            if (!file.data || file.data.length === 0) return;
+
+            let dataSlice = file.data;
+            if (isFirstFile && dataSlice.length > 0) {
+                currentData.push(dataSlice[0]); // Add header
+                rowIndexMap.push({ fileIndex: fileIndex, rowIndexInFile: 0 }); // Map header
+                headersCache = dataSlice[0];
+                isFirstFile = false;
+            }
+
+            // Process data rows
+            for (let i = 1; i < dataSlice.length; i++) {
+                 // Đảm bảo hàng không rỗng
+                if (dataSlice[i] && dataSlice[i].some(cell => String(cell).trim() !== '')) {
+                    currentData.push(dataSlice[i]);
+                    rowIndexMap.push({ fileIndex: fileIndex, rowIndexInFile: i });
+                }
+            }
+        });
+        
         // clear chọn khi nạp bộ dữ liệu mới
         selectedRowIdx.clear(); showingOnlySelected=false; searchInput.value='';
         createTable(currentData); 
+        updateActionButtonsState();
     }
 
     function visibleColumnIndexes(){
+        if (headersCache.length === 0 && currentData.length > 0) {
+            headersCache = currentData[0];
+        }
         return headersCache.map((_, idx)=> idx).filter(idx => !hiddenColumns.has(idx));
     }
 
@@ -1166,7 +1400,7 @@
             const rowData = data[i] || []; if(!rowData.some(cell=> String(cell).trim().length>0)) continue;
             const tr = document.createElement("tr");
             // xác định chỉ số hàng trong currentData
-            const rowIdx = sourceIndexes ? sourceIndexes[i] : i; // i trùng với vị trí trong currentData khi không lọc
+            const rowIdx = sourceIndexes ? sourceIndexes[i-1] : i;
             tr.dataset.rowIndex = rowIdx;
 
             visibleIdx.forEach((colIdx, visPos)=>{
@@ -1178,7 +1412,15 @@
             // Ô chọn
             const tdChoose = document.createElement('td');
             const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = selectedRowIdx.has(rowIdx);
-            cb.addEventListener('change', ()=>{ if(cb.checked) selectedRowIdx.add(rowIdx); else selectedRowIdx.delete(rowIdx); });
+            cb.addEventListener('change', ()=>{ 
+                if (editingRowState.index !== null && editingRowState.index !== rowIdx) {
+                    alert("Vui lòng Lưu hoặc Hủy thay đổi ở hàng đang sửa trước khi chọn hàng khác.");
+                    cb.checked = !cb.checked;
+                    return;
+                }
+                if(cb.checked) selectedRowIdx.add(rowIdx); else selectedRowIdx.delete(rowIdx); 
+                updateActionButtonsState();
+            });
             tdChoose.style.textAlign='center'; tdChoose.appendChild(cb); tr.appendChild(tdChoose);
 
             tbody.appendChild(tr);
@@ -1193,9 +1435,13 @@
         // dựng dữ liệu hiển thị chỉ gồm các hàng đã chọn
         const indices = Array.from(selectedRowIdx).sort((a,b)=>a-b);
         const aoa = [currentData[0]]; // header
-        indices.forEach(idx=>{ if(currentData[idx]) aoa.push(currentData[idx]); });
-        // sourceIndexes: mapping vị trí i -> chỉ số gốc
-        const sourceIdx = [0, ...indices];
+        const sourceIdx = [];
+        indices.forEach(idx=>{ 
+            if(currentData[idx]) {
+                aoa.push(currentData[idx]);
+                sourceIdx.push(idx);
+            }
+        });
         createTable(aoa, sourceIdx);
     }
 
@@ -1227,11 +1473,14 @@
         const searchTerm = searchInput.value.trim().toLowerCase();
         if(!searchTerm){ createTable(currentData); return; }
         const filtered = [currentData[0]]; // header
-        const sourceIdx = [0];
+        const sourceIdx = [];
         for(let i=1;i<currentData.length;i++){
             const row = currentData[i]; let ok = false;
             for(let j=0;j<row.length;j++){ const v = String(row[j]).toLowerCase(); if(v.includes(searchTerm)){ ok = true; break; } }
-            if(ok){ filtered.push(row); sourceIdx.push(i); }
+            if(ok){ 
+                filtered.push(row); 
+                sourceIdx.push(i);
+            }
         }
         createTable(filtered, sourceIdx); highlightSearchResults(searchTerm);
     }
@@ -1269,16 +1518,36 @@
     }
 
     // ========== Lưu/Tải Firebase ==========
-    function saveDataToFirebase(){
+    async function saveDataToFirebase(){
+        // Lọc bỏ các hàng hoàn toàn rỗng từ file "User Added Data" trước khi lưu
+        const userAddedFile = uploadedFiles.find(f => f.name === "User Added Data");
+        if(userAddedFile){
+            userAddedFile.data = userAddedFile.data.filter((row, index) => {
+                if (index === 0) return true; // Giữ header
+                return row.some(cell => String(cell).trim() !== '');
+            });
+        }
+
         const dataToSave = { files: uploadedFiles, lastUpdated: new Date().toISOString() };
-        database.ref("priceData").set(dataToSave).then(()=> console.log("Đã lưu Firebase"))
-        .catch(err=> console.error("Lỗi khi lưu dữ liệu:", err));
+        try {
+            await database.ref("priceData").set(dataToSave);
+            console.log("Đã lưu Firebase");
+        } catch (err) {
+            console.error("Lỗi khi lưu dữ liệu:", err);
+            alert("Lỗi khi lưu dữ liệu lên server. Vui lòng kiểm tra kết nối mạng.");
+        }
     }
     function loadDataFromFirebase(){
         loadingIndicator.style.display = 'block'; tableContainer.innerHTML = ''; filesList.innerHTML = '';
         database.ref('priceData').once('value').then(snapshot=>{
             const data = snapshot.val();
-            if(data && data.files){ uploadedFiles = data.files; uploadedFiles.forEach((file,index)=> addFileToList(file.name,index)); updateFileNameDisplay(); displayAllData(); }
+            if(data && data.files){ 
+                uploadedFiles = data.files; 
+                filesList.innerHTML = ''; // Xóa danh sách file cũ
+                uploadedFiles.forEach((file,index)=> addFileToList(file.name,index)); 
+                updateFileNameDisplay(); 
+                displayAllData(); 
+            }
             else { tableContainer.innerHTML = '<p>Không có dữ liệu trên server. Vui lòng tải lên file Excel.</p>'; columnToolbar.style.display = 'none'; }
             loadingIndicator.style.display = 'none';
         }).catch(error=>{ console.error('Lỗi khi tải dữ liệu:', error); loadingIndicator.style.display = 'none'; tableContainer.innerHTML = '<p>Lỗi khi tải dữ liệu từ server. Vui lòng thử lại sau.</p>'; });
@@ -1289,10 +1558,10 @@
         const table = document.querySelector('.price-table'); if(!table){ alert('Không có dữ liệu để xuất.'); return; }
         const aoa = [];
         const headerCells = table.querySelectorAll('thead tr th');
-        const headerRow = Array.from(headerCells).map(th => th.textContent.trim());
+        const headerRow = Array.from(headerCells).map(th => th.textContent.trim()).slice(0,-1); // Bỏ cột 'Chọn'
         aoa.push(headerRow);
         const bodyRows = table.querySelectorAll('tbody tr');
-        bodyRows.forEach(tr => { const row = Array.from(tr.querySelectorAll('td')).map(td => td.textContent.replace(/\u00A0/g,' ').trim()); aoa.push(row); });
+        bodyRows.forEach(tr => { const row = Array.from(tr.querySelectorAll('td')).map(td => td.textContent.replace(/\u00A0/g,' ').trim()).slice(0,-1); aoa.push(row); });
         const ws = XLSX.utils.aoa_to_sheet(aoa); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'BangGia');
         const now = new Date(); const pad = (n)=> String(n).padStart(2,'0');
         const fileName = `BangGia_HienThi_${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}.xlsx`;
