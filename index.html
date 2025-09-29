@@ -17,37 +17,31 @@
         .home-erp-btn{ bottom:190px; background:#34a853; text-decoration:none } .home-erp-btn:hover{ background:#2d8e47; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,.3)}
         .notification-btn{ bottom:250px; background:#f44336 } .notification-btn:hover{ background:#d32f2f; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,.3)}
         .create-quote-btn{ bottom:310px; background:#ff9800 } .create-quote-btn:hover{ background:#f57c00; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,.3)}
-
         .popup-overlay{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:1001; overflow-y:auto }
         .popup-content{ background:#fff; margin:20px auto; padding:20px; width:90%; max-width:1200px; border-radius:8px; box-shadow:0 5px 15px rgba(0,0,0,.3); max-height:90vh; overflow-y:auto; position:relative }
         .popup-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding-bottom:10px; border-bottom:1px solid #eee }
         .popup-title{ font-size:24px; color:#4285f4; margin:0 }
         .close-btn{ background:none; border:none; font-size:24px; cursor:pointer; color:#666 }
-
         .upload-section{ margin-bottom:16px; padding:15px; background:#f9f9f9; border-radius:5px; border:1px dashed #ccc }
         .file-input-container{ display:flex; align-items:center; gap:10px }
         .file-input-label{ padding:8px 15px; background:#4285f4; color:#fff; border-radius:4px; cursor:pointer; transition:.3s }
         .file-input-label:hover{ background:#3367d6 }
         .file-input{ display:none }
         .file-name{ flex-grow:1; color:#666 }
-
         .search-section{ margin-bottom:12px; display:flex; gap:8px; flex-wrap:wrap }
         .search-input{ flex:1; min-width:220px; padding:10px; border:1px solid #ddd; border-radius:4px; font-size:16px }
         .btn{ padding:10px 12px; border:none; border-radius:6px; font-weight:700; cursor:pointer }
         .btn-filter{ background:#8e24aa; color:#fff }
         .btn-clear{ background:#9e9e9e; color:#fff }
-
         .files-list{ margin-bottom:12px }
         .file-item{ display:flex; justify-content:space-between; align-items:center; padding:10px; background:#f5f5f5; margin-bottom:5px; border-radius:4px }
         .delete-file-btn{ background:#f44336; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer }
-
         .toolbar{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:12px 0; padding:10px; background:#f9fbff; border:1px solid #e3eeff; border-radius:6px }
         .toolbar .section-title{ font-weight:bold; color:#3367d6; margin-right:8px }
         .column-list{ display:flex; flex-wrap:wrap; gap:8px; max-height:120px; overflow:auto; border:1px dashed #cfe1ff; padding:8px; border-radius:6px; background:#fff }
         .column-chip{ display:inline-flex; align-items:center; gap:6px; background:#eef4ff; border:1px solid #cfe1ff; border-radius:999px; padding:6px 10px; font-size:13px }
         .toolbar button{ padding:8px 12px; border:none; border-radius:6px; cursor:pointer; font-weight:600 }
         .btn-hide{ background:#ff7043; color:#fff } .btn-unhide{ background:#43a047; color:#fff } .btn-showall{ background:#546e7a; color:#fff }
-
         .table-container{ overflow-x:auto; margin-top:12px }
         .price-table{ width:100%; border-collapse:collapse; table-layout: fixed; }
         .price-table th,.price-table td{ border:1px solid #ddd; padding:8px; text-align:left; white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
@@ -56,21 +50,15 @@
         .price-table tr:hover{ background:#e6f2ff }
         .highlight{ background:yellow }
         .editing-cell { background-color: #fffde7; outline: 2px solid #ffc107; }
-
-
         /* Tay nắm kéo giãn cột */
         .th-resizable{ position: relative; }
         .col-resizer{ position:absolute; right:0; top:0; height:100%; width:6px; cursor:col-resize; user-select:none; -webkit-user-select:none; }
         .col-resizer:hover{ background: rgba(255,255,255,.25); }
-
         .loading{ display:none; text-align:center; margin:20px 0 }
         .spinner{ border:4px solid rgba(0,0,0,.1); border-radius:50%; border-top:4px solid #4285f4; width:30px; height:30px; animation:spin 1s linear infinite; margin:0 auto }
-
         .footer-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:16px; flex-wrap:wrap }
         .export-btn{ background:#1976d2; color:#fff; border:none; padding:10px 14px; border-radius:6px; font-weight:700; cursor:pointer }
         .export-btn:disabled { background-color: #ccc; cursor: not-allowed; }
-
-
         .password-dialog,.notification-dialog,.quote-dialog{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1002; justify-content:center; align-items:center }
         .password-dialog-content,.notification-dialog-content,.quote-dialog-content{ background:#fff; padding:20px; border-radius:8px; width:300px; box-shadow:0 5px 15px rgba(0,0,0,.3) }
         .notification-dialog-content,.quote-dialog-content{ width:400px }
@@ -82,7 +70,6 @@
         .notification-dialog-cancel{ background:#f5f5f5 } .notification-dialog-save{ background:#4CAF50; color:#fff }
         .quote-dialog-cancel{ background:#f5f5f5 } .quote-dialog-create{ background:#ff9800; color:#fff }
         .notification-display{ position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#ffebee; border:1px solid #f44336; border-radius:4px; padding:15px; max-width:80%; color:#f44336; font-weight:bold; z-index:1000; display:none; text-align:center }
-
         /* Image manager */
         .image-manager { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); z-index: 1003; width: 500px; max-width: 90%; }
         .image-manager h3 { margin-top: 0; color: #4285f4; }
@@ -100,7 +87,6 @@
         .tab.active { border-bottom: 2px solid #4285f4; color: #4285f4; font-weight: bold; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-
         /* Quote page styles */
         .quote-page { 
             display: none; 
@@ -216,7 +202,6 @@
             border-radius: 5px; 
             cursor: pointer;
         }
-
         /* For PDF printing */
         @media print {
             body * {
@@ -238,7 +223,6 @@
                 display: none !important;
             }
         }
-
         @keyframes spin{ 0%{ transform:rotate(0) } 100%{ transform:rotate(360deg) } }
         @media(max-width:768px){ 
             .popup-content{ width:95%; padding:15px } 
@@ -255,7 +239,6 @@
             .customer-info-label { width: 100%; margin-bottom: 5px; }
             .image-manager { width: 95%; padding: 15px; }
         }
-        
         /* Selected products filter */
         .selected-products-filter {
             margin: 10px 0;
@@ -274,7 +257,6 @@
             flex-direction: column;
             gap: 10px;
         }
-        
         .processing-btn {
             padding: 8px 12px;
             border: none;
@@ -282,48 +264,75 @@
             cursor: pointer;
             font-weight: 600;
         }
-        
         .remove-bg-btn {
             background: #9c27b0;
             color: white;
         }
-        
         .remove-bg-btn:disabled {
             background: #ccc;
             cursor: not-allowed;
         }
-        
         .remove-image-btn {
             background: #f44336;
             color: white;
         }
-        
         .processing-status {
             margin-top: 10px;
             padding: 8px;
             border-radius: 4px;
             display: none;
         }
-        
         .processing-status.loading {
             display: block;
             background: #fff3cd;
             color: #856404;
             border: 1px solid #ffeaa7;
         }
-        
         .processing-status.success {
             display: block;
             background: #d4edda;
             color: #155724;
             border: 1px solid #c3e6cb;
         }
-        
         .processing-status.error {
             display: block;
             background: #f8d7da;
             color: #721c24;
             border: 1px solid #f5c6cb;
+        }
+        /* === STYLE MỚI CHO CHỨC NĂNG CHỌN TẤT CẢ VÀ CHỌN THEO PHẠM VI === */
+        .select-range-section {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        .range-input {
+            width: 60px;
+            padding: 6px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .range-label {
+            font-size: 14px;
+            color: #555;
+        }
+        /* === STYLE CHO CHỌN KHỔ GIẤY === */
+        .paper-orientation {
+            margin: 10px 0;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .paper-orientation label {
+            font-weight: bold;
+            color: #4285f4;
+        }
+        .paper-orientation input[type="radio"] {
+            margin-right: 5px;
         }
     </style>
 </head>
@@ -333,9 +342,7 @@
     <button class="view-price-btn" id="viewPriceBtn">Xem Giá</button>
     <button class="database-btn" id="databaseBtn">Cơ sở dữ liệu</button>
     <button class="create-quote-btn" id="createQuoteBtn">Tạo Báo Giá</button>
-
     <div class="notification-display" id="notificationDisplay"></div>
-
     <div class="notification-dialog" id="notificationDialog">
         <div class="notification-dialog-content">
             <div class="notification-dialog-title">THÔNG BÁO SẢN PHẨM</div>
@@ -346,14 +353,12 @@
             </div>
         </div>
     </div>
-
     <div class="popup-overlay" id="popupOverlay">
         <div class="popup-content">
             <div class="popup-header">
                 <h2 class="popup-title">Xem Giá Thuốc</h2>
                 <button class="close-btn" id="closePopupBtn">&times;</button>
             </div>
-
             <div class="upload-section">
                 <div class="file-input-container">
                     <label for="excelFileInput" class="file-input-label">Chọn file Excel</label>
@@ -361,13 +366,20 @@
                     <span class="file-name" id="fileNameDisplay">Chưa chọn file</span>
                 </div>
             </div>
-
             <div class="search-section">
                 <input type="text" id="searchInput" class="search-input" placeholder="Tìm kiếm trong bảng giá..." />
                 <button class="btn btn-filter" id="filterSelectedBtn" title="Chỉ hiển thị các hàng đã tick">Lọc hàng đã chọn</button>
                 <button class="btn btn-clear" id="clearSelectionBtn" title="Xóa mọi tick và trở về danh sách ban đầu">Refresh (xóa chọn)</button>
             </div>
-
+            <!-- === THÊM KHU VỰC CHỌN TẤT CẢ & CHỌN THEO PHẠM VI === -->
+            <div class="select-range-section">
+                <button class="btn" id="selectAllBtn" style="background:#2196F3; color:white;">Chọn tất cả</button>
+                <span class="range-label">Từ hàng</span>
+                <input type="number" id="fromRowInput" class="range-input" min="1" value="1" />
+                <span class="range-label">đến</span>
+                <input type="number" id="toRowInput" class="range-input" min="1" value="1" />
+                <button class="btn" id="selectRangeBtn" style="background:#009688; color:white;">Chọn phạm vi</button>
+            </div>
             <div class="toolbar" id="columnToolbar" style="display:none">
                 <span class="section-title">Chọn cột:</span>
                 <div class="column-list" id="columnList"></div>
@@ -375,16 +387,12 @@
                 <button class="btn-unhide" id="btnUnhide">Hiện cột đã chọn</button>
                 <button class="btn-showall" id="btnShowAll">Hiện tất cả</button>
             </div>
-
             <div class="files-list" id="filesList"></div>
-
             <div class="loading" id="loadingIndicator">
                 <div class="spinner"></div>
                 <p>Đang tải dữ liệu...</p>
             </div>
-
             <div class="table-container" id="tableContainer"></div>
-
             <div class="footer-actions">
                 <button class="export-btn" id="addNewRowBtn" style="background: #4caf50;">Thêm hàng mới</button>
                 <button class="export-btn" id="editRowBtn" style="background: #ffc107;" disabled>Sửa hàng đã chọn</button>
@@ -394,7 +402,6 @@
             </div>
         </div>
     </div>
-    
     <div class="popup-overlay" id="customerDbOverlay">
         <div class="popup-content">
             <div class="popup-header">
@@ -416,8 +423,6 @@
             <div class="table-container" id="customerTableContainer"></div>
         </div>
     </div>
-
-
     <div class="password-dialog" id="passwordDialog">
         <div class="password-dialog-content">
             <div class="password-dialog-title">Nhập password để xóa file</div>
@@ -428,7 +433,6 @@
             </div>
         </div>
     </div>
-
     <div class="quote-dialog" id="quoteDialog">
         <div class="quote-dialog-content">
             <div class="quote-dialog-title">THÔNG TIN KHÁCH HÀNG</div>
@@ -437,33 +441,37 @@
             <input type="text" class="quote-input" id="customerContactInput" placeholder="Người phụ trách" />
             <input type="text" class="quote-input" id="customerPhoneInput" placeholder="Điện thoại" />
             <input type="text" class="quote-input" id="customerAddressInput" placeholder="Địa chỉ" />
+            <!-- === THÊM CHỌN KHỔ GIẤY === -->
+            <div class="paper-orientation">
+                <label>
+                    <input type="radio" name="paperOrientation" value="portrait" checked /> Khổ dọc (A4)
+                </label>
+                <label>
+                    <input type="radio" name="paperOrientation" value="landscape" /> Khổ ngang (A4)
+                </label>
+            </div>
             <div class="quote-dialog-buttons">
                 <button class="quote-dialog-cancel" id="quoteDialogCancel">Hủy</button>
                 <button class="quote-dialog-create" id="quoteDialogCreate">Tạo Báo Giá</button>
             </div>
         </div>
     </div>
-
    <div class="image-manager" id="imageManager">
         <h3>Quản lý hình ảnh sản phẩm</h3>
-        
         <div class="selected-products-filter">
             <label>
                 <input type="checkbox" id="showOnlySelectedProducts" checked />
                 Chỉ hiển thị sản phẩm đã chọn
             </label>
         </div>
-        
         <div>
             <label for="productSelect">Chọn sản phẩm:</label>
             <select id="productSelect" class="quote-input"></select>
         </div>
-        
         <div class="tab-container">
             <div class="tab active" data-tab="url-tab">Dán URL</div>
             <div class="tab" data-tab="upload-tab">Upload từ máy tính</div>
         </div>
-        
         <div class="tab-content active" id="url-tab">
             <div style="margin-top: 15px;">
                 <label for="imageUrlInput">URL hình ảnh:</label>
@@ -471,14 +479,12 @@
                 <button id="previewImageBtn" style="margin-top: 10px; padding: 5px 10px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer;">Xem trước</button>
             </div>
         </div>
-        
         <div class="tab-content" id="upload-tab">
             <div class="upload-section-image">
                 <p>Chọn hình ảnh từ máy tính của bạn:</p>
                 <input type="file" id="imageUploadInput" accept="image/*" style="display: none;" />
                 <button class="upload-image-btn" id="triggerUploadBtn">Chọn hình ảnh</button>
                 <div class="upload-status" id="uploadStatus"></div>
-                
                 <div class="image-processing-controls">
                     <button class="processing-btn remove-bg-btn" id="removeBgBtn" disabled>Tách nền tự động</button>
                     <button class="processing-btn remove-image-btn" id="removeImageBtn">Xóa hình và làm lại</button>
@@ -486,15 +492,12 @@
                 </div>
             </div>
         </div>
-        
         <img id="imagePreview" class="image-preview" />
-        
         <div class="image-manager-buttons">
             <button class="image-manager-cancel" id="imageManagerCancel">Hủy</button>
             <button class="image-manager-save" id="imageManagerSave">Lưu hình ảnh</button>
         </div>
     </div>
-
     <div class="quote-page" id="quotePage">
         <div class="quote-header">
             <div class="company-logo-container">
@@ -507,9 +510,7 @@
                 </div>
             </div>
         </div>
-        
         <div class="quote-title">BÁO GIÁ SẢN PHẨM THUỐC</div>
-        
         <div class="customer-info">
             <div class="customer-info-row">
                 <div class="customer-info-label">Khách hàng:</div>
@@ -528,9 +529,7 @@
                 <div id="quoteCustomerAddress"></div>
             </div>
         </div>
-        
         <div class="table-container" id="quoteTableContainer"></div>
-        
        <div class="quote-footer">
             <div>
                 <div style="font-style: italic; font-weight: bold;">Gía này chưa bao gồm VAT 5%</div>
@@ -539,17 +538,13 @@
                 <div>Ngày lập: <span id="quoteDate"></span></div>
                 <div style="margin-top: 50px; text-align: center;">CÔNG TY IDECO TRÂN TRỌNG BÁO </div>
                 <div style="margin-top: 50px; text-align: center; font-weight: bold;">(Ký và ghi rõ họ tên)</div>
-                
             </div>
         </div>
-        
         <div class="quote-actions">
             <button class="quote-back-btn" id="quoteBackBtn">Quay lại</button>
             <button class="quote-print-btn" id="quotePrintBtn">In Báo Giá</button>
             <button class="quote-pdf-btn" id="quotePdfBtn">Xuất PDF</button>
         </div>
-    </div>
-
 <script>
     // ========== Firebase ==========
     const firebaseConfig = {
@@ -564,36 +559,28 @@
     };
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
-
     // ========== Biến toàn cục ==========
     let uploadedFiles = [];
     let currentData = [];           // mảng AoA, index của phần tử chính là ID hàng toàn cục
     let fileIndexToRemove = null;
     const CORRECT_PASSWORD = "minhtriet1973";
     let customerDatabase = []; // NEW: To store customer data
-
     // Cột
     let hiddenColumns = new Set(); // index cột đang ẩn
     let headersCache = [];         // tiêu đề
     let columnWidths = {};         // {colIndex: widthPx}
-
     // Hàng được chọn
     const selectedRowIdx = new Set(); // lưu chỉ số hàng theo currentData (ID ổn định)
     let showingOnlySelected = false;  // trạng thái lọc xem chỉ hàng đã chọn
-
     // Hình ảnh sản phẩm
     let productImages = {};        // {productName: imageData (base64 hoặc URL)}
     let currentImageFile = null;   // File hình ảnh được chọn để upload
     let originalImageFile = null;  // File gốc để có thể làm lại
-
     // --- Biến mới cho chức năng CRUD ---
     let rowIndexMap = []; // Map từ index của currentData về {fileIndex, rowIndexInFile}
     let editingRowState = { index: null, originalData: [] }; // Lưu trạng thái hàng đang sửa
-
-
     // API Remove.bg - cần thay bằng API key thực
     const REMOVE_BG_API_KEY = "iHt8DKCwKg4Va63ACXopN7nm"; // Thay bằng API key thực
-
     // ========== DOM ==========
     const viewPriceBtn = document.getElementById("viewPriceBtn");
     const popupOverlay = document.getElementById("popupOverlay");
@@ -604,19 +591,16 @@
     const searchInput = document.getElementById("searchInput");
     const tableContainer = document.getElementById("tableContainer");
     const loadingIndicator = document.getElementById("loadingIndicator");
-
     const passwordDialog = document.getElementById("passwordDialog");
     const passwordInput = document.getElementById("passwordInput");
     const passwordDialogCancel = document.getElementById("passwordDialogCancel");
     const passwordDialogConfirm = document.getElementById("passwordDialogConfirm");
-
     const notificationBtn = document.getElementById("notificationBtn");
     const notificationDialog = document.getElementById("notificationDialog");
     const notificationTextarea = document.getElementById("notificationTextarea");
     const notificationCancelBtn = document.getElementById("notificationCancelBtn");
     const notificationSaveBtn = document.getElementById("notificationSaveBtn");
     const notificationDisplay = document.getElementById("notificationDisplay");
-
     const columnToolbar = document.getElementById("columnToolbar");
     const columnList = document.getElementById("columnList");
     const btnHide = document.getElementById("btnHide");
@@ -624,10 +608,8 @@
     const btnShowAll = document.getElementById("btnShowAll");
     const exportBtn = document.getElementById("exportBtn");
     const manageImagesBtn = document.getElementById("manageImagesBtn");
-
     const filterSelectedBtn = document.getElementById("filterSelectedBtn");
     const clearSelectionBtn = document.getElementById("clearSelectionBtn");
-
     const createQuoteBtn = document.getElementById("createQuoteBtn");
     const quoteDialog = document.getElementById("quoteDialog");
     const customerNameInput = document.getElementById("customerNameInput");
@@ -637,8 +619,6 @@
     const quoteDialogCancel = document.getElementById("quoteDialogCancel");
     const quoteDialogCreate = document.getElementById("quoteDialogCreate");
     const customerSuggestions = document.getElementById('customerSuggestions');
-
-
     const imageManager = document.getElementById("imageManager");
     const productSelect = document.getElementById("productSelect");
     const imageUrlInput = document.getElementById("imageUrlInput");
@@ -652,7 +632,6 @@
     const tabs = document.querySelectorAll('.tab');
     const tabContents = document.querySelectorAll('.tab-content');
     const showOnlySelectedCheckbox = document.getElementById("showOnlySelectedProducts");
-
     const quotePage = document.getElementById("quotePage");
     const quoteCustomerName = document.getElementById("quoteCustomerName");
     const quoteCustomerContact = document.getElementById("quoteCustomerContact");
@@ -663,17 +642,14 @@
     const quoteBackBtn = document.getElementById("quoteBackBtn");
     const quotePrintBtn = document.getElementById("quotePrintBtn");
     const quotePdfBtn = document.getElementById("quotePdfBtn");
-
     // Thêm các phần tử DOM mới cho xử lý ảnh
     const removeBgBtn = document.getElementById("removeBgBtn");
     const removeImageBtn = document.getElementById("removeImageBtn");
     const processingStatus = document.getElementById("processingStatus");
-
     // --- DOM mới cho CRUD ---
     const addNewRowBtn = document.getElementById("addNewRowBtn");
     const editRowBtn = document.getElementById("editRowBtn");
     const deleteRowBtn = document.getElementById("deleteRowBtn");
-
     // --- DOM MỚI CHO DATABASE KHÁCH HÀNG ---
     const databaseBtn = document.getElementById("databaseBtn");
     const customerDbOverlay = document.getElementById("customerDbOverlay");
@@ -682,7 +658,13 @@
     const customerFileNameDisplay = document.getElementById("customerFileNameDisplay");
     const customerTableContainer = document.getElementById("customerTableContainer");
     const customerLoadingIndicator = document.getElementById("customerLoadingIndicator");
-
+    // === THÊM DOM MỚI CHO CHỨC NĂNG CHỌN TẤT CẢ & PHẠM VI ===
+    const selectAllBtn = document.getElementById("selectAllBtn");
+    const fromRowInput = document.getElementById("fromRowInput");
+    const toRowInput = document.getElementById("toRowInput");
+    const selectRangeBtn = document.getElementById("selectRangeBtn");
+    // === BIẾN LƯU KHỔ GIẤY ===
+    let currentPaperOrientation = 'portrait'; // mặc định là dọc
 
     // ========== Sự kiện ==========
     viewPriceBtn.addEventListener("click", () => {
@@ -693,7 +675,6 @@
     popupOverlay.addEventListener("click", (e) => { if (e.target === popupOverlay) popupOverlay.style.display = "none"; });
     excelFileInput.addEventListener("change", handleFileSelect);
     searchInput.addEventListener("input", ()=>{ showingOnlySelected=false; performSearch(); });
-
     passwordDialogCancel.addEventListener("click", () => { passwordDialog.style.display = "none"; passwordInput.value = ""; fileIndexToRemove = null; });
     passwordDialogConfirm.addEventListener("click", () => {
         const enteredPassword = passwordInput.value;
@@ -702,7 +683,6 @@
             passwordDialog.style.display = "none"; passwordInput.value = ""; fileIndexToRemove = null;
         } else { alert("Password không đúng. Vui lòng thử lại."); passwordInput.value = ""; }
     });
-
     notificationBtn.addEventListener("click", () => {
         notificationDialog.style.display = "flex";
         notificationTextarea.focus();
@@ -712,17 +692,13 @@
     });
     notificationCancelBtn.addEventListener("click", () => { notificationDialog.style.display = "none"; notificationDisplay.style.display = "none"; });
     notificationSaveBtn.addEventListener("click", saveNotification);
-
     btnHide.addEventListener("click", () => applyColumnSelection("hide"));
     btnUnhide.addEventListener("click", () => applyColumnSelection("unhide"));
     btnShowAll.addEventListener("click", () => { hiddenColumns.clear(); renderColumnSelector(); redrawWithFilters(); });
-
     exportBtn.addEventListener("click", exportCurrentViewToExcel);
     manageImagesBtn.addEventListener("click", openImageManager);
-
     filterSelectedBtn.addEventListener('click', ()=>{ if(selectedRowIdx.size===0){ alert('Chưa có hàng nào được chọn.'); return; } showingOnlySelected=true; renderSelectedOnly(); });
     clearSelectionBtn.addEventListener('click', ()=>{ selectedRowIdx.clear(); showingOnlySelected=false; searchInput.value=''; createTable(currentData); updateActionButtonsState(); });
-
     createQuoteBtn.addEventListener('click', () => {
         if (selectedRowIdx.size === 0) {
             alert('Vui lòng chọn ít nhất một sản phẩm để tạo báo giá.');
@@ -731,28 +707,31 @@
         quoteDialog.style.display = 'flex';
         customerNameInput.focus();
     });
-
     quoteDialogCancel.addEventListener('click', () => {
         quoteDialog.style.display = 'none';
         clearQuoteForm();
     });
-
-    quoteDialogCreate.addEventListener('click', createQuote);
-
+    quoteDialogCreate.addEventListener('click', () => {
+        // Lấy giá trị khổ giấy
+        const radios = document.querySelectorAll('input[name="paperOrientation"]');
+        for (const radio of radios) {
+            if (radio.checked) {
+                currentPaperOrientation = radio.value;
+                break;
+            }
+        }
+        createQuote();
+    });
     // Sự kiện cho autocomplete khách hàng
     customerNameInput.addEventListener('input', showCustomerSuggestions);
-
     quoteBackBtn.addEventListener('click', () => {
         quotePage.style.display = 'none';
         popupOverlay.style.display = 'block';
     });
-
     quotePrintBtn.addEventListener('click', () => {
         window.print();
     });
-
-    quotePdfBtn.addEventListener('click', generatePdf);
-
+    quotePdfBtn.addEventListener('click', () => generatePdf(currentPaperOrientation));
     previewImageBtn.addEventListener('click', previewImage);
     imageManagerCancel.addEventListener('click', () => { 
         imageManager.style.display = 'none'; 
@@ -764,40 +743,31 @@
         resetProcessingUI();
     });
     imageManagerSave.addEventListener('click', saveProductImage);
-    
     triggerUploadBtn.addEventListener('click', () => {
         imageUploadInput.click();
     });
-    
     imageUploadInput.addEventListener('change', handleImageUpload);
-    
     // Tab switching
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
             const tabId = tab.getAttribute('data-tab');
-            
             tabs.forEach(t => t.classList.remove('active'));
             tabContents.forEach(tc => tc.classList.remove('active'));
-            
             tab.classList.add('active');
             document.getElementById(tabId).classList.add('active');
         });
     });
-
     showOnlySelectedCheckbox.addEventListener('change', () => {
         if (imageManager.style.display === 'block') {
             populateProductSelect();
         }
     });
-
     removeBgBtn.addEventListener("click", removeImageBackground);
     removeImageBtn.addEventListener("click", resetImageUpload);
-
     // --- Sự kiện mới cho CRUD ---
     addNewRowBtn.addEventListener("click", handleAddNewRow);
     editRowBtn.addEventListener("click", handleEditRow);
     deleteRowBtn.addEventListener("click", handleDeleteRows);
-    
     // --- SỰ KIỆN MỚI CHO DATABASE KHÁCH HÀNG ---
     databaseBtn.addEventListener("click", () => {
         customerDbOverlay.style.display = "block";
@@ -806,45 +776,86 @@
     closeDbPopupBtn.addEventListener("click", () => customerDbOverlay.style.display = "none");
     customerDbOverlay.addEventListener("click", (e) => { if (e.target === customerDbOverlay) customerDbOverlay.style.display = "none"; });
     customerFileInput.addEventListener("change", handleCustomerFileSelect);
-
+    // === THÊM SỰ KIỆN CHO CHỨC NĂNG MỚI ===
+    selectAllBtn.addEventListener("click", () => {
+        const checkboxes = tableContainer.querySelectorAll('tbody input[type="checkbox"]');
+        if (checkboxes.length === 0) {
+            alert("Không có hàng nào để chọn.");
+            return;
+        }
+        selectedRowIdx.clear();
+        checkboxes.forEach((cb, idx) => {
+            const tr = cb.closest('tr');
+            const rowIndex = parseInt(tr.dataset.rowIndex);
+            selectedRowIdx.add(rowIndex);
+            cb.checked = true;
+        });
+        updateActionButtonsState();
+    });
+    selectRangeBtn.addEventListener("click", () => {
+        const from = parseInt(fromRowInput.value);
+        const to = parseInt(toRowInput.value);
+        const checkboxes = tableContainer.querySelectorAll('tbody input[type="checkbox"]');
+        if (checkboxes.length === 0) {
+            alert("Không có hàng nào để chọn.");
+            return;
+        }
+        if (isNaN(from) || isNaN(to) || from < 1 || to < 1) {
+            alert("Vui lòng nhập số hàng hợp lệ.");
+            return;
+        }
+        if (from > to) {
+            alert("Số 'từ' không được lớn hơn số 'đến'.");
+            return;
+        }
+        const maxVisibleRows = checkboxes.length;
+        if (from > maxVisibleRows || to > maxVisibleRows) {
+            alert(`Số hàng vượt quá giới hạn. Hiện chỉ có ${maxVisibleRows} hàng.`);
+            return;
+        }
+        selectedRowIdx.clear();
+        checkboxes.forEach((cb, idx) => {
+            const tr = cb.closest('tr');
+            const rowIndex = parseInt(tr.dataset.rowIndex);
+            if (idx + 1 >= from && idx + 1 <= to) {
+                selectedRowIdx.add(rowIndex);
+                cb.checked = true;
+            } else {
+                cb.checked = false;
+            }
+        });
+        updateActionButtonsState();
+    });
     // ========== Customer Database Functions (NEW) ==========
-
     async function handleCustomerFileSelect(event) {
         const file = event.target.files[0];
         if (!file) return;
-
         customerLoadingIndicator.style.display = "block";
         customerTableContainer.innerHTML = "";
         customerFileNameDisplay.textContent = file.name;
-
         try {
             const data = await readExcelFile(file);
             if (data.length < 2) {
                 throw new Error("File Excel không có dữ liệu hoặc chỉ có dòng tiêu đề.");
             }
-
             const header = data[0].map(h => String(h).toLowerCase().trim());
             const nameIndex = header.findIndex(h => h.includes('tên khách hàng') || h.includes('tên'));
             const contactIndex = header.findIndex(h => h.includes('người phụ trách'));
             const phoneIndex = header.findIndex(h => h.includes('điện thoại') || h.includes('sdt'));
             const addressIndex = header.findIndex(h => h.includes('địa chỉ'));
-
             if (nameIndex === -1) {
                 throw new Error("Không tìm thấy cột 'Tên khách hàng' trong file Excel.");
             }
-
             const parsedData = data.slice(1).map(row => ({
                 tenKhachHang: row[nameIndex] || '',
                 nguoiPhuTrach: contactIndex > -1 ? (row[contactIndex] || '') : '',
                 dienThoai: phoneIndex > -1 ? (row[phoneIndex] || '') : '',
                 diaChi: addressIndex > -1 ? (row[addressIndex] || '') : '',
             })).filter(customer => customer.tenKhachHang.trim() !== ''); // Lọc bỏ khách hàng không có tên
-
             customerDatabase = parsedData;
             await saveCustomerDataToFirebase();
             renderCustomerTable(customerDatabase);
             alert(`Đã import và lưu thành công ${customerDatabase.length} khách hàng.`);
-
         } catch (error) {
             console.error("Lỗi khi xử lý file khách hàng:", error);
             alert(`Lỗi: ${error.message}`);
@@ -854,18 +865,15 @@
             customerFileInput.value = ''; // Reset input
         }
     }
-    
     function renderCustomerTable(data) {
         if (!data || data.length === 0) {
             customerTableContainer.innerHTML = '<p>Không có dữ liệu khách hàng. Vui lòng upload file Excel.</p>';
             return;
         }
-
         const table = document.createElement("table");
         table.className = "price-table";
         const thead = document.createElement("thead");
         const headerRow = document.createElement("tr");
-
         const headers = ["STT", "Tên khách hàng", "Người phụ trách", "Điện thoại", "Địa chỉ"];
         headers.forEach(text => {
             const th = document.createElement("th");
@@ -874,7 +882,6 @@
         });
         thead.appendChild(headerRow);
         table.appendChild(thead);
-
         const tbody = document.createElement("tbody");
         data.forEach((customer, index) => {
             const tr = document.createElement("tr");
@@ -888,11 +895,9 @@
             tbody.appendChild(tr);
         });
         table.appendChild(tbody);
-
         customerTableContainer.innerHTML = "";
         customerTableContainer.appendChild(table);
     }
-
     async function saveCustomerDataToFirebase() {
         try {
             await database.ref("customerData").set(customerDatabase);
@@ -902,7 +907,6 @@
             alert("Lỗi khi lưu dữ liệu khách hàng. Vui lòng kiểm tra kết nối mạng.");
         }
     }
-
     async function loadCustomerDataFromFirebase() {
         try {
             const snapshot = await database.ref('customerData').once('value');
@@ -915,25 +919,20 @@
             console.error('Lỗi khi tải dữ liệu khách hàng:', error);
         }
     }
-    
     function showCustomerSuggestions(event) {
         const input = event.target.value.toLowerCase();
         customerSuggestions.innerHTML = '';
-
         if (input.length < 1) {
             return;
         }
-
         const filteredCustomers = customerDatabase.filter(customer =>
             customer.tenKhachHang.toLowerCase().includes(input)
         );
-
         filteredCustomers.forEach(customer => {
             const option = document.createElement('option');
             option.value = customer.tenKhachHang;
             customerSuggestions.appendChild(option);
         });
-        
         // Auto-fill when a selection is made
         const exactMatch = customerDatabase.find(c => c.tenKhachHang.toLowerCase() === input);
         if (exactMatch) {
@@ -942,10 +941,7 @@
             customerAddressInput.value = exactMatch.diaChi || '';
         }
     }
-
-
     // ========== CRUD Functions (Thêm, Sửa, Xóa) ==========
-    
     function updateActionButtonsState() {
         if (editingRowState.index !== null) {
             addNewRowBtn.disabled = true;
@@ -957,57 +953,44 @@
             editRowBtn.disabled = (selectedRowIdx.size !== 1);
         }
     }
-    
     async function handleAddNewRow() {
         if (headersCache.length === 0) {
             alert("Không có dữ liệu (tiêu đề cột) để thêm hàng mới. Vui lòng tải file Excel trước.");
             return;
         }
-
         const userAddedFileName = "User Added Data";
         let userFile = uploadedFiles.find(f => f.name === userAddedFileName);
-
         if (!userFile) {
             userFile = { name: userAddedFileName, data: [headersCache] };
             uploadedFiles.push(userFile);
             addFileToList(userAddedFileName, uploadedFiles.length - 1);
         }
-
         const newRow = Array(headersCache.length).fill('');
         userFile.data.push(newRow);
-
         await saveDataToFirebase();
         await displayAllData();
-
         tableContainer.scrollTop = tableContainer.scrollHeight;
-        
         const newRowIndexInCurrentData = currentData.length - 1;
         selectedRowIdx.clear();
         selectedRowIdx.add(newRowIndexInCurrentData);
         handleEditRow();
     }
-
     function handleEditRow() {
         const btn = editRowBtn;
-
         if (editingRowState.index !== null) {
             const rowIndex = editingRowState.index;
             const tr = tableContainer.querySelector(`tr[data-row-index='${rowIndex}']`);
             if (!tr) return;
-
             const newRowData = [];
             const cells = tr.querySelectorAll('td');
             const visibleIdx = visibleColumnIndexes();
-            
             for (let i = 0; i < cells.length -1; i++) {
                  newRowData.push(cells[i].textContent.trim());
             }
-
             let fullNewRow = [...currentData[rowIndex]];
             visibleIdx.forEach((originalColIdx, i) => {
                 fullNewRow[originalColIdx] = newRowData[i] || '';
             });
-
             const mapping = rowIndexMap[rowIndex];
             if (mapping) {
                 uploadedFiles[mapping.fileIndex].data[mapping.rowIndexInFile] = fullNewRow;
@@ -1016,7 +999,6 @@
                     currentData[rowIndex] = fullNewRow;
                 });
             }
-
             cells.forEach(td => {
                 td.contentEditable = 'false';
                 td.classList.remove('editing-cell');
@@ -1025,16 +1007,13 @@
             btn.textContent = 'Sửa hàng đã chọn';
             btn.style.background = '#ffc107';
             document.getElementById('cancelEditBtn')?.remove();
-
         } else {
             if (selectedRowIdx.size !== 1) return;
             const rowIndex = selectedRowIdx.values().next().value;
             const tr = tableContainer.querySelector(`tr[data-row-index='${rowIndex}']`);
             if (!tr) return;
-
             editingRowState.index = rowIndex;
             editingRowState.originalData = [...currentData[rowIndex]];
-
             const cells = tr.querySelectorAll('td');
             cells.forEach((td, i) => {
                 if (i < cells.length - 1) {
@@ -1043,10 +1022,8 @@
                 }
             });
             cells[0].focus();
-
             btn.textContent = 'Lưu thay đổi';
             btn.style.background = '#4caf50';
-            
             const cancelBtn = document.createElement('button');
             cancelBtn.id = 'cancelEditBtn';
             cancelBtn.textContent = 'Hủy';
@@ -1073,15 +1050,12 @@
                 updateActionButtonsState();
             };
             btn.parentNode.insertBefore(cancelBtn, btn.nextSibling);
-
         }
         updateActionButtonsState();
     }
-    
     async function handleDeleteRows() {
         if (selectedRowIdx.size === 0) return;
         if (!confirm(`Bạn có chắc muốn xóa ${selectedRowIdx.size} hàng đã chọn? Hành động này không thể hoàn tác.`)) return;
-
         const toDeleteByFile = {};
         for (const rowIndex of selectedRowIdx) {
             const mapping = rowIndexMap[rowIndex];
@@ -1092,30 +1066,24 @@
                 toDeleteByFile[mapping.fileIndex].push(mapping.rowIndexInFile);
             }
         }
-
         for (const fileIndex in toDeleteByFile) {
             toDeleteByFile[fileIndex].sort((a, b) => b - a);
             for (const rowIndexInFile of toDeleteByFile[fileIndex]) {
                 uploadedFiles[fileIndex].data.splice(rowIndexInFile, 1);
             }
         }
-
         selectedRowIdx.clear();
         await saveDataToFirebase();
         await displayAllData();
         updateActionButtonsState();
     }
-
-
     // ========== Quản lý hình ảnh ==========
     function openImageManager() {
         if (currentData.length === 0) {
             alert('Vui lòng tải dữ liệu sản phẩm trước.');
             return;
         }
-        
         populateProductSelect();
-        
         const selectedProduct = productSelect.value;
         if (productImages[selectedProduct]) {
             imageUrlInput.value = productImages[selectedProduct];
@@ -1125,46 +1093,36 @@
             imageUrlInput.value = '';
             imagePreview.style.display = 'none';
         }
-        
         currentImageFile = null;
         originalImageFile = null;
         uploadStatus.textContent = '';
-        
         resetProcessingUI();
-        
         imageManager.style.display = 'block';
     }
-    
     function populateProductSelect() {
         productSelect.innerHTML = '';
-        
         const productNameIndex = findProductNameColumnIndex();
         if (productNameIndex === -1) {
             alert('Không tìm thấy cột tên sản phẩm trong dữ liệu.');
             return;
         }
-        
         const products = new Set();
         const showOnlySelected = showOnlySelectedCheckbox.checked;
-        
         for (let i = 1; i < currentData.length; i++) {
             if (showOnlySelected && !selectedRowIdx.has(i)) {
                 continue;
             }
-            
             const productName = currentData[i][productNameIndex] || '';
             if (productName.trim() !== '') {
                 products.add(productName);
             }
         }
-        
         if (products.size === 0 && showOnlySelected) {
             alert('Không có sản phẩm nào được chọn. Vui lòng chọn ít nhất một sản phẩm trước.');
             showOnlySelectedCheckbox.checked = false;
             populateProductSelect();
             return;
         }
-        
         products.forEach(product => {
             const option = document.createElement('option');
             option.value = product;
@@ -1172,7 +1130,6 @@
             productSelect.appendChild(option);
         });
     }
-    
     function findProductNameColumnIndex() {
         for (let i = 0; i < headersCache.length; i++) {
             const header = headersCache[i].toLowerCase();
@@ -1182,7 +1139,6 @@
         }
         return 0;
     }
-    
     function previewImage() {
         const url = imageUrlInput.value.trim();
         if (url) {
@@ -1194,93 +1150,72 @@
             resetProcessingUI();
         }
     }
-    
     function handleImageUpload(event) {
         const file = event.target.files[0];
         if (!file) return;
-        
         if (!file.type.match('image.*')) {
             alert('Vui lòng chọn file hình ảnh (JPEG, PNG, GIF, v.v.)');
             return;
         }
-        
         if (file.size > 5 * 1024 * 1024) {
             alert('Kích thước file không được vượt quá 5MB');
             return;
         }
-        
         currentImageFile = file;
         originalImageFile = file;
         uploadStatus.textContent = `Đã chọn: ${file.name} (${Math.round(file.size/1024)} KB)`;
         uploadStatus.style.color = '#4CAF50';
-        
         removeBgBtn.disabled = false;
-        
         const reader = new FileReader();
         reader.onload = function(e) {
             imagePreview.src = e.target.result;
             imagePreview.style.display = 'block';
         };
         reader.readAsDataURL(file);
-        
         imageUrlInput.value = '';
     }
-    
     function resetImageUpload() {
         if (!confirm('Bạn có chắc muốn xóa hình hiện tại và chọn lại?')) {
             return;
         }
-        
         currentImageFile = null;
         originalImageFile = null;
         imageUploadInput.value = '';
         uploadStatus.textContent = '';
         imagePreview.style.display = 'none';
         removeBgBtn.disabled = true;
-        
         resetProcessingUI();
-        
         triggerUploadBtn.click();
     }
-    
     function resetProcessingUI() {
         processingStatus.className = 'processing-status';
         processingStatus.textContent = '';
         removeBgBtn.disabled = (currentImageFile === null);
     }
-    
     async function removeImageBackground() {
         if (!currentImageFile) {
             alert('Vui lòng chọn hình ảnh trước.');
             return;
         }
-        
         processingStatus.className = 'processing-status loading';
         processingStatus.textContent = 'Đang xử lý tách nền...';
         removeBgBtn.disabled = true;
-        
         try {
             const formData = new FormData();
             formData.append('image_file', currentImageFile);
             formData.append('size', 'auto');
-            
             const response = await fetch('https://api.remove.bg/v1.0/removebg', {
                 method: 'POST',
                 headers: { 'X-Api-Key': REMOVE_BG_API_KEY },
                 body: formData
             });
-            
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.errors ? errorData.errors[0].title : 'Lỗi khi tách nền');
             }
-            
             const blob = await response.blob();
-            
             const processedFile = new File([blob], `nobg_${currentImageFile.name}`, { type: 'image/png' });
-            
             currentImageFile = processedFile;
-            
             const reader = new FileReader();
             reader.onload = function(e) {
                 imagePreview.src = e.target.result;
@@ -1289,7 +1224,6 @@
                 removeBgBtn.disabled = false;
             };
             reader.readAsDataURL(blob);
-            
         } catch (error) {
             console.error('Lỗi khi tách nền:', error);
             processingStatus.className = 'processing-status error';
@@ -1297,26 +1231,21 @@
             removeBgBtn.disabled = false;
         }
     }
-    
     function saveProductImage() {
         const productName = productSelect.value;
-        
         if (!productName) {
             alert('Vui lòng chọn sản phẩm.');
             return;
         }
-        
         if (currentImageFile) {
             uploadStatus.textContent = 'Đang xử lý hình ảnh...';
             uploadStatus.style.color = '#FF9800';
-            
             const reader = new FileReader();
             reader.onload = function(e) {
                 productImages[productName] = e.target.result;
                 saveImagesToLocalStorage();
                 uploadStatus.textContent = 'Lưu hình ảnh thành công!';
                 uploadStatus.style.color = '#4CAF50';
-                
                 setTimeout(() => {
                     imageManager.style.display = 'none';
                     uploadStatus.textContent = '';
@@ -1335,7 +1264,6 @@
                 alert('URL hình ảnh không hợp lệ. Vui lòng nhập URL đúng định dạng.');
                 return;
             }
-            
             productImages[productName] = imageUrl;
             saveImagesToLocalStorage();
             alert('Đã lưu hình ảnh cho sản phẩm: ' + productName);
@@ -1345,11 +1273,9 @@
             alert('Vui lòng chọn hình ảnh từ máy tính hoặc nhập URL hình ảnh.');
         }
     }
-    
     function isValidUrl(string) {
         try { new URL(string); return true; } catch (_) { return false; }
     }
-    
     function saveImagesToLocalStorage() {
         try {
             localStorage.setItem("productImages", JSON.stringify(productImages));
@@ -1358,14 +1284,12 @@
             alert('Lỗi khi lưu hình ảnh: ' + error.message);
         }
     }
-    
     function loadProductImages() {
         try {
             const imagesData = localStorage.getItem("productImages");
             if (imagesData) productImages = JSON.parse(imagesData);
         } catch (error) { console.error("Lỗi khi tải hình ảnh sản phẩm:", error); }
     }
-
     // ========== Thông báo ==========
     function saveNotification(){
         const notificationText = notificationTextarea.value.trim();
@@ -1379,7 +1303,6 @@
             const data = snapshot.val(); if (data && data.text){ notificationDisplay.textContent = data.text; notificationDisplay.style.display = "block"; }
         }).catch((error) => console.error("Lỗi khi tải thông báo:", error));
     }
-
     // ========== Upload/Đọc Excel ==========
     async function handleFileSelect(event){
         const files = event.target.files; if(!files.length) return;
@@ -1424,7 +1347,6 @@
             reader.readAsArrayBuffer(file);
         });
     }
-
     // ========== Danh sách file ==========
     function addFileToList(fileName, index){
         const fileItem = document.createElement("div");
@@ -1446,22 +1368,17 @@
         else if(uploadedFiles.length===1) fileNameDisplay.textContent = uploadedFiles[0].name;
         else fileNameDisplay.textContent = `${uploadedFiles.length} file đã chọn`;
     }
-
     // ========== Hiển thị bảng ==========
     function displayAllData(){
         if (editingRowState.index !== null) {
             handleEditRow();
         }
-
         if(uploadedFiles.length===0){ tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị. Vui lòng tải lên file Excel.</p>'; columnToolbar.style.display='none'; return; }
-        
         currentData = [];
         rowIndexMap = [];
         let isFirstFile = true;
-        
         uploadedFiles.forEach((file, fileIndex) => {
             if (!file.data || file.data.length === 0) return;
-
             let dataSlice = file.data;
             if (isFirstFile && dataSlice.length > 0) {
                 currentData.push(dataSlice[0]);
@@ -1469,7 +1386,6 @@
                 headersCache = dataSlice[0];
                 isFirstFile = false;
             }
-
             for (let i = 1; i < dataSlice.length; i++) {
                 if (dataSlice[i] && dataSlice[i].some(cell => String(cell).trim() !== '')) {
                     currentData.push(dataSlice[i]);
@@ -1477,53 +1393,42 @@
                 }
             }
         });
-        
         selectedRowIdx.clear(); showingOnlySelected=false; searchInput.value='';
         createTable(currentData); 
         updateActionButtonsState();
     }
-
     function visibleColumnIndexes(){
         if (headersCache.length === 0 && currentData.length > 0) {
             headersCache = currentData[0];
         }
         return headersCache.map((_, idx)=> idx).filter(idx => !hiddenColumns.has(idx));
     }
-
     function createTable(data, sourceIndexes=null){
         if(!data.length){ tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị.</p>'; columnToolbar.style.display='none'; return; }
         headersCache = data[0] || [];
         const visibleIdx = visibleColumnIndexes();
-
         renderColumnSelector();
-
         const table = document.createElement("table"); table.className = "price-table";
         const thead = document.createElement("thead"); const headerRow = document.createElement("tr");
-        
         visibleIdx.forEach((colIdx)=>{ 
             const th = document.createElement("th"); th.className = 'th-resizable'; th.textContent = headersCache[colIdx] || ""; 
             if(columnWidths[colIdx]){ th.style.width = columnWidths[colIdx] + 'px'; }
             headerRow.appendChild(th); 
         });
-        
         const thChoose = document.createElement('th'); thChoose.textContent = 'Chọn'; thChoose.className='th-resizable'; headerRow.appendChild(thChoose);
         thead.appendChild(headerRow); table.appendChild(thead);
-
         const tbody = document.createElement("tbody");
         for(let i=1;i<data.length;i++){
             const rowData = data[i] || []; if(!rowData.some(cell=> String(cell).trim().length>0)) continue;
             const tr = document.createElement("tr");
-            
             const rowIdx = sourceIndexes ? sourceIndexes[i-1] : i;
             tr.dataset.rowIndex = rowIdx;
-
             visibleIdx.forEach((colIdx, visPos)=>{
                 const td = document.createElement("td"); const cell = rowData[colIdx];
                 td.textContent = (typeof cell === 'string' && cell.includes('%')) ? cell : (cell || '');
                 if(columnWidths[colIdx]){ td.style.width = columnWidths[colIdx] + 'px'; }
                 tr.appendChild(td);
             });
-            
             const tdChoose = document.createElement('td');
             const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = selectedRowIdx.has(rowIdx);
             cb.addEventListener('change', ()=>{ 
@@ -1536,15 +1441,17 @@
                 updateActionButtonsState();
             });
             tdChoose.style.textAlign='center'; tdChoose.appendChild(cb); tr.appendChild(tdChoose);
-
             tbody.appendChild(tr);
         }
         table.appendChild(tbody);
         tableContainer.innerHTML = ""; (tbody.rows.length>0 || headersCache.length>0) ? tableContainer.appendChild(table) : (tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị sau khi lọc.</p>');
-
         enableColumnResize(table, visibleIdx);
+        // === CẬP NHẬT GIÁ TRỊ MAX CHO INPUT PHẠM VI ===
+        const visibleRowCount = tbody.querySelectorAll('tr').length;
+        fromRowInput.max = visibleRowCount;
+        toRowInput.max = visibleRowCount;
+        toRowInput.value = visibleRowCount;
     }
-
     function renderSelectedOnly(){
         const indices = Array.from(selectedRowIdx).sort((a,b)=>a-b);
         const aoa = [currentData[0]];
@@ -1557,7 +1464,6 @@
         });
         createTable(aoa, sourceIdx);
     }
-
     function enableColumnResize(table, visibleIdx){
         const headerCells = table.querySelectorAll('thead th');
         headerCells.forEach((th, visPos)=>{
@@ -1568,7 +1474,6 @@
             const originalIndex = visibleIdx[visPos];
             const minWidth = 60;
             let startX = 0; let startWidth = 0; let dragging = false;
-
             const onMouseDown = (e)=>{ dragging = true; startX = e.pageX; startWidth = th.offsetWidth; document.body.style.cursor = 'col-resize'; e.preventDefault(); };
             const onMouseMove = (e)=>{
                 if(!dragging) return; const delta = e.pageX - startX; let newW = Math.max(minWidth, startWidth + delta);
@@ -1579,7 +1484,6 @@
             handle.onmousedown = onMouseDown; document.addEventListener('mousemove', onMouseMove); document.addEventListener('mouseup', onMouseUp);
         });
     }
-
     // ========== Tìm kiếm ==========
     function performSearch(){
         const searchTerm = searchInput.value.trim().toLowerCase();
@@ -1601,7 +1505,6 @@
         const cells = table.querySelectorAll('td');
         cells.forEach(cell=>{ const t = cell.textContent.toLowerCase(); if(t.includes(searchTerm)){ const r = new RegExp(searchTerm,'gi'); cell.innerHTML = cell.textContent.replace(r, m=>`<span class="highlight">${m}</span>`); } });
     }
-
     // ========== Ẩn/Hiện cột ==========
     function renderColumnSelector(){
         columnList.innerHTML = ""; if(!headersCache.length){ columnToolbar.style.display = 'none'; return; }
@@ -1628,7 +1531,6 @@
         if(showingOnlySelected){ renderSelectedOnly(); return; }
         const term = searchInput.value.trim(); if(term){ performSearch(); } else { createTable(currentData); }
     }
-
     // ========== Lưu/Tải Firebase ==========
     async function saveDataToFirebase(){
         const userAddedFile = uploadedFiles.find(f => f.name === "User Added Data");
@@ -1638,7 +1540,6 @@
                 return row.some(cell => String(cell).trim() !== '');
             });
         }
-
         const dataToSave = { files: uploadedFiles, lastUpdated: new Date().toISOString() };
         try {
             await database.ref("priceData").set(dataToSave);
@@ -1663,7 +1564,6 @@
             loadingIndicator.style.display = 'none';
         }).catch(error=>{ console.error('Lỗi khi tải dữ liệu:', error); loadingIndicator.style.display = 'none'; tableContainer.innerHTML = '<p>Lỗi khi tải dữ liệu từ server. Vui lòng thử lại sau.</p>'; });
     }
-
     // ========== Xuất Excel theo giao diện hiện tại ==========
     function exportCurrentViewToExcel(){
         const table = document.querySelector('.price-table'); if(!table){ alert('Không có dữ liệu để xuất.'); return; }
@@ -1678,7 +1578,6 @@
         const fileName = `BangGia_HienThi_${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}.xlsx`;
         XLSX.writeFile(wb, fileName);
     }
-
     // ========== Tạo báo giá ==========
     function clearQuoteForm() {
         customerNameInput.value = '';
@@ -1686,87 +1585,67 @@
         customerPhoneInput.value = '';
         customerAddressInput.value = '';
     }
-
     function createQuote() {
         const customerName = customerNameInput.value.trim();
         const customerContact = customerContactInput.value.trim();
         const customerPhone = customerPhoneInput.value.trim();
         const customerAddress = customerAddressInput.value.trim();
-
         if (!customerName) {
             alert('Vui lòng nhập tên khách hàng');
             return;
         }
-
         quoteCustomerName.textContent = customerName;
         quoteCustomerContact.textContent = customerContact;
         quoteCustomerPhone.textContent = customerPhone;
         quoteCustomerAddress.textContent = customerAddress;
-
         const now = new Date();
         const day = String(now.getDate()).padStart(2, '0');
         const month = String(now.getMonth() + 1).padStart(2, '0');
         const year = now.getFullYear();
         quoteDate.textContent = `${day}/${month}/${year}`;
-
         createQuoteTable();
-
         quotePage.style.display = 'block';
         popupOverlay.style.display = 'none';
         quoteDialog.style.display = 'none';
         clearQuoteForm();
     }
-
     function createQuoteTable() {
         const indices = Array.from(selectedRowIdx).sort((a,b)=>a-b);
         const aoa = [currentData[0]];
         indices.forEach(idx=>{ if(currentData[idx]) aoa.push(currentData[idx]); });
-
         const visibleIdx = visibleColumnIndexes();
         const filteredAoa = aoa.map(row => row.filter((_, idx) => visibleIdx.includes(idx)));
-
         const productNameIndex = findProductNameColumnIndex();
-        
         const table = document.createElement("table");
         table.className = "quote-table";
-
         const thead = document.createElement("thead");
         const headerRow = document.createElement("tr");
-        
         const thStt = document.createElement("th");
         thStt.textContent = "STT";
         thStt.style.width = "50px";
         headerRow.appendChild(thStt);
-        
         const thImage = document.createElement("th");
         thImage.textContent = "Hình ảnh";
         thImage.style.width = "100px";
         headerRow.appendChild(thImage);
-
         visibleIdx.forEach(colIdx => {
             const th = document.createElement("th");
             th.textContent = headersCache[colIdx] || "";
             headerRow.appendChild(th);
         });
-
         thead.appendChild(headerRow);
         table.appendChild(thead);
-
         const tbody = document.createElement("tbody");
         for (let i = 1; i < filteredAoa.length; i++) {
             const rowData = filteredAoa[i] || [];
             if (!rowData.some(cell => String(cell).trim().length > 0)) continue;
-
             const tr = document.createElement("tr");
-
             const tdStt = document.createElement("td");
             tdStt.textContent = i;
             tdStt.style.textAlign = "center";
             tr.appendChild(tdStt);
-            
             const tdImage = document.createElement("td");
             tdImage.style.textAlign = "center";
-            
             if (productNameIndex !== -1) {
                 const productName = aoa[i][productNameIndex] || '';
                 if (productImages[productName]) {
@@ -1777,31 +1656,44 @@
                     tdImage.appendChild(img);
                 }
             }
-            
             tr.appendChild(tdImage);
-
             rowData.forEach(cell => {
                 const td = document.createElement("td");
                 td.textContent = (typeof cell === 'string' && cell.includes('%')) ? cell : (cell || '');
                 tr.appendChild(td);
             });
-
             tbody.appendChild(tr);
         }
-
         table.appendChild(tbody);
         quoteTableContainer.innerHTML = "";
         quoteTableContainer.appendChild(table);
     }
-
     // ========== Xuất PDF ==========
-    function generatePdf() {
+    function generatePdf(paperOrientation = 'portrait') {
         const printQuotePage = quotePage.cloneNode(true);
         const actionsDiv = printQuotePage.querySelector('.quote-actions');
         if (actionsDiv) {
             actionsDiv.style.display = 'none';
         }
-        
+        // Áp dụng style theo khổ giấy
+        if (paperOrientation === 'landscape') {
+            printQuotePage.style.width = '297mm'; // A4 ngang
+            printQuotePage.style.height = '210mm';
+            printQuotePage.style.padding = '15px';
+            // Tùy chỉnh bảng cho ngang
+            const table = printQuotePage.querySelector('.quote-table');
+            if (table) {
+                table.style.fontSize = '12px';
+                const ths = table.querySelectorAll('th, td');
+                ths.forEach(cell => {
+                    cell.style.padding = '4px';
+                });
+            }
+        } else {
+            printQuotePage.style.width = '210mm'; // A4 dọc
+            printQuotePage.style.height = '297mm';
+            printQuotePage.style.padding = '20px';
+        }
         document.body.appendChild(printQuotePage);
         printQuotePage.style.display = 'block';
         printQuotePage.style.position = 'absolute';
@@ -1809,37 +1701,40 @@
         printQuotePage.style.top = '0';
         printQuotePage.style.zIndex = '9999';
         printQuotePage.style.background = 'white';
-        
+        printQuotePage.style.margin = '0';
+        printQuotePage.style.boxShadow = 'none';
+
         const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('p', 'mm', 'a4');
-        
+        const doc = new jsPDF({
+            orientation: paperOrientation,
+            unit: 'mm',
+            format: 'a4'
+        });
+
         html2canvas(printQuotePage, {
-            scale: 2, useCORS: true, logging: false,
-            width: printQuotePage.scrollWidth, height: printQuotePage.scrollHeight
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            width: printQuotePage.scrollWidth,
+            height: printQuotePage.scrollHeight
         }).then(canvas => {
             const imgData = canvas.toDataURL('image/jpeg', 1.0);
             const imgWidth = doc.internal.pageSize.getWidth();
             const pageHeight = doc.internal.pageSize.getHeight();
             const imgHeight = canvas.height * imgWidth / canvas.width;
-            
             let heightLeft = imgHeight;
             let position = 0;
-            
             doc.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
             heightLeft -= pageHeight;
-            
             while (heightLeft >= 0) {
                 position = heightLeft - imgHeight;
                 doc.addPage();
                 doc.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
                 heightLeft -= pageHeight;
             }
-            
             document.body.removeChild(printQuotePage);
-            
             const now = new Date();
             const fileName = `Bao_Gia_${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}_${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}.pdf`;
-            
             doc.save(fileName);
         }).catch(error => {
             console.error('Lỗi khi tạo PDF:', error);
@@ -1849,7 +1744,6 @@
             alert('Có lỗi xảy ra khi tạo PDF. Vui lòng thử lại.');
         });
     }
-
     // ========== Khởi tạo ==========
     document.addEventListener('DOMContentLoaded', ()=>{ 
         loadNotification(); 
