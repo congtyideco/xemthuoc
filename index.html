@@ -202,6 +202,24 @@
             border-radius: 5px; 
             cursor: pointer;
         }
+        
+        /* === THÊM: CSS CHO VÙNG CHỈNH SỬA === */
+        .quote-page [contentEditable="true"] {
+            background-color: #fffde7;
+            outline: 1px dashed #ffc107;
+            padding-left: 5px;
+            padding-right: 5px;
+        }
+        .quote-page [contentEditable="true"]:focus {
+            background-color: #ffffff;
+            outline: 2px solid #4285f4;
+            box-shadow: 0 0 5px rgba(66,133,244,0.5);
+        }
+        /* THÊM: Style cho TH khi chỉnh sửa */
+        .quote-table th[contentEditable="true"] {
+             background: #3367d6; /* Màu nền đậm hơn khi chỉnh sửa */
+        }
+        
         /* For PDF printing */
         @media print {
             body * {
@@ -221,6 +239,19 @@
             }
             .quote-actions {
                 display: none !important;
+            }
+            /* THÊM: Tắt CSS chỉnh sửa khi in */
+            .quote-page [contentEditable="true"] {
+                background-color: transparent !important;
+                outline: none !important;
+                box-shadow: none !important;
+            }
+            /* Đảm bảo nền TH được in đúng */
+            .quote-table th {
+                background: #4285f4 !important;
+                color: white !important;
+                -webkit-print-color-adjust: exact; /* Đảm bảo Chrome in nền */
+                print-color-adjust: exact; /* Tiêu chuẩn */
             }
         }
         @keyframes spin{ 0%{ transform:rotate(0) } 100%{ transform:rotate(360deg) } }
@@ -371,7 +402,6 @@
                 <button class="btn btn-filter" id="filterSelectedBtn" title="Chỉ hiển thị các hàng đã tick">Lọc hàng đã chọn</button>
                 <button class="btn btn-clear" id="clearSelectionBtn" title="Xóa mọi tick và trở về danh sách ban đầu">Refresh (xóa chọn)</button>
             </div>
-            <!-- === THÊM KHU VỰC CHỌN TẤT CẢ & CHỌN THEO PHẠM VI === -->
             <div class="select-range-section">
                 <button class="btn" id="selectAllBtn" style="background:#2196F3; color:white;">Chọn tất cả</button>
                 <span class="range-label">Từ hàng</span>
@@ -441,7 +471,6 @@
             <input type="text" class="quote-input" id="customerContactInput" placeholder="Người phụ trách" />
             <input type="text" class="quote-input" id="customerPhoneInput" placeholder="Điện thoại" />
             <input type="text" class="quote-input" id="customerAddressInput" placeholder="Địa chỉ" />
-            <!-- === THÊM CHỌN KHỔ GIẤY === -->
             <div class="paper-orientation">
                 <label>
                     <input type="radio" name="paperOrientation" value="portrait" checked /> Khổ dọc (A4)
@@ -510,7 +539,7 @@
                 </div>
             </div>
         </div>
-        <div class="quote-title">BÁO GIÁ SẢN PHẨM THUỐC</div>
+        <div class="quote-title" contentEditable="true">BÁO GIÁ SẢN PHẨM THUỐC</div>
         <div class="customer-info">
             <div class="customer-info-row">
                 <div class="customer-info-label">Khách hàng:</div>
@@ -532,12 +561,12 @@
         <div class="table-container" id="quoteTableContainer"></div>
        <div class="quote-footer">
             <div>
-                <div style="font-style: italic; font-weight: bold;">Gía này bao gồm VAT 5%</div>
+                <div style="font-style: italic; font-weight: bold;" contentEditable="true">Gía này bao gồm VAT 5%</div>
             </div>
             <div>
                 <div>Ngày lập: <span id="quoteDate"></span></div>
-                <div style="margin-top: 50px; text-align: center;">CÔNG TY IDECO TRÂN TRỌNG BÁO </div>
-                <div style="margin-top: 50px; text-align: center; font-weight: bold;">(Ký và ghi rõ họ tên)</div>
+                <div style="margin-top: 50px; text-align: center;" contentEditable="true">CÔNG TY IDECO TRÂN TRỌNG BÁO </div>
+                <div style="margin-top: 50px; text-align: center; font-weight: bold;" contentEditable="true">(Ký và ghi rõ họ tên)</div>
             </div>
         </div>
         <div class="quote-actions">
@@ -547,7 +576,7 @@
         </div>
 <script>
     // ========== Firebase ==========
-    const firebaseConfig = {
+  const firebaseConfig = {
         apiKey: "AIzaSyBuXjYpTuKpNyZY6ZIfUSA-m4NWBwPWcU0",
         authDomain: "baica-dae2b.firebaseapp.com",
         databaseURL: "https://baica-dae2b-default-rtdb.firebaseio.com",
@@ -1598,6 +1627,13 @@
         quoteCustomerContact.textContent = customerContact;
         quoteCustomerPhone.textContent = customerPhone;
         quoteCustomerAddress.textContent = customerAddress;
+        
+        // === THÊM: Cho phép chỉnh sửa thông tin khách hàng ===
+        quoteCustomerName.contentEditable = "true";
+        quoteCustomerContact.contentEditable = "true";
+        quoteCustomerPhone.contentEditable = "true";
+        quoteCustomerAddress.contentEditable = "true";
+
         const now = new Date();
         const day = String(now.getDate()).padStart(2, '0');
         const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -1631,6 +1667,8 @@
         visibleIdx.forEach(colIdx => {
             const th = document.createElement("th");
             th.textContent = headersCache[colIdx] || "";
+            // === THÊM: Cho phép chỉnh sửa tiêu đề cột ===
+            th.contentEditable = "true";
             headerRow.appendChild(th);
         });
         thead.appendChild(headerRow);
@@ -1660,6 +1698,8 @@
             rowData.forEach(cell => {
                 const td = document.createElement("td");
                 td.textContent = (typeof cell === 'string' && cell.includes('%')) ? cell : (cell || '');
+                // === THÊM: Cho phép chỉnh sửa ô trong bảng ===
+                td.contentEditable = "true";
                 tr.appendChild(td);
             });
             tbody.appendChild(tr);
@@ -1675,10 +1715,19 @@
         if (actionsDiv) {
             actionsDiv.style.display = 'none';
         }
+
+        // === THÊM: Tắt style chỉnh sửa trước khi chụp ảnh ===
+        const editables = printQuotePage.querySelectorAll('[contentEditable="true"]');
+        editables.forEach(el => {
+            el.style.backgroundColor = 'transparent';
+            el.style.outline = 'none';
+            el.style.boxShadow = 'none';
+        });
+
         // Áp dụng style theo khổ giấy
         if (paperOrientation === 'landscape') {
             printQuotePage.style.width = '297mm'; // A4 ngang
-            printQuotePage.style.height = '210mm';
+            printQuoteSizepage.style.height = '210mm';
             printQuotePage.style.padding = '15px';
             // Tùy chỉnh bảng cho ngang
             const table = printQuotePage.querySelector('.quote-table');
@@ -1754,4 +1803,3 @@
 </script>
 </body>
 </html>
-
