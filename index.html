@@ -246,10 +246,10 @@
                 outline: none !important;
                 box-shadow: none !important;
             }
-            /* Đảm bảo nền TH được in đúng */
+            /* === THAY ĐỔI: Sửa lỗi in === */
             .quote-table th {
-                background: #4285f4 !important;
-                color: white !important;
+                background: #f0f0f0 !important; /* Nền xám nhạt để dễ in */
+                color: #000000 !important; /* Chữ đen để đảm bảo luôn thấy */
                 -webkit-print-color-adjust: exact; /* Đảm bảo Chrome in nền */
                 print-color-adjust: exact; /* Tiêu chuẩn */
             }
@@ -576,7 +576,7 @@
         </div>
 <script>
     // ========== Firebase ==========
-  const firebaseConfig = {
+ const firebaseConfig = {
         apiKey: "AIzaSyBuXjYpTuKpNyZY6ZIfUSA-m4NWBwPWcU0",
         authDomain: "baica-dae2b.firebaseapp.com",
         databaseURL: "https://baica-dae2b-default-rtdb.firebaseio.com",
@@ -1727,7 +1727,8 @@
         // Áp dụng style theo khổ giấy
         if (paperOrientation === 'landscape') {
             printQuotePage.style.width = '297mm'; // A4 ngang
-            printQuoteSizepage.style.height = '210mm';
+            // === THAY ĐỔI: Sửa lỗi gõ nhầm ===
+            printQuotePage.style.height = '210mm';
             printQuotePage.style.padding = '15px';
             // Tùy chỉnh bảng cho ngang
             const table = printQuotePage.querySelector('.quote-table');
@@ -1752,6 +1753,14 @@
         printQuotePage.style.background = 'white';
         printQuotePage.style.margin = '0';
         printQuotePage.style.boxShadow = 'none';
+
+        // === THÊM: Ép kiểu CSS cho header của bảng (fix lỗi html2canvas) ===
+        const thCells = printQuotePage.querySelectorAll('.quote-table th');
+        thCells.forEach(th => {
+            th.style.background = '#4285f4';
+            th.style.color = 'white';
+        });
+        // === KẾT THÚC THÊM ===
 
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({
