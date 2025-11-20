@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Xem Giá Thuốc — Upload hình ảnh trực tiếp</title>
+    <title>Xem Giá Thuốc — Báo Giá Chuyên Nghiệp</title>
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f5f5f5; }
         .view-price-btn,.database-btn,.home-erp-btn,.notification-btn,.create-quote-btn{ position:fixed; right:20px; color:#fff; border:none; border-radius:8px; width:120px; height:50px; font-size:16px; font-weight:bold; cursor:pointer; box-shadow:0 4px 8px rgba(0,0,0,.2); display:flex; justify-content:center; align-items:center; text-align:center; transition:all .3s; z-index:1000; }
@@ -70,6 +71,7 @@
         .notification-dialog-cancel{ background:#f5f5f5 } .notification-dialog-save{ background:#4CAF50; color:#fff }
         .quote-dialog-cancel{ background:#f5f5f5 } .quote-dialog-create{ background:#ff9800; color:#fff }
         .notification-display{ position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#ffebee; border:1px solid #f44336; border-radius:4px; padding:15px; max-width:80%; color:#f44336; font-weight:bold; z-index:1000; display:none; text-align:center }
+        
         /* Image manager */
         .image-manager { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); z-index: 1003; width: 500px; max-width: 90%; }
         .image-manager h3 { margin-top: 0; color: #4285f4; }
@@ -87,7 +89,8 @@
         .tab.active { border-bottom: 2px solid #4285f4; color: #4285f4; font-weight: bold; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        /* Quote page styles */
+
+        /* === CSS CHO TRANG BÁO GIÁ & PDF === */
         .quote-page { 
             display: none; 
             background: white; 
@@ -95,7 +98,7 @@
             margin: 20px auto; 
             max-width: 1000px; 
             box-shadow: 0 0 10px rgba(0,0,0,0.1); 
-            page-break-after: always;
+            /* Không dùng page-break ở đây, để html2pdf tự xử lý */
         }
         .quote-header { 
             display: flex; 
@@ -141,6 +144,8 @@
             width: 150px; 
             font-weight: bold; 
         }
+        
+        /* Bảng báo giá */
         .quote-table { 
             width: 100%; 
             border-collapse: collapse; 
@@ -151,12 +156,23 @@
             border: 1px solid #ddd; 
             padding: 8px; 
             text-align: left; 
-            vertical-align: top;
+            vertical-align: middle; /* Căn giữa dọc cho đẹp */
         }
         .quote-table th { 
             background: #4285f4; 
             color: white; 
         }
+        
+        /* --- CẢI TIẾN PDF: LẶP LẠI TIÊU ĐỀ & NGẮT TRANG THÔNG MINH --- */
+        .quote-table thead {
+            display: table-header-group; /* Tiêu đề lặp lại ở trang mới */
+        }
+        .quote-table tr {
+            page-break-inside: avoid; /* Không cắt đôi dòng */
+            page-break-after: auto;
+        }
+        /* ------------------------------------------------------------ */
+
         .product-image { 
             max-width: 80px; 
             max-height: 80px; 
@@ -170,6 +186,7 @@
             display: flex; 
             justify-content: space-between; 
             font-size: 14px;
+            page-break-inside: avoid; /* Footer không bị cắt */
         }
         .quote-actions { 
             margin-top: 20px; 
@@ -202,8 +219,22 @@
             border-radius: 5px; 
             cursor: pointer;
         }
+        .quote-excel-btn {
+            background: #1D6F42; 
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        .quote-excel-btn:hover {
+            background: #145c32;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
         
-        /* === THÊM: CSS CHO VÙNG CHỈNH SỬA === */
+        /* Styles chỉnh sửa */
         .quote-page [contentEditable="true"] {
             background-color: #fffde7;
             outline: 1px dashed #ffc107;
@@ -215,45 +246,31 @@
             outline: 2px solid #4285f4;
             box-shadow: 0 0 5px rgba(66,133,244,0.5);
         }
-        /* THÊM: Style cho TH khi chỉnh sửa */
         .quote-table th[contentEditable="true"] {
-             background: #3367d6; /* Màu nền đậm hơn khi chỉnh sửa */
+             background: #3367d6; 
         }
         
-        /* For PDF printing */
+        /* Print styles */
         @media print {
-            body * {
-                visibility: hidden;
-            }
-            .quote-page, .quote-page * {
-                visibility: visible;
-            }
+            body * { visibility: hidden; }
+            .quote-page, .quote-page * { visibility: visible; }
             .quote-page {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                margin: 0;
-                padding: 20px;
-                box-shadow: none;
+                position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 20px; box-shadow: none;
             }
-            .quote-actions {
-                display: none !important;
-            }
-            /* THÊM: Tắt CSS chỉnh sửa khi in */
+            .quote-actions { display: none !important; }
             .quote-page [contentEditable="true"] {
                 background-color: transparent !important;
                 outline: none !important;
                 box-shadow: none !important;
             }
-            /* === THAY ĐỔI: Sửa lỗi in === */
             .quote-table th {
-                background: #f0f0f0 !important; /* Nền xám nhạt để dễ in */
-                color: #000000 !important; /* Chữ đen để đảm bảo luôn thấy */
-                -webkit-print-color-adjust: exact; /* Đảm bảo Chrome in nền */
-                print-color-adjust: exact; /* Tiêu chuẩn */
+                background: #f0f0f0 !important; 
+                color: #000000 !important;
+                -webkit-print-color-adjust: exact; 
+                print-color-adjust: exact; 
             }
         }
+
         @keyframes spin{ 0%{ transform:rotate(0) } 100%{ transform:rotate(360deg) } }
         @media(max-width:768px){ 
             .popup-content{ width:95%; padding:15px } 
@@ -281,7 +298,7 @@
             font-weight: bold;
             color: #4285f4;
         }
-		/* Thêm style mới cho tính năng tách nền và xóa ảnh */
+		/* Image processing controls */
         .image-processing-controls {
             margin-top: 15px;
             display: flex;
@@ -331,7 +348,7 @@
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
-        /* === STYLE MỚI CHO CHỨC NĂNG CHỌN TẤT CẢ VÀ CHỌN THEO PHẠM VI === */
+        /* Select range */
         .select-range-section {
             display: flex;
             align-items: center;
@@ -351,7 +368,7 @@
             font-size: 14px;
             color: #555;
         }
-        /* === STYLE CHO CHỌN KHỔ GIẤY === */
+        /* Paper orientation */
         .paper-orientation {
             margin: 10px 0;
             display: flex;
@@ -571,8 +588,9 @@
         </div>
         <div class="quote-actions">
             <button class="quote-back-btn" id="quoteBackBtn">Quay lại</button>
+            <button class="quote-excel-btn" id="quoteExcelBtn">Xuất Excel</button>
             <button class="quote-print-btn" id="quotePrintBtn">In Báo Giá</button>
-            <button class="quote-pdf-btn" id="quotePdfBtn">Xuất PDF</button>
+            <button class="quote-pdf-btn" id="quotePdfBtn">Xuất PDF (Sắc Nét)</button>
         </div>
 <script>
     // ========== Firebase ==========
@@ -671,6 +689,8 @@
     const quoteBackBtn = document.getElementById("quoteBackBtn");
     const quotePrintBtn = document.getElementById("quotePrintBtn");
     const quotePdfBtn = document.getElementById("quotePdfBtn");
+    const quoteExcelBtn = document.getElementById("quoteExcelBtn");
+    
     // Thêm các phần tử DOM mới cho xử lý ảnh
     const removeBgBtn = document.getElementById("removeBgBtn");
     const removeImageBtn = document.getElementById("removeImageBtn");
@@ -855,6 +875,89 @@
         });
         updateActionButtonsState();
     });
+
+    // ============ SỰ KIỆN NÚT XUẤT EXCEL ============
+    quoteExcelBtn.addEventListener('click', () => {
+        const companyInfo = [
+            ["CÔNG TY TNHH TM -DV KẾT GIAO PHÁT TRIỂN QUỐC TẾ ( IDECO)"],
+            ["Địa chỉ: 003 Carillon 5 262/3 Lũy Bán Bích - P.Tân Phú - Tp.HCM"],
+            ["Điện thoại: 0385400436"],
+            ["Website: www.goibaogia.com"],
+            [] 
+        ];
+        const titleText = document.querySelector('.quote-title').innerText || "BÁO GIÁ SẢN PHẨM THUỐC";
+        
+        const custName = document.getElementById("quoteCustomerName").innerText;
+        const custContact = document.getElementById("quoteCustomerContact").innerText;
+        const custPhone = document.getElementById("quoteCustomerPhone").innerText;
+        const custAddress = document.getElementById("quoteCustomerAddress").innerText;
+
+        const customerInfo = [
+            [titleText], 
+            [], 
+            ["Khách hàng:", custName],
+            ["Người phụ trách:", custContact],
+            ["Điện thoại:", custPhone],
+            ["Địa chỉ:", custAddress],
+            [] 
+        ];
+
+        const tableEl = document.querySelector("#quoteTableContainer table");
+        if (!tableEl) { alert("Không tìm thấy bảng dữ liệu báo giá."); return; }
+
+        const tableData = [];
+        const headers = [];
+        const thList = tableEl.querySelectorAll("thead th");
+        thList.forEach(th => {
+            if (th.innerText.toLowerCase().includes("hình")) return;
+            headers.push(th.innerText);
+        });
+        tableData.push(headers);
+
+        const trList = tableEl.querySelectorAll("tbody tr");
+        trList.forEach(tr => {
+            const row = [];
+            const tdList = tr.querySelectorAll("td");
+            tdList.forEach((td, index) => {
+                const headerText = thList[index].innerText.toLowerCase();
+                if (headerText.includes("hình")) return;
+                row.push(td.innerText);
+            });
+            tableData.push(row);
+        });
+
+        const footerRows = [
+            [],
+            ["Ghi chú: Gía này bao gồm VAT 5%"], 
+            [],
+            ["Ngày lập:", document.getElementById("quoteDate").innerText],
+            [],
+            [],
+            ["CÔNG TY IDECO TRÂN TRỌNG BÁO"],
+            [],
+            [],
+            ["(Ký và ghi rõ họ tên)"]
+        ];
+
+        const finalData = [...companyInfo, ...customerInfo, ...tableData, ...footerRows];
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(finalData);
+
+        if(!ws['!merges']) ws['!merges'] = [];
+        ws['!merges'].push({s:{r:0,c:0}, e:{r:0,c:4}}); 
+        ws['!merges'].push({s:{r:5,c:0}, e:{r:5,c:4}}); 
+        
+        const wscols = headers.map(() => ({wch: 20}));
+        if(wscols.length > 0) wscols[0] = {wch: 5}; 
+        if(wscols.length > 1) wscols[1] = {wch: 30}; 
+        ws['!cols'] = wscols;
+
+        XLSX.utils.book_append_sheet(wb, ws, "BaoGia_IDECO");
+        const now = new Date();
+        const fileName = `BaoGia_IDECO_${now.getDate()}${now.getMonth()+1}${now.getFullYear()}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+    });
+
     // ========== Customer Database Functions (NEW) ==========
     async function handleCustomerFileSelect(event) {
         const file = event.target.files[0];
@@ -1708,106 +1811,85 @@
         quoteTableContainer.innerHTML = "";
         quoteTableContainer.appendChild(table);
     }
-    // ========== Xuất PDF ==========
-    function generatePdf(paperOrientation = 'portrait') {
-        const printQuotePage = quotePage.cloneNode(true);
-        const actionsDiv = printQuotePage.querySelector('.quote-actions');
-        if (actionsDiv) {
-            actionsDiv.style.display = 'none';
-        }
 
-        // === THÊM: Tắt style chỉnh sửa trước khi chụp ảnh ===
-        const editables = printQuotePage.querySelectorAll('[contentEditable="true"]');
+    // ========== Xuất PDF Nâng Cao (Sắc nét & Liền mạch) ==========
+    function generatePdf(paperOrientation = 'portrait') {
+        // 1. Chuẩn bị phần tử để in
+        const element = document.getElementById('quotePage');
+        
+        // 2. Tắt các nút bấm/giao diện thừa trước khi in (để đảm bảo sạch sẽ)
+        const actionsDiv = element.querySelector('.quote-actions');
+        if (actionsDiv) actionsDiv.style.display = 'none';
+
+        // Tắt chế độ chỉnh sửa (contentEditable) để bỏ các đường viền
+        const editables = element.querySelectorAll('[contentEditable="true"]');
         editables.forEach(el => {
-            el.style.backgroundColor = 'transparent';
+            el.setAttribute('data-original-edit', 'true'); 
+            el.contentEditable = 'false';
             el.style.outline = 'none';
+            el.style.backgroundColor = 'transparent';
             el.style.boxShadow = 'none';
         });
-
-        // Áp dụng style theo khổ giấy
-        if (paperOrientation === 'landscape') {
-            printQuotePage.style.width = '297mm'; // A4 ngang
-            // === THAY ĐỔI: Sửa lỗi gõ nhầm ===
-            printQuotePage.style.height = '210mm';
-            printQuotePage.style.padding = '15px';
-            // Tùy chỉnh bảng cho ngang
-            const table = printQuotePage.querySelector('.quote-table');
-            if (table) {
-                table.style.fontSize = '12px';
-                const ths = table.querySelectorAll('th, td');
-                ths.forEach(cell => {
-                    cell.style.padding = '4px';
-                });
-            }
-        } else {
-            printQuotePage.style.width = '210mm'; // A4 dọc
-            printQuotePage.style.height = '297mm';
-            printQuotePage.style.padding = '20px';
-        }
-        document.body.appendChild(printQuotePage);
-        printQuotePage.style.display = 'block';
-        printQuotePage.style.position = 'absolute';
-        printQuotePage.style.left = '0';
-        printQuotePage.style.top = '0';
-        printQuotePage.style.zIndex = '9999';
-        printQuotePage.style.background = 'white';
-        printQuotePage.style.margin = '0';
-        printQuotePage.style.boxShadow = 'none';
-
-        // === THÊM: Ép kiểu CSS cho header của bảng (fix lỗi html2canvas) ===
-        const thCells = printQuotePage.querySelectorAll('.quote-table th');
+        
+        // Cố định Header bảng màu xanh (fix lỗi hiển thị thư viện)
+        const thCells = element.querySelectorAll('.quote-table th');
         thCells.forEach(th => {
-            th.style.background = '#4285f4';
-            th.style.color = 'white';
-        });
-        // === KẾT THÚC THÊM ===
-
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({
-            orientation: paperOrientation,
-            unit: 'mm',
-            format: 'a4'
+            th.style.backgroundColor = '#4285f4';
+            th.style.color = '#ffffff';
         });
 
-        html2canvas(printQuotePage, {
-            scale: 2,
-            useCORS: true,
-            logging: false,
-            width: printQuotePage.scrollWidth,
-            height: printQuotePage.scrollHeight
-        }).then(canvas => {
-            const imgData = canvas.toDataURL('image/jpeg', 1.0);
-            const imgWidth = doc.internal.pageSize.getWidth();
-            const pageHeight = doc.internal.pageSize.getHeight();
-            const imgHeight = canvas.height * imgWidth / canvas.width;
-            let heightLeft = imgHeight;
-            let position = 0;
-            doc.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-            heightLeft -= pageHeight;
-            while (heightLeft >= 0) {
-                position = heightLeft - imgHeight;
-                doc.addPage();
-                doc.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-                heightLeft -= pageHeight;
-            }
-            document.body.removeChild(printQuotePage);
-            const now = new Date();
-            const fileName = `Bao_Gia_${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}_${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}.pdf`;
-            doc.save(fileName);
-        }).catch(error => {
-            console.error('Lỗi khi tạo PDF:', error);
-            if (document.body.contains(printQuotePage)) {
-                document.body.removeChild(printQuotePage);
-            }
-            alert('Có lỗi xảy ra khi tạo PDF. Vui lòng thử lại.');
+        // 3. Cấu hình file PDF
+        const now = new Date();
+        const fileName = `Bao_Gia_${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}_${now.getHours()}${now.getMinutes()}.pdf`;
+
+        const opt = {
+            margin:       [10, 10, 10, 10], 
+            filename:     fileName,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { 
+                scale: 2,       // Sắc nét
+                useCORS: true,  
+                letterRendering: true
+            },
+            jsPDF:        { 
+                unit: 'mm', 
+                format: 'a4', 
+                orientation: paperOrientation 
+            },
+            // TÍNH NĂNG QUAN TRỌNG: NGẮT TRANG THÔNG MINH
+            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } 
+        };
+
+        // 4. Thực hiện xuất file
+        const originalText = quotePdfBtn.innerText;
+        quotePdfBtn.innerText = "Đang tạo PDF...";
+        quotePdfBtn.disabled = true;
+
+        html2pdf().set(opt).from(element).save().then(() => {
+            // 5. Khôi phục lại giao diện
+            if (actionsDiv) actionsDiv.style.display = 'block';
+            
+            editables.forEach(el => {
+                el.contentEditable = 'true';
+            });
+
+            quotePdfBtn.innerText = originalText;
+            quotePdfBtn.disabled = false;
+        }).catch(err => {
+            console.error(err);
+            alert("Lỗi khi xuất PDF. Vui lòng thử lại.");
+            if (actionsDiv) actionsDiv.style.display = 'block';
+            quotePdfBtn.innerText = originalText;
+            quotePdfBtn.disabled = false;
         });
     }
+
     // ========== Khởi tạo ==========
     document.addEventListener('DOMContentLoaded', ()=>{ 
         loadNotification(); 
         loadDataFromFirebase();
         loadProductImages();
-        loadCustomerDataFromFirebase(); // NEW: Load customer data on start
+        loadCustomerDataFromFirebase(); 
     });
 </script>
 </body>
