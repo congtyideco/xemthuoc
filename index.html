@@ -37,7 +37,6 @@
         .file-item{ display:flex; justify-content:space-between; align-items:center; padding:10px; background:#f5f5f5; margin-bottom:5px; border-radius:4px }
         .delete-file-btn{ background:#f44336; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer }
         
-        /* Toolbar cho ẩn hiện cột */
         .toolbar{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:12px 0; padding:10px; background:#f9fbff; border:1px solid #e3eeff; border-radius:6px }
         .toolbar .section-title{ font-weight:bold; color:#3367d6; margin-right:8px }
         .column-list{ display:flex; flex-wrap:wrap; gap:8px; max-height:120px; overflow:auto; border:1px dashed #cfe1ff; padding:8px; border-radius:6px; background:#fff }
@@ -54,10 +53,10 @@
         .highlight{ background:yellow }
         .editing-cell { background-color: #fffde7; outline: 2px solid #ffc107; }
         
-        /* Tay nắm kéo giãn cột */
+        /* Tay nắm kéo giãn cột - Dùng chung cho cả bảng xem giá và bảng báo giá */
         .th-resizable{ position: relative; }
-        .col-resizer{ position:absolute; right:0; top:0; height:100%; width:6px; cursor:col-resize; user-select:none; -webkit-user-select:none; }
-        .col-resizer:hover{ background: rgba(255,255,255,.25); }
+        .col-resizer{ position:absolute; right:0; top:0; height:100%; width:8px; cursor:col-resize; user-select:none; -webkit-user-select:none; z-index: 10; }
+        .col-resizer:hover{ background: rgba(0,0,0,0.2); border-right: 2px solid #4285f4; }
         
         .loading{ display:none; text-align:center; margin:20px 0 }
         .spinner{ border:4px solid rgba(0,0,0,.1); border-radius:50%; border-top:4px solid #4285f4; width:30px; height:30px; animation:spin 1s linear infinite; margin:0 auto }
@@ -75,7 +74,6 @@
         .notification-dialog-cancel{ background:#f5f5f5 } .notification-dialog-save{ background:#4CAF50; color:#fff }
         .quote-dialog-cancel{ background:#f5f5f5 } .quote-dialog-create{ background:#ff9800; color:#fff }
         .notification-display{ position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#ffebee; border:1px solid #f44336; border-radius:4px; padding:15px; max-width:80%; color:#f44336; font-weight:bold; z-index:1000; display:none; text-align:center }
-        /* Image manager */
         .image-manager { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); z-index: 1003; width: 500px; max-width: 90%; }
         .image-manager h3 { margin-top: 0; color: #4285f4; }
         .image-url-input { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 4px; }
@@ -92,54 +90,64 @@
         .tab.active { border-bottom: 2px solid #4285f4; color: #4285f4; font-weight: bold; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        /* Quote page styles */
+        
+        /* --- CSS CHO TRANG BÁO GIÁ (Đã cập nhật Khổ Ngang Mặc Định) --- */
         .quote-page { 
             display: none; 
             background: white; 
             padding: 20px; 
             margin: 20px auto; 
-            max-width: 1000px; 
+            /* Mặc định luôn là khổ ngang 297mm */
+            width: 297mm; 
+            min-height: 210mm;
             box-shadow: 0 0 10px rgba(0,0,0,0.1); 
-            width: 210mm; /* Cố định chiều rộng A4 */
-            min-height: 297mm;
+            box-sizing: border-box;
         }
+
         .quote-header { display: flex; margin-bottom: 20px; flex-direction: column; }
-        .company-logo-container { display: flex; align-items: center; margin-bottom: 15px; }
+        .company-logo-container { display: flex; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #4285f4; padding-bottom: 15px; }
         .company-logo { width: 80px; height: auto; margin-right: 20px; }
-        .company-info { text-align: left; font-size: 14px; line-height: 1.5; }
+        .company-info { text-align: left; font-size: 14px; line-height: 1.5; color: #333; }
         .quote-title { text-align: center; font-size: 24px; font-weight: bold; margin: 20px 0; color: #4285f4; text-transform: uppercase; }
-        .customer-info { margin-bottom: 20px; padding: 15px; background: #f9f9f9; border-radius: 5px; border: 1px solid #ddd; }
-        .customer-info-row { display: flex; margin-bottom: 10px; font-size: 14px; }
-        .customer-info-label { width: 150px; font-weight: bold; }
-        .quote-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
-        .quote-table th, .quote-table td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }
-        .quote-table th { background: #4285f4; color: white; }
+        .customer-info { margin-bottom: 20px; padding: 15px; background: #f9fbff; border-radius: 5px; border: 1px solid #cfe1ff; color: #000; }
+        .customer-info-row { display: flex; margin-bottom: 8px; font-size: 14px; }
+        .customer-info-label { width: 140px; font-weight: bold; color: #333; }
         
-        /* FIX NGẮT TRANG PDF */
+        /* Table báo giá */
+        .quote-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; table-layout: fixed; }
+        .quote-table th, .quote-table td { border: 1px solid #333; padding: 6px 8px; text-align: left; vertical-align: middle; color: #000; word-wrap: break-word; overflow-wrap: break-word; }
+        
+        .quote-table th { background: #4285f4; color: white; text-align: center; font-weight: bold; position: relative; }
+        
+        /* Class in ấn: Dùng khi xuất PDF */
+        .quote-table.printing-mode th {
+            background-color: #e0e0e0 !important; 
+            color: #000000 !important; 
+            border: 1px solid #000 !important;
+        }
+        /* Ẩn tay nắm khi in/xuất pdf */
+        .quote-table.printing-mode .col-resizer { display: none; }
+
+        .quote-table td img { display: block; margin: 0 auto; }
+        
+        /* Ngắt trang thông minh */
         .quote-table thead { display: table-header-group; }
-        .quote-table tr { page-break-inside: avoid; }
+        .quote-table tr { page-break-inside: avoid; break-inside: avoid; }
         .quote-table td { page-break-inside: avoid; }
-        .quote-footer { page-break-inside: avoid; margin-top: 30px; display: flex; justify-content: space-between; font-size: 14px; }
         
-        .product-image { max-width: 80px; max-height: 80px; display: block; margin-bottom: 5px; border: 1px solid #eee; border-radius: 4px; }
+        .quote-footer { page-break-inside: avoid; margin-top: 30px; display: flex; justify-content: space-between; font-size: 14px; padding-top: 20px; color: #000; }
+        
+        .product-image { max-width: 60px; max-height: 60px; object-fit: contain; }
         .quote-actions { margin-top: 20px; text-align: center; padding: 20px 0; }
         .quote-back-btn { background: #4285f4; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-right: 10px; }
         .quote-print-btn { background: #34a853; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-right: 10px; }
         .quote-pdf-btn { background: #f44336; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
         .quote-excel-btn { background: #1D6F42; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-right: 10px; font-weight: bold; }
         
-        .quote-page [contentEditable="true"] { background-color: #fffde7; outline: 1px dashed #ffc107; padding-left: 5px; padding-right: 5px; }
-        .quote-page [contentEditable="true"]:focus { background-color: #ffffff; outline: 2px solid #4285f4; box-shadow: 0 0 5px rgba(66,133,244,0.5); }
+        .quote-page [contentEditable="true"] { background-color: #fffde7; outline: 1px dashed #ffc107; padding: 2px 4px; }
+        .quote-page [contentEditable="true"]:focus { background-color: #ffffff; outline: 2px solid #4285f4; }
         .quote-table th[contentEditable="true"] { background: #3367d6; }
         
-        @media print {
-            body * { visibility: hidden; }
-            .quote-page, .quote-page * { visibility: visible; }
-            .quote-page { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 20px; box-shadow: none; }
-            .quote-actions { display: none !important; }
-            .quote-page [contentEditable="true"] { background-color: transparent !important; outline: none !important; box-shadow: none !important; }
-            .quote-table th { background: #f0f0f0 !important; color: #000000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        }
         @keyframes spin{ 0%{ transform:rotate(0) } 100%{ transform:rotate(360deg) } }
         @media(max-width:768px){ 
             .popup-content{ width:95%; padding:15px } 
@@ -156,22 +164,11 @@
             .customer-info-label { width: 100%; margin-bottom: 5px; }
             .image-manager { width: 95%; padding: 15px; }
         }
-        .selected-products-filter { margin: 10px 0; display: flex; align-items: center; gap: 10px; }
-        .selected-products-filter label { font-weight: bold; color: #4285f4; }
-        .image-processing-controls { margin-top: 15px; display: flex; flex-direction: column; gap: 10px; }
-        .processing-btn { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; }
-        .remove-bg-btn { background: #9c27b0; color: white; }
-        .remove-bg-btn:disabled { background: #ccc; cursor: not-allowed; }
-        .remove-image-btn { background: #f44336; color: white; }
-        .processing-status { margin-top: 10px; padding: 8px; border-radius: 4px; display: none; }
-        .processing-status.loading { display: block; background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
-        .processing-status.success { display: block; background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .processing-status.error { display: block; background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
         .select-range-section { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
         .range-input { width: 60px; padding: 6px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; text-align: center; }
         .range-label { font-size: 14px; color: #555; }
-        .paper-orientation { margin: 10px 0; display: flex; gap: 10px; align-items: center; }
-        .paper-orientation label { font-weight: bold; color: #4285f4; }
+        .paper-orientation { margin: 10px 0; display: flex; gap: 10px; align-items: center; background: #f1f3f4; padding: 10px; border-radius: 5px; }
+        .paper-orientation label { font-weight: bold; color: #4285f4; cursor: pointer; }
         .paper-orientation input[type="radio"] { margin-right: 5px; }
     </style>
 </head>
@@ -280,11 +277,12 @@
             <input type="text" class="quote-input" id="customerPhoneInput" placeholder="Điện thoại" />
             <input type="text" class="quote-input" id="customerAddressInput" placeholder="Địa chỉ" />
             <div class="paper-orientation">
+                <span style="font-weight: bold; margin-right: 10px;">Khổ giấy xuất PDF:</span>
                 <label>
-                    <input type="radio" name="paperOrientation" value="portrait" checked /> Khổ dọc (A4)
+                    <input type="radio" name="paperOrientation" value="landscape" checked /> Khổ ngang (A4)
                 </label>
                 <label>
-                    <input type="radio" name="paperOrientation" value="landscape" /> Khổ ngang (A4)
+                    <input type="radio" name="paperOrientation" value="portrait" /> Khổ dọc (A4)
                 </label>
             </div>
             <div class="quote-dialog-buttons">
@@ -335,15 +333,16 @@
             <button class="image-manager-save" id="imageManagerSave">Lưu hình ảnh</button>
         </div>
     </div>
+    
     <div class="quote-page" id="quotePage">
         <div class="quote-header">
             <div class="company-logo-container">
                 <img src="https://cdn.imgpile.com/f/GK3nMDF_xl.png" alt="Company Logo" class="company-logo" />
                 <div class="company-info">
-                    <div><strong>CÔNG TY TNHH TM -DV KẾT GIAO PHÁT TRIỂN QUỐC TẾ ( IDECO)</strong></div>
-                    <div>Địa chỉ:003 Carillon 5 262/3 Lũy Bán Bích -P.Tân Phú -Tp.HCM</div>
+                    <div style="font-size: 16px; font-weight: bold; color: #d32f2f;">CÔNG TY TNHH TM -DV KẾT GIAO PHÁT TRIỂN QUỐC TẾ (IDECO)</div>
+                    <div>Địa chỉ: 003 Carillon 5, 262/3 Lũy Bán Bích, P.Tân Phú, Tp.HCM</div>
                     <div>Điện thoại: 0385400436</div>
-                    <div>www.goibaogia.com</div>
+                    <div>Website: www.goibaogia.com</div>
                 </div>
             </div>
         </div>
@@ -351,7 +350,7 @@
         <div class="customer-info">
             <div class="customer-info-row">
                 <div class="customer-info-label">Khách hàng:</div>
-                <div id="quoteCustomerName"></div>
+                <div id="quoteCustomerName" style="font-weight: bold;"></div>
             </div>
             <div class="customer-info-row">
                 <div class="customer-info-label">Người phụ trách:</div>
@@ -368,13 +367,15 @@
         </div>
         <div class="table-container" id="quoteTableContainer"></div>
        <div class="quote-footer">
-            <div>
-                <div style="font-style: italic; font-weight: bold;" contentEditable="true">Gía này bao gồm VAT 5%</div>
+            <div style="width: 40%">
+                <div style="font-style: italic; font-weight: bold; margin-bottom: 5px;">Ghi chú:</div>
+                <div contentEditable="true">Gía này bao gồm VAT 5%</div>
+                <div contentEditable="true">Hiệu lực báo giá: 30 ngày</div>
             </div>
-            <div>
-                <div>Ngày lập: <span id="quoteDate"></span></div>
-                <div style="margin-top: 50px; text-align: center;" contentEditable="true">CÔNG TY IDECO TRÂN TRỌNG BÁO </div>
-                <div style="margin-top: 50px; text-align: center; font-weight: bold;" contentEditable="true">(Ký và ghi rõ họ tên)</div>
+            <div style="width: 40%; text-align: center;">
+                <div>Tp.HCM, ngày <span id="quoteDateDay"></span> tháng <span id="quoteDateMonth"></span> năm <span id="quoteDateYear"></span></div>
+                <div style="margin-top: 20px; font-weight: bold; text-transform: uppercase;" contentEditable="true">ĐẠI DIỆN CÔNG TY IDECO</div>
+                <div style="margin-top: 60px; font-weight: bold;" contentEditable="true">(Ký và ghi rõ họ tên)</div>
             </div>
         </div>
         <div class="quote-actions">
@@ -383,6 +384,8 @@
             <button class="quote-print-btn" id="quotePrintBtn">In Báo Giá</button>
             <button class="quote-pdf-btn" id="quotePdfBtn">Xuất PDF</button>
         </div>
+    </div>
+    
 <script>
     // ========== FIREBASE CONFIG ==========
  const firebaseConfig = {
@@ -421,7 +424,8 @@
     let rowIndexMap = []; 
     let editingRowState = { index: null, originalData: [] }; 
     const REMOVE_BG_API_KEY = "iHt8DKCwKg4Va63ACXopN7nm"; 
-    let currentPaperOrientation = 'portrait';
+    // MẶC ĐỊNH LÀ LANDSCAPE
+    let currentPaperOrientation = 'landscape';
 
     // ========== DOM ==========
     const viewPriceBtn = document.getElementById("viewPriceBtn");
@@ -483,7 +487,11 @@
     const quoteCustomerContact = document.getElementById("quoteCustomerContact");
     const quoteCustomerPhone = document.getElementById("quoteCustomerPhone");
     const quoteCustomerAddress = document.getElementById("quoteCustomerAddress");
-    const quoteDate = document.getElementById("quoteDate");
+    // Date parts
+    const quoteDateDay = document.getElementById("quoteDateDay");
+    const quoteDateMonth = document.getElementById("quoteDateMonth");
+    const quoteDateYear = document.getElementById("quoteDateYear");
+    
     const quoteTableContainer = document.getElementById("quoteTableContainer");
     const quoteBackBtn = document.getElementById("quoteBackBtn");
     const quotePrintBtn = document.getElementById("quotePrintBtn");
@@ -662,7 +670,7 @@
             tdList.forEach((td, index) => { const headerText = thList[index].innerText.toLowerCase(); if (headerText.includes("hình")) return; row.push(td.innerText); });
             tableData.push(row);
         });
-        const footerRows = [ [], ["Ghi chú: Gía này bao gồm VAT 5%"], [], ["Ngày lập:", document.getElementById("quoteDate").innerText], [], [], ["CÔNG TY IDECO TRÂN TRỌNG BÁO"], [], [], ["(Ký và ghi rõ họ tên)"] ];
+        const footerRows = [ [], ["Ghi chú: Gía này bao gồm VAT 5%"], [], ["Ngày lập:", `${quoteDateDay.innerText}/${quoteDateMonth.innerText}/${quoteDateYear.innerText}`], [], [], ["ĐẠI DIỆN CÔNG TY IDECO"], [], [], ["(Ký và ghi rõ họ tên)"] ];
         const finalData = [...companyInfo, ...customerInfo, ...tableData, ...footerRows];
         const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(finalData);
         if(!ws['!merges']) ws['!merges'] = [];
@@ -838,20 +846,48 @@
         const headerCells = table.querySelectorAll('thead th');
         headerCells.forEach((th, visPos)=>{
             const isCheckboxCol = (visPos === visibleIdx.length);
-            if(isCheckboxCol){ return; }
+            // Bỏ qua cột checkbox nếu ở bảng xem giá, nhưng ở bảng báo giá thì không có cột checkbox này
+            if(table.classList.contains('price-table') && isCheckboxCol){ return; }
+            
             let handle = th.querySelector('.col-resizer');
             if(!handle){ handle = document.createElement('div'); handle.className = 'col-resizer'; th.appendChild(handle); }
+            
             const originalIndex = visibleIdx[visPos];
-            const minWidth = 60;
+            const minWidth = 40;
             let startX = 0; let startWidth = 0; let dragging = false;
-            const onMouseDown = (e)=>{ dragging = true; startX = e.pageX; startWidth = th.offsetWidth; document.body.style.cursor = 'col-resize'; e.preventDefault(); };
-            const onMouseMove = (e)=>{
-                if(!dragging) return; const delta = e.pageX - startX; let newW = Math.max(minWidth, startWidth + delta);
-                columnWidths[originalIndex] = newW; th.style.width = newW + 'px';
-                const rows = table.querySelectorAll('tbody tr'); rows.forEach(r=>{ const td = r.children[visPos]; if(td){ td.style.width = newW + 'px'; } });
+            
+            const onMouseDown = (e)=>{ 
+                dragging = true; 
+                startX = e.pageX; 
+                startWidth = th.offsetWidth; 
+                document.body.style.cursor = 'col-resize'; 
+                e.preventDefault(); 
+                e.stopPropagation(); // Ngăn chặn sự kiện click trên th
             };
-            const onMouseUp = ()=>{ dragging = false; document.body.style.cursor = ''; };
-            handle.onmousedown = onMouseDown; document.addEventListener('mousemove', onMouseMove); document.addEventListener('mouseup', onMouseUp);
+            
+            const onMouseMove = (e)=>{
+                if(!dragging) return; 
+                const delta = e.pageX - startX; 
+                let newW = Math.max(minWidth, startWidth + delta);
+                th.style.width = newW + 'px';
+                
+                // Nếu là bảng xem giá chính, lưu lại width để tái sử dụng
+                if (table.classList.contains('price-table')) {
+                    columnWidths[originalIndex] = newW;
+                }
+                
+                // Cập nhật độ rộng các ô trong body (cho table-layout: fixed hoặc auto đều ổn định hơn)
+                 /* Với table-layout: fixed, chỉ cần chỉnh th là đủ, nhưng đôi khi cần ép width cho cột đầu tiên */
+            };
+            
+            const onMouseUp = ()=>{ 
+                dragging = false; 
+                document.body.style.cursor = ''; 
+            };
+            
+            handle.addEventListener('mousedown', onMouseDown);
+            document.addEventListener('mousemove', onMouseMove); 
+            document.addEventListener('mouseup', onMouseUp);
         });
     }
     function performSearch(){
@@ -891,22 +927,6 @@
     }
     function applyColumnSelection(mode){
         const selected = getSelectedColumnIndexes();
-        // Logic: input:checked nghĩa là cột đang hiển thị
-        // Nếu mode='hide', ta muốn ẩn các cột đang được tick (hoặc ngược lại, tùy logic UX)
-        // Ở code cũ: selected là các checkbox được check. 
-        // Nút "Ẩn cột đã chọn" -> Ẩn các cột đang check? Không hợp lý lắm.
-        // Sửa lại logic đúng như file gốc: Checkbox trong Toolbar thể hiện trạng thái Visible.
-        
-        // Nhưng nút "Ẩn cột đã chọn" hoạt động dựa trên cái gì? 
-        // Code gốc: btnHide -> lấy những cái checked -> add vào hiddenColumns ??
-        // Thường thì người dùng check vào checkbox -> cột hiện. Uncheck -> cột ẩn.
-        // Nhưng ở đây có thêm nút "Ẩn cột".
-        
-        // Logic phục hồi từ file gốc:
-        // "Chọn cột" list hiển thị trạng thái.
-        // Nút Hide/Unhide thao tác hàng loạt trên list này.
-        
-        // Để đơn giản và đúng code gốc:
         if(!selected.length){ alert('Vui lòng chọn ít nhất một cột.'); return; }
         if(mode === 'hide'){ selected.forEach(idx => hiddenColumns.add(idx)); }
         if(mode === 'unhide'){ selected.forEach(idx => hiddenColumns.delete(idx)); }
@@ -987,7 +1007,10 @@
         const day = String(now.getDate()).padStart(2, '0');
         const month = String(now.getMonth() + 1).padStart(2, '0');
         const year = now.getFullYear();
-        quoteDate.textContent = `${day}/${month}/${year}`;
+        quoteDateDay.textContent = day;
+        quoteDateMonth.textContent = month;
+        quoteDateYear.textContent = year;
+        
         createQuoteTable();
         quotePage.style.display = 'block';
         popupOverlay.style.display = 'none';
@@ -1008,22 +1031,32 @@
         table.className = "quote-table";
         const thead = document.createElement("thead");
         const headerRow = document.createElement("tr");
+        
+        // Cột STT
         const thStt = document.createElement("th");
         thStt.textContent = "STT";
-        thStt.style.width = "50px";
+        thStt.style.width = "40px";
+        thStt.className = "th-resizable";
         headerRow.appendChild(thStt);
+        
+        // Cột Hình Ảnh
         const thImage = document.createElement("th");
         thImage.textContent = "Hình ảnh";
-        thImage.style.width = "100px";
+        thImage.style.width = "80px";
+        thImage.className = "th-resizable";
         headerRow.appendChild(thImage);
+        
+        // Các cột dữ liệu
         visibleIdx.forEach(colIdx => {
             const th = document.createElement("th");
             th.textContent = headersCache[colIdx] || "";
             th.contentEditable = "true";
+            th.className = "th-resizable"; // Thêm class để kích hoạt resize
             headerRow.appendChild(th);
         });
         thead.appendChild(headerRow);
         table.appendChild(thead);
+        
         const tbody = document.createElement("tbody");
         for (let i = 1; i < filteredAoa.length; i++) {
             const rowData = filteredAoa[i] || [];
@@ -1057,35 +1090,64 @@
         table.appendChild(tbody);
         quoteTableContainer.innerHTML = "";
         quoteTableContainer.appendChild(table);
+        
+        // Kích hoạt tính năng kéo giãn cột cho bảng báo giá vừa tạo
+        // Truyền một mảng giả visibleIdx vì quote-table cấu trúc hơi khác (có thêm STT và Hình ảnh)
+        // Nhưng logic enableColumnResize ở trên đã viết lại để không phụ thuộc chặt chẽ vào visibleIdx cho việc tạo handle
+        // Tuy nhiên, ta cần truyền một mảng index tương ứng để hàm hoạt động.
+        // Ở đây ta gọi hàm enableColumnResize với bảng mới.
+        const headerCellsCount = table.querySelectorAll('thead th').length;
+        const dummyIndices = Array.from({length: headerCellsCount}, (_, i) => i);
+        enableColumnResize(table, dummyIndices);
     }
     
-    // ========== HÀM XUẤT PDF FIX LỖI TRẮNG TRANG & LOGO ==========
+    // ========== HÀM XUẤT PDF HOÀN THIỆN: ĐỔI MÀU CHỮ & KHỔ GIẤY & GIỮ WIDTH CỘT ==========
     function generatePdf(paperOrientation = 'portrait') {
-        window.scrollTo(0, 0); // Cuộn lên đầu để tránh lỗi trắng trang
         const element = document.getElementById('quotePage');
         const actionsDiv = element.querySelector('.quote-actions');
+        
+        // 1. Tạm ẩn nút chức năng
         if (actionsDiv) actionsDiv.style.display = 'none';
         
+        // 2. Tắt chế độ chỉnh sửa
         const editables = element.querySelectorAll('[contentEditable="true"]');
-        editables.forEach(el => { el.contentEditable = 'false'; el.style.outline = 'none'; });
-        
-        const thCells = element.querySelectorAll('.quote-table th');
-        thCells.forEach(th => { th.style.backgroundColor = '#4285f4'; th.style.color = '#ffffff'; });
-        
+        editables.forEach(el => { 
+            el.dataset.wasContentEditable = 'true';
+            el.contentEditable = 'false'; 
+            el.style.outline = 'none'; 
+        });
+
+        // 3. XỬ LÝ KHỔ GIẤY: Thêm class CSS để mở rộng bảng
+        element.classList.remove('landscape-mode');
+        if (paperOrientation === 'landscape') {
+            element.classList.add('landscape-mode'); 
+        }
+
+        // 4. XỬ LÝ MÀU SẮC IN ẤN & TẮT RESIZER
+        const table = element.querySelector('.quote-table');
+        if(table) table.classList.add('printing-mode');
+
+        // Ép màu tiêu đề chính
+        const titleEl = element.querySelector('.quote-title');
+        if (titleEl) titleEl.style.color = '#4285f4'; // Xanh đậm
+
         const now = new Date();
-        const fileName = `Bao_Gia_${now.getDate()}${now.getMonth()+1}_${now.getHours()}${now.getMinutes()}.pdf`;
+        const fileName = `Bao_Gia_IDECO_${now.getDate()}${now.getMonth()+1}_${now.getHours()}${now.getMinutes()}.pdf`;
         
+        // Cấu hình html2pdf chuẩn
         const opt = {
-            margin: 10, 
-            filename: fileName,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { 
+            margin:       5, // Lề nhỏ
+            filename:     fileName,
+            image:        { type: 'jpeg', quality: 1 }, // Chất lượng ảnh tối đa
+            html2canvas:  { 
                 scale: 2, 
-                useCORS: true, // Quan trọng để tải ảnh từ domain khác
-                scrollY: 0 
+                useCORS: true, 
+                scrollY: 0,
+                // Không set width cố định để nó tự lấy width thực tế sau khi resize
             },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: paperOrientation },
-            pagebreak: { mode: ['css', 'legacy'] }
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: paperOrientation },
+            // Tránh cắt đôi dòng trong bảng
+            pagebreak:    { mode: ['css', 'legacy'], avoid: ['tr', '.quote-table tr'] }
         };
         
         const originalText = quotePdfBtn.innerText;
@@ -1093,27 +1155,39 @@
         quotePdfBtn.disabled = true;
         
         html2pdf().set(opt).from(element).save().then(() => {
+            // KHÔI PHỤC LẠI TRẠNG THÁI CŨ
             if (actionsDiv) actionsDiv.style.display = 'block';
-            editables.forEach(el => el.contentEditable = 'true');
+            
+            // Xóa class landscape
+            element.classList.remove('landscape-mode');
+            
+            // Xóa class in ấn
+            if(table) table.classList.remove('printing-mode');
+
+            editables.forEach(el => {
+                if(el.dataset.wasContentEditable) el.contentEditable = 'true';
+            });
+            
             quotePdfBtn.innerText = originalText;
             quotePdfBtn.disabled = false;
         }).catch(err => {
             console.error(err);
             alert("Lỗi PDF: " + err.message);
+            // Khôi phục nếu lỗi
             if (actionsDiv) actionsDiv.style.display = 'block';
+            element.classList.remove('landscape-mode');
+            if(table) table.classList.remove('printing-mode');
             quotePdfBtn.innerText = originalText;
             quotePdfBtn.disabled = false;
         });
     }
 
     // ========== CÁC HÀM HỖ TRỢ KHÁC (Customer, Image, CRUD) ==========
-    // (Giữ nguyên logic từ file gốc)
     async function handleCustomerFileSelect(event) {
         const file = event.target.files[0]; if (!file) return;
         customerLoadingIndicator.style.display = "block"; customerTableContainer.innerHTML = ""; customerFileNameDisplay.textContent = file.name;
         try {
             const data = await readExcelFile(file);
-            // Giả định cấu trúc cột: STT, Tên KH, Người PT, SĐT, ĐC
             const parsed = data.slice(1).map(r => ({ tenKhachHang: r[1]||'', nguoiPhuTrach: r[2]||'', dienThoai: r[3]||'', diaChi: r[4]||'' })).filter(c=>c.tenKhachHang);
             customerDatabase = parsed;
             await database.ref("customerData").set(customerDatabase);
@@ -1153,29 +1227,22 @@
         userFile.data.push(Array(headersCache.length).fill(''));
         await saveDataToFirebase(); displayAllData();
         tableContainer.scrollTop = tableContainer.scrollHeight;
-        // Tự chọn hàng mới
         const newIdx = currentData.length-1; selectedRowIdx.clear(); selectedRowIdx.add(newIdx); handleEditRow();
     }
     function handleEditRow() {
         const btn = editRowBtn;
         if(editingRowState.index !== null){
-            // Save logic
             const idx = editingRowState.index;
             const tr = tableContainer.querySelector(`tr[data-row-index='${idx}']`);
             if(!tr) return;
             const cells = tr.querySelectorAll('td');
             const newRow = [];
-            // Bỏ cell cuối (checkbox)
             for(let i=0; i<cells.length-1; i++) newRow.push(cells[i].textContent.trim());
-            
-            // Update uploadedFiles via mapping
             const fullRow = [...currentData[idx]];
             const visibleIdx = visibleColumnIndexes();
             visibleIdx.forEach((origIdx, i) => fullRow[origIdx] = newRow[i]||'');
-            
             const map = rowIndexMap[idx];
             if(map) uploadedFiles[map.fileIndex].data[map.rowIndexInFile] = fullRow;
-            
             saveDataToFirebase();
             cells.forEach(td=>{ td.contentEditable='false'; td.classList.remove('editing-cell'); });
             editingRowState = {index:null, originalData:[]};
@@ -1192,7 +1259,6 @@
             btn.textContent = 'Lưu thay đổi'; btn.style.background='#4caf50';
             const cancelBtn = document.createElement('button'); cancelBtn.id='cancelEditBtn'; cancelBtn.textContent='Hủy'; cancelBtn.className='export-btn'; cancelBtn.style.background='#9e9e9e';
             cancelBtn.onclick = ()=>{
-                // Cancel logic restore data
                 const visIdx = visibleColumnIndexes();
                 visIdx.forEach((origIdx, i) => cells[i].textContent = editingRowState.originalData[origIdx]||'');
                 cells.forEach(td=>{ td.contentEditable='false'; td.classList.remove('editing-cell'); });
@@ -1207,7 +1273,6 @@
     async function handleDeleteRows() {
         if(!selectedRowIdx.size) return;
         if(!confirm("Chắc chắn xóa?")) return;
-        // Group deletion by file to allow splicing from end
         const toDel = {};
         selectedRowIdx.forEach(idx => {
             const m = rowIndexMap[idx];
@@ -1285,4 +1350,3 @@
 </script>
 </body>
 </html>
-
