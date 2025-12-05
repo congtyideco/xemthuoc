@@ -119,6 +119,27 @@
         
         .quote-table th { background: #4285f4; color: white; text-align: center; font-weight: bold; position: relative; }
         
+        /* --- CSS NÂNG CẤP HIỂN THỊ HÌNH ẢNH FULL Ô --- */
+        /* Class cho ô chứa ảnh (td) */
+        .quote-table td.image-cell {
+            padding: 0 !important; /* Xóa padding để ảnh tràn viền */
+            width: 100px; /* Width mặc định */
+            height: 90px; /* Chiều cao cố định cho hàng có ảnh để tạo sự đồng đều */
+            vertical-align: middle;
+            text-align: center;
+            background-color: #fff; /* Nền trắng làm nổi bật ảnh */
+        }
+
+        /* Class cho bản thân hình ảnh */
+        .product-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* QUAN TRỌNG: Giữ tỷ lệ ảnh, tự động thu phóng vừa khít ô */
+            display: block;
+            margin: 0 auto;
+        }
+        /* ------------------------------------------------ */
+
         /* Class in ấn: Dùng khi xuất PDF */
         .quote-table.printing-mode th {
             background-color: #e0e0e0 !important; 
@@ -128,7 +149,6 @@
         /* Ẩn tay nắm khi in/xuất pdf */
         .quote-table.printing-mode .col-resizer { display: none; }
 
-        .quote-table td img { display: block; margin: 0 auto; }
         
         /* Ngắt trang thông minh */
         .quote-table thead { display: table-header-group; }
@@ -137,7 +157,6 @@
         
         .quote-footer { page-break-inside: avoid; margin-top: 30px; display: flex; justify-content: space-between; font-size: 14px; padding-top: 20px; color: #000; }
         
-        .product-image { max-width: 60px; max-height: 60px; object-fit: contain; }
         .quote-actions { margin-top: 20px; text-align: center; padding: 20px 0; }
         .quote-back-btn { background: #4285f4; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-right: 10px; }
         .quote-print-btn { background: #34a853; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-right: 10px; }
@@ -1063,7 +1082,7 @@
         // Cột Hình Ảnh
         const thImage = document.createElement("th");
         thImage.textContent = "Hình ảnh";
-        thImage.style.width = "80px";
+        thImage.style.width = "100px"; // Tăng kích thước mặc định lên 100px
         thImage.className = "th-resizable";
         headerRow.appendChild(thImage);
         
@@ -1088,7 +1107,9 @@
             tdStt.style.textAlign = "center";
             tr.appendChild(tdStt);
             const tdImage = document.createElement("td");
-            tdImage.style.textAlign = "center";
+            // Gán class mới để CSS tác động
+            tdImage.className = "image-cell";
+            
             if (productNameIndex !== -1) {
                 const productName = aoa[i][productNameIndex] || '';
                 if (productImages[productName]) {
@@ -1113,10 +1134,6 @@
         quoteTableContainer.appendChild(table);
         
         // Kích hoạt tính năng kéo giãn cột cho bảng báo giá vừa tạo
-        // Truyền một mảng giả visibleIdx vì quote-table cấu trúc hơi khác (có thêm STT và Hình ảnh)
-        // Nhưng logic enableColumnResize ở trên đã viết lại để không phụ thuộc chặt chẽ vào visibleIdx cho việc tạo handle
-        // Tuy nhiên, ta cần truyền một mảng index tương ứng để hàm hoạt động.
-        // Ở đây ta gọi hàm enableColumnResize với bảng mới.
         const headerCellsCount = table.querySelectorAll('thead th').length;
         const dummyIndices = Array.from({length: headerCellsCount}, (_, i) => i);
         enableColumnResize(table, dummyIndices);
