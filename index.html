@@ -170,6 +170,27 @@
         .paper-orientation { margin: 10px 0; display: flex; gap: 10px; align-items: center; background: #f1f3f4; padding: 10px; border-radius: 5px; }
         .paper-orientation label { font-weight: bold; color: #4285f4; cursor: pointer; }
         .paper-orientation input[type="radio"] { margin-right: 5px; }
+
+        /* ========= CSS MỚI: ẨN CÁC NÚT KHI IN ========= */
+        @media print {
+            .view-price-btn, 
+            .database-btn, 
+            .home-erp-btn, 
+            .notification-btn, 
+            .create-quote-btn,
+            .quote-actions,
+            .popup-overlay,
+            .notification-display {
+                display: none !important;
+            }
+            body { margin: 0; padding: 0; background-color: white; }
+            .quote-page {
+                box-shadow: none;
+                border: none;
+                margin: 0;
+                width: 100% !important; /* Đảm bảo full width khi in thường */
+            }
+        }
     </style>
 </head>
 <body>
@@ -1117,10 +1138,19 @@
             el.style.outline = 'none'; 
         });
 
-        // 3. XỬ LÝ KHỔ GIẤY: Thêm class CSS để mở rộng bảng
+        // 3. XỬ LÝ KHỔ GIẤY CHO PDF (Tránh bị cắt cột phải)
         element.classList.remove('landscape-mode');
+        // Lưu lại width gốc
+        const originalWidth = element.style.width;
+        
+        // Tính toán width an toàn để vừa trang PDF (trừ lề)
+        // A4 Ngang = 297mm. Lề 5mm x 2 = 10mm. An toàn: 285mm
+        // A4 Dọc = 210mm. Lề 5mm x 2 = 10mm. An toàn: 200mm
         if (paperOrientation === 'landscape') {
-            element.classList.add('landscape-mode'); 
+            element.classList.add('landscape-mode');
+            element.style.width = '285mm'; 
+        } else {
+            element.style.width = '200mm';
         }
 
         // 4. XỬ LÝ MÀU SẮC IN ẤN & TẮT RESIZER
@@ -1136,17 +1166,15 @@
         
         // Cấu hình html2pdf chuẩn
         const opt = {
-            margin:       5, // Lề nhỏ
+            margin:       5, // Lề nhỏ 5mm
             filename:     fileName,
-            image:        { type: 'jpeg', quality: 1 }, // Chất lượng ảnh tối đa
+            image:        { type: 'jpeg', quality: 1 }, 
             html2canvas:  { 
                 scale: 2, 
                 useCORS: true, 
                 scrollY: 0,
-                // Không set width cố định để nó tự lấy width thực tế sau khi resize
             },
             jsPDF:        { unit: 'mm', format: 'a4', orientation: paperOrientation },
-            // Tránh cắt đôi dòng trong bảng
             pagebreak:    { mode: ['css', 'legacy'], avoid: ['tr', '.quote-table tr'] }
         };
         
@@ -1158,10 +1186,10 @@
             // KHÔI PHỤC LẠI TRẠNG THÁI CŨ
             if (actionsDiv) actionsDiv.style.display = 'block';
             
-            // Xóa class landscape
+            // Xóa class và restore width
             element.classList.remove('landscape-mode');
+            element.style.width = originalWidth; // Trả về 297mm như cũ
             
-            // Xóa class in ấn
             if(table) table.classList.remove('printing-mode');
 
             editables.forEach(el => {
@@ -1176,6 +1204,7 @@
             // Khôi phục nếu lỗi
             if (actionsDiv) actionsDiv.style.display = 'block';
             element.classList.remove('landscape-mode');
+            element.style.width = originalWidth;
             if(table) table.classList.remove('printing-mode');
             quotePdfBtn.innerText = originalText;
             quotePdfBtn.disabled = false;
