@@ -16,7 +16,136 @@
         .database-btn{ bottom:70px; background:#8e24aa; } .database-btn:hover{ background:#7b1fa2; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,.3)}
         .home-erp-btn{ bottom:190px; background:#34a853; text-decoration:none } .home-erp-btn:hover{ background:#2d8e47; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,.3)}
         .notification-btn{ bottom:250px; background:#f44336 } .notification-btn:hover{ background:#d32f2f; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,.3)}
-        .create-quote-btn{ bottom:310px; background:#ff9800 } .create-quote-btn:hover{ background:#f57c00; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,.3)}
+        /* --- CODE GIAO DIỆN THÔNG BÁO MỚI (PROFESSIONAL STYLE) --- */
+
+/* Hộp thoại nhập liệu - Canh giữa và đẹp hơn */
+.notification-dialog {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6); /* Nền tối mờ chuyên nghiệp hơn */
+    z-index: 1002;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(2px); /* Hiệu ứng mờ nền phía sau */
+}
+
+.notification-dialog-content {
+    background: #fff;
+    padding: 0; /* Bỏ padding mặc định để làm header đẹp */
+    border-radius: 12px;
+    width: 500px; /* Rộng hơn một chút để thoải mái nhập */
+    max-width: 90%;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+    animation: notiSlideIn 0.3s ease-out;
+}
+
+/* Tiêu đề hộp thoại */
+.notification-dialog-title {
+    background: linear-gradient(135deg, #4285f4, #2b569a); /* Màu xanh Pro */
+    color: white;
+    padding: 15px 20px;
+    font-size: 18px;
+    font-weight: bold;
+    text-transform: uppercase;
+    text-align: center;
+    margin: 0;
+    letter-spacing: 0.5px;
+}
+
+/* Ô nhập liệu */
+.notification-textarea {
+    width: 100%;
+    height: 200px;
+    padding: 15px;
+    box-sizing: border-box;
+    border: none;
+    border-bottom: 1px solid #eee;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    resize: none; /* Không cho kéo giãn để giữ form đẹp */
+    outline: none;
+    background: #fdfdfd;
+    color: #333;
+}
+.notification-textarea:focus {
+    background: #fff;
+}
+
+/* Khu vực nút bấm */
+.notification-dialog-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 12px 20px;
+    background: #f5f7fa;
+}
+
+.notification-dialog-cancel {
+    background: #e0e0e0;
+    color: #333;
+    padding: 8px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.2s;
+}
+.notification-dialog-cancel:hover { background: #d5d5d5; }
+
+.notification-dialog-save {
+    background: #4285f4;
+    color: #fff;
+    padding: 8px 25px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    box-shadow: 0 4px 10px rgba(66, 133, 244, 0.3);
+    transition: 0.2s;
+}
+.notification-dialog-save:hover { 
+    background: #3367d6; 
+    transform: translateY(-1px);
+}
+
+/* --- QUAN TRỌNG: Giao diện hiển thị thông báo (Banner) --- */
+.notification-display {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    
+    /* Style mới đẹp hơn */
+    background: #fff;
+    border-left: 5px solid #ff9800; /* Viền cam nổi bật */
+    color: #333;
+    padding: 15px 25px;
+    width: auto;
+    min-width: 300px;
+    max-width: 80%;
+    
+    border-radius: 4px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    font-weight: 500;
+    z-index: 1000;
+    display: none;
+    text-align: left; /* Canh trái để dễ đọc văn bản dài */
+    
+    /* MẤU CHỐT ĐỂ "VIẾT SAO HIỆN VẬY" */
+    white-space: pre-wrap; 
+    line-height: 1.6;
+    font-size: 15px;
+}
+
+@keyframes notiSlideIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+		
+		.create-quote-btn{ bottom:310px; background:#ff9800 } .create-quote-btn:hover{ background:#f57c00; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,.3)}
         .popup-overlay{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:1001; overflow-y:auto }
         .popup-content{ background:#fff; margin:20px auto; padding:20px; width:90%; max-width:1200px; border-radius:8px; box-shadow:0 5px 15px rgba(0,0,0,.3); max-height:90vh; overflow-y:auto; position:relative }
         .popup-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding-bottom:10px; border-bottom:1px solid #eee }
@@ -220,15 +349,17 @@
     <button class="create-quote-btn" id="createQuoteBtn">Tạo Báo Giá</button>
     <div class="notification-display" id="notificationDisplay"></div>
     <div class="notification-dialog" id="notificationDialog">
-        <div class="notification-dialog-content">
-            <div class="notification-dialog-title">THÔNG BÁO SẢN PHẨM</div>
-            <textarea class="notification-textarea" id="notificationTextarea" placeholder="Nhập thông báo sản phẩm..."></textarea>
-            <div class="notification-dialog-buttons">
-                <button class="notification-dialog-cancel" id="notificationCancelBtn">Hủy</button>
-                <button class="notification-dialog-save" id="notificationSaveBtn">Lưu</button>
-            </div>
+    <div class="notification-dialog-content">
+        <div class="notification-dialog-title">THÔNG BÁO THÔNG TIN SẢN PHẨM</div>
+        
+        <textarea class="notification-textarea" id="notificationTextarea" placeholder="Nhập nội dung thông báo... (Hệ thống sẽ giữ nguyên định dạng xuống dòng của bạn)"></textarea>
+        
+        <div class="notification-dialog-buttons">
+            <button class="notification-dialog-cancel" id="notificationCancelBtn">Hủy</button>
+            <button class="notification-dialog-save" id="notificationSaveBtn">Lưu</button>
         </div>
     </div>
+</div>
     <div class="popup-overlay" id="popupOverlay">
         <div class="popup-content">
             <div class="popup-header">
@@ -1396,3 +1527,4 @@
 </script>
 </body>
 </html>
+
