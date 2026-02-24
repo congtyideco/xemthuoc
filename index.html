@@ -339,6 +339,44 @@
                 width: 100% !important; /* Đảm bảo full width khi in thường */
             }
         }
+        
+        /* CSS cho phần chọn tất cả danh sách đã lọc */
+        .select-all-filtered-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 10px 0;
+            padding: 8px 12px;
+            background: #e3f2fd;
+            border-radius: 6px;
+            border-left: 4px solid #2196F3;
+        }
+        .select-all-filtered-btn {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .select-all-filtered-btn:hover {
+            background: #1976D2;
+        }
+        .select-all-filtered-btn i {
+            font-size: 16px;
+        }
+        .filtered-count {
+            color: #0d47a1;
+            font-weight: 500;
+            background: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 13px;
+        }
     </style>
 </head>
 <body>
@@ -378,6 +416,15 @@
                 <button class="btn btn-filter" id="filterSelectedBtn" title="Chỉ hiển thị các hàng đã tick">Lọc hàng đã chọn</button>
                 <button class="btn btn-clear" id="clearSelectionBtn" title="Xóa mọi tick và trở về danh sách ban đầu">Refresh (xóa chọn)</button>
             </div>
+            
+            <!-- PHẦN BỔ SUNG: Chọn tất cả danh sách đã lọc -->
+            <div class="select-all-filtered-section" id="selectAllFilteredSection" style="display: none;">
+                <button class="select-all-filtered-btn" id="selectAllFilteredBtn">
+                    <span>✓</span> Chọn tất cả danh sách đã lọc
+                </button>
+                <span class="filtered-count" id="filteredCount">0 sản phẩm</span>
+            </div>
+            
             <div class="select-range-section">
                 <button class="btn" id="selectAllBtn" style="background:#2196F3; color:white;">Chọn tất cả</button>
                 <span class="range-label">Từ hàng</span>
@@ -597,6 +644,10 @@
     const REMOVE_BG_API_KEY = "iHt8DKCwKg4Va63ACXopN7nm"; 
     // MẶC ĐỊNH LÀ LANDSCAPE
     let currentPaperOrientation = 'landscape';
+    
+    // Biến theo dõi trạng thái lọc hiện tại
+    let currentFilteredData = [];
+    let currentFilteredSourceIdx = [];
 
     // ========== DOM ==========
     const viewPriceBtn = document.getElementById("viewPriceBtn");
@@ -686,6 +737,11 @@
     const fromRowInput = document.getElementById("fromRowInput");
     const toRowInput = document.getElementById("toRowInput");
     const selectRangeBtn = document.getElementById("selectRangeBtn");
+    
+    // PHẦN BỔ SUNG: DOM cho chức năng chọn tất cả danh sách đã lọc
+    const selectAllFilteredSection = document.getElementById("selectAllFilteredSection");
+    const selectAllFilteredBtn = document.getElementById("selectAllFilteredBtn");
+    const filteredCount = document.getElementById("filteredCount");
 
     // ========== SỰ KIỆN ==========
     viewPriceBtn.addEventListener("click", () => {
@@ -695,7 +751,10 @@
     closePopupBtn.addEventListener("click", () => (popupOverlay.style.display = "none"));
     popupOverlay.addEventListener("click", (e) => { if (e.target === popupOverlay) popupOverlay.style.display = "none"; });
     excelFileInput.addEventListener("change", handleFileSelect);
-    searchInput.addEventListener("input", ()=>{ showingOnlySelected=false; performSearch(); });
+    searchInput.addEventListener("input", ()=>{ 
+        showingOnlySelected=false; 
+        performSearch(); 
+    });
     passwordDialogCancel.addEventListener("click", () => { passwordDialog.style.display = "none"; passwordInput.value = ""; fileIndexToRemove = null; });
     passwordDialogConfirm.addEventListener("click", () => {
         const enteredPassword = passwordInput.value;
@@ -721,8 +780,22 @@
     
     exportBtn.addEventListener("click", exportCurrentViewToExcel);
     manageImagesBtn.addEventListener("click", openImageManager);
-    filterSelectedBtn.addEventListener('click', ()=>{ if(selectedRowIdx.size===0){ alert('Chưa có hàng nào được chọn.'); return; } showingOnlySelected=true; renderSelectedOnly(); });
-    clearSelectionBtn.addEventListener('click', ()=>{ selectedRowIdx.clear(); showingOnlySelected=false; searchInput.value=''; createTable(currentData); updateActionButtonsState(); });
+    filterSelectedBtn.addEventListener('click', ()=>{ 
+        if(selectedRowIdx.size===0){ 
+            alert('Chưa có hàng nào được chọn.'); 
+            return; 
+        } 
+        showingOnlySelected=true; 
+        renderSelectedOnly(); 
+    });
+    clearSelectionBtn.addEventListener('click', ()=>{ 
+        selectedRowIdx.clear(); 
+        showingOnlySelected=false; 
+        searchInput.value=''; 
+        createTable(currentData); 
+        updateActionButtonsState(); 
+        updateFilteredSection(); // Cập nhật phần chọn tất cả danh sách đã lọc
+    });
     createQuoteBtn.addEventListener('click', () => {
         if (selectedRowIdx.size === 0) {
             alert('Vui lòng chọn ít nhất một sản phẩm để tạo báo giá.');
@@ -798,6 +871,7 @@
             cb.checked = true;
         });
         updateActionButtonsState();
+        updateFilteredSection();
     });
     selectRangeBtn.addEventListener("click", () => {
         const from = parseInt(fromRowInput.value);
@@ -818,6 +892,12 @@
             }
         });
         updateActionButtonsState();
+        updateFilteredSection();
+    });
+    
+    // PHẦN BỔ SUNG: Sự kiện cho nút chọn tất cả danh sách đã lọc
+    selectAllFilteredBtn.addEventListener('click', () => {
+        selectAllFilteredProducts();
     });
 
     // ========== XUẤT EXCEL ==========
@@ -943,6 +1023,7 @@
         selectedRowIdx.clear(); showingOnlySelected=false; searchInput.value='';
         createTable(currentData); 
         updateActionButtonsState();
+        updateFilteredSection(); // Cập nhật phần chọn tất cả danh sách đã lọc
     }
     // HÀM LỌC CỘT HIỂN THỊ (QUAN TRỌNG CHO ẨN CỘT)
     function visibleColumnIndexes(){
@@ -988,6 +1069,7 @@
                 }
                 if(cb.checked) selectedRowIdx.add(rowIdx); else selectedRowIdx.delete(rowIdx); 
                 updateActionButtonsState();
+                updateFilteredSection(); // Cập nhật phần chọn tất cả danh sách đã lọc
             });
             tdChoose.style.textAlign='center'; tdChoose.appendChild(cb); tr.appendChild(tdChoose);
             tbody.appendChild(tr);
@@ -1000,6 +1082,17 @@
         fromRowInput.max = visibleRowCount;
         toRowInput.max = visibleRowCount;
         toRowInput.value = visibleRowCount;
+        
+        // Lưu dữ liệu đã lọc hiện tại
+        if (sourceIndexes) {
+            currentFilteredData = data.slice(1);
+            currentFilteredSourceIdx = sourceIndexes;
+        } else {
+            currentFilteredData = data.slice(1);
+            currentFilteredSourceIdx = Array.from({length: data.length - 1}, (_, i) => i + 1);
+        }
+        
+        updateFilteredSection();
     }
     function renderSelectedOnly(){
         const indices = Array.from(selectedRowIdx).sort((a,b)=>a-b);
@@ -1523,9 +1616,61 @@
     function saveNotification(){ const t = notificationTextarea.value; database.ref("notification").set({text:t, timestamp:Date.now()}); notificationDialog.style.display='none'; loadNotification(); }
     function loadNotification(){ database.ref("notification").once("value").then(s=>{ if(s.val()) notificationDisplay.textContent=s.val().text; notificationDisplay.style.display='block'; }); }
     
-    document.addEventListener('DOMContentLoaded', ()=>{ loadNotification(); loadDataFromFirebase(); loadProductImages(); loadCustomerDataFromFirebase(); });
+    // ========== PHẦN BỔ SUNG: Hàm cập nhật và chọn tất cả danh sách đã lọc ==========
+    function updateFilteredSection() {
+        // Kiểm tra xem có đang ở chế độ lọc không (đang tìm kiếm hoặc đang lọc hàng đã chọn)
+        const isFiltering = searchInput.value.trim().length > 0 || showingOnlySelected;
+        
+        if (isFiltering && currentFilteredData.length > 0) {
+            selectAllFilteredSection.style.display = 'flex';
+            filteredCount.textContent = `${currentFilteredData.length} sản phẩm`;
+            
+            // Kiểm tra xem tất cả các sản phẩm trong danh sách đã lọc đã được chọn chưa
+            const allFilteredSelected = currentFilteredSourceIdx.every(idx => selectedRowIdx.has(idx));
+            if (allFilteredSelected) {
+                selectAllFilteredBtn.innerHTML = '<span>✓</span> Bỏ chọn tất cả';
+            } else {
+                selectAllFilteredBtn.innerHTML = '<span>✓</span> Chọn tất cả danh sách đã lọc';
+            }
+        } else {
+            selectAllFilteredSection.style.display = 'none';
+        }
+    }
+    
+    function selectAllFilteredProducts() {
+        // Kiểm tra xem tất cả các sản phẩm trong danh sách đã lọc đã được chọn chưa
+        const allFilteredSelected = currentFilteredSourceIdx.every(idx => selectedRowIdx.has(idx));
+        
+        if (allFilteredSelected) {
+            // Nếu đã chọn hết thì bỏ chọn tất cả
+            currentFilteredSourceIdx.forEach(idx => {
+                selectedRowIdx.delete(idx);
+            });
+        } else {
+            // Nếu chưa chọn hết thì chọn tất cả
+            currentFilteredSourceIdx.forEach(idx => {
+                selectedRowIdx.add(idx);
+            });
+        }
+        
+        // Cập nhật lại checkbox trong bảng
+        const checkboxes = tableContainer.querySelectorAll('tbody input[type="checkbox"]');
+        checkboxes.forEach(cb => {
+            const tr = cb.closest('tr');
+            const rowIndex = parseInt(tr.dataset.rowIndex);
+            cb.checked = selectedRowIdx.has(rowIndex);
+        });
+        
+        updateActionButtonsState();
+        updateFilteredSection();
+    }
+    
+    document.addEventListener('DOMContentLoaded', ()=>{ 
+        loadNotification(); 
+        loadDataFromFirebase(); 
+        loadProductImages(); 
+        loadCustomerDataFromFirebase(); 
+    });
 </script>
 </body>
 </html>
-
-
