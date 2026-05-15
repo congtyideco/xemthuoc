@@ -377,6 +377,348 @@
             border-radius: 20px;
             font-size: 13px;
         }
+        
+        /* ================================================================== */
+        /* ====== GIAO DIỆN CẢI TIẾN: STICKY HEADER + COLLAPSIBLE MENU ====== */
+        /* ================================================================== */
+        
+        /* Popup overlay - giữ vị trí cuộn lên đầu */
+        .popup-overlay { padding: 0 !important; }
+        
+        /* Popup content - layout mới: flex column */
+        .popup-overlay .popup-content.modern-layout {
+            margin: 10px auto;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100vh - 20px);
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+            border-radius: 10px;
+        }
+        
+        /* Header dính trên cùng */
+        .pro-header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: linear-gradient(135deg, #4285f4 0%, #2b569a 100%);
+            color: white;
+            padding: 12px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            border-bottom: 2px solid #1c3a6e;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .pro-header .pro-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: white;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+        .pro-header .pro-title-icon {
+            font-size: 22px;
+        }
+        .pro-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            justify-content: flex-end;
+        }
+        .pro-search-box {
+            position: relative;
+            flex: 1;
+            max-width: 420px;
+            min-width: 180px;
+        }
+        .pro-search-box input {
+            width: 100%;
+            padding: 8px 12px 8px 36px;
+            border-radius: 20px;
+            border: none;
+            font-size: 14px;
+            background: rgba(255,255,255,0.95);
+            outline: none;
+            transition: 0.2s;
+            box-sizing: border-box;
+        }
+        .pro-search-box input:focus {
+            background: white;
+            box-shadow: 0 0 0 3px rgba(255,255,255,0.4);
+        }
+        .pro-search-box::before {
+            content: "🔍";
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+            pointer-events: none;
+        }
+        
+        .pro-menu-btn {
+            background: rgba(255,255,255,0.18);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 7px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: 0.2s;
+        }
+        .pro-menu-btn:hover { background: rgba(255,255,255,0.28); }
+        .pro-menu-btn.active { background: rgba(255,255,255,0.35); }
+        .pro-menu-btn .chevron { transition: transform 0.3s; display: inline-block; }
+        .pro-menu-btn.active .chevron { transform: rotate(180deg); }
+        
+        .pro-close-btn {
+            background: rgba(255,255,255,0.18);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+        .pro-close-btn:hover {
+            background: #f44336;
+            border-color: #f44336;
+            transform: rotate(90deg);
+        }
+        
+        /* Menu thả - thanh công cụ (KHÔNG dùng position:sticky vì xung đột với flex parent có overflow:hidden) */
+        .pro-tools-menu {
+            background: #ffffff;
+            border-bottom: 1px solid #e0e6f0;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.06);
+            flex-shrink: 0;
+        }
+        .pro-tools-menu.open { 
+            max-height: 70vh; 
+            overflow-y: auto; 
+        }
+        .pro-tools-inner {
+            padding: 14px 18px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 14px;
+        }
+        .pro-tool-card {
+            background: #f8faff;
+            border: 1px solid #e3eeff;
+            border-radius: 8px;
+            padding: 12px;
+        }
+        .pro-tool-card h4 {
+            margin: 0 0 10px 0;
+            font-size: 13px;
+            font-weight: 700;
+            color: #2b569a;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border-bottom: 1px dashed #cfdcf0;
+            padding-bottom: 6px;
+        }
+        .pro-tool-card .pro-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .pro-tool-card .pro-row:last-child { margin-bottom: 0; }
+        .pro-tool-card .btn,
+        .pro-tool-card .export-btn {
+            padding: 6px 12px;
+            font-size: 13px;
+            border-radius: 5px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: 0.2s;
+        }
+        .pro-tool-card .export-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 3px 6px rgba(0,0,0,0.15); }
+        .pro-tool-card .file-input-label {
+            padding: 6px 12px;
+            font-size: 13px;
+            border-radius: 5px;
+        }
+        .pro-tool-card .upload-section {
+            margin: 0;
+            padding: 8px;
+            background: white;
+            border-radius: 5px;
+        }
+        .pro-tool-card .files-list { margin: 8px 0 0 0; max-height: 100px; overflow-y: auto; }
+        .pro-tool-card .file-item { padding: 4px 8px; font-size: 12px; }
+        .pro-tool-card .select-range-section,
+        .pro-tool-card .toolbar { margin: 0; padding: 0; background: transparent; border: none; }
+        .pro-tool-card .column-list { max-height: 80px; padding: 6px; }
+        .pro-tool-card .column-chip { font-size: 12px; padding: 3px 7px; }
+        
+        /* Body - chứa table cuộn. pro-body KHÔNG cuộn trực tiếp; 
+           thay vào đó .table-container bên trong cuộn cả 2 hướng để sticky thead hoạt động */
+        .pro-body {
+            flex: 1;
+            overflow: hidden;
+            padding: 10px 18px 18px 18px;
+            background: #fafbfd;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* table-container trong pro-body trở thành scroll context chính */
+        .pro-body .table-container {
+            flex: 1;
+            overflow: auto;
+            min-height: 0;
+            margin-top: 0;
+            border-radius: 6px;
+            border: 1px solid #e0e6f0;
+            background: white;
+        }
+        
+        /* Tiêu đề bảng (STT, Tên thuốc, ...) cố định khi cuộn dữ liệu */
+        .pro-body .price-table { margin: 0; }
+        .pro-body .price-table thead th { 
+            position: sticky; 
+            top: 0; 
+            z-index: 5;
+            background: #4285f4;
+            color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        /* ============ DROPDOWN BÁO GIÁ ============ */
+        .quote-menu-container {
+            position: fixed;
+            right: 20px;
+            bottom: 310px;
+            z-index: 1000;
+        }
+        .quote-menu-container .create-quote-btn {
+            position: static;
+            right: auto;
+            bottom: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+        .quote-menu-dropdown {
+            display: none;
+            position: absolute;
+            right: 0;
+            bottom: 58px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            min-width: 240px;
+            overflow: hidden;
+            animation: dropdownIn 0.2s ease-out;
+            border: 1px solid #e0e6f0;
+        }
+        .quote-menu-dropdown.show { display: block; }
+        @keyframes dropdownIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .quote-menu-dropdown button {
+            width: 100%;
+            padding: 12px 16px;
+            border: none;
+            background: white;
+            text-align: left;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: 0.15s;
+        }
+        .quote-menu-dropdown button:last-child { border-bottom: none; }
+        .quote-menu-dropdown button:hover { background: #f5f9ff; color: #4285f4; padding-left: 20px; }
+        .quote-menu-dropdown button .icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .quote-menu-dropdown button.general .icon { background: #fff3e0; color: #ff9800; }
+        .quote-menu-dropdown button.longchau .icon { background: #e3f2fd; color: #1976d2; }
+        .quote-menu-dropdown button.pharmacity .icon { background: #e8f5e9; color: #2e7d32; }
+        
+        /* Floating buttons - thêm hiệu ứng đẹp */
+        .view-price-btn,.database-btn,.home-erp-btn,.notification-btn,.create-quote-btn {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            letter-spacing: 0.3px;
+        }
+        
+        /* Cải tiến nút action chính */
+        .pro-action-bar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        /* Responsive mobile */
+        @media(max-width: 768px) {
+            .pro-header { padding: 10px 12px; flex-wrap: wrap; }
+            .pro-header .pro-title { font-size: 15px; }
+            .pro-header-actions { width: 100%; }
+            .pro-search-box { max-width: 100%; }
+            .pro-tools-inner { grid-template-columns: 1fr; padding: 10px; }
+            .quote-menu-container { right: 80px; }
+            .quote-menu-dropdown { right: 0; bottom: 70px; min-width: 220px; }
+        }
+        
+        /* Hộp thoại file rendering tốt hơn */
+        .pro-tool-card .file-input-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .pro-tool-card .file-name {
+            flex: 1;
+            font-size: 12px;
+            color: #666;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
     </style>
 </head>
 <body>
@@ -384,7 +726,23 @@
     <a href="https://erp-ideco.skyit.vn/#/app/order/index/" class="home-erp-btn" id="homeErpBtn">HOME ERP</a>
     <button class="view-price-btn" id="viewPriceBtn">Xem Giá</button>
     <button class="database-btn" id="databaseBtn">Cơ sở dữ liệu</button>
-    <button class="create-quote-btn" id="createQuoteBtn">Tạo Báo Giá</button>
+    <div class="quote-menu-container">
+        <button class="create-quote-btn" id="createQuoteBtn">Tạo Báo Giá ▾</button>
+        <div class="quote-menu-dropdown" id="quoteMenuDropdown">
+            <button class="general" data-quote-type="general">
+                <span class="icon">📋</span>
+                <span>Báo Giá Chung</span>
+            </button>
+            <button class="longchau" data-quote-type="longchau">
+                <span class="icon">💊</span>
+                <span>Nhà Thuốc Long Châu</span>
+            </button>
+            <button class="pharmacity" data-quote-type="pharmacity">
+                <span class="icon">🏥</span>
+                <span>Nhà Thuốc Pharmacity</span>
+            </button>
+        </div>
+    </div>
     <div class="notification-display" id="notificationDisplay"></div>
     <div class="notification-dialog" id="notificationDialog">
     <div class="notification-dialog-content">
@@ -399,60 +757,107 @@
     </div>
 </div>
     <div class="popup-overlay" id="popupOverlay">
-        <div class="popup-content">
-            <div class="popup-header">
-                <h2 class="popup-title">Xem Giá Thuốc</h2>
-                <button class="close-btn" id="closePopupBtn">&times;</button>
-            </div>
-            <div class="upload-section">
-                <div class="file-input-container">
-                    <label for="excelFileInput" class="file-input-label">Chọn file Excel</label>
-                    <input type="file" id="excelFileInput" class="file-input" accept=".xlsx, .xls" multiple />
-                    <span class="file-name" id="fileNameDisplay">Chưa chọn file</span>
+        <div class="popup-content modern-layout">
+            
+            <!-- HEADER DÍNH TRÊN CÙNG -->
+            <div class="pro-header">
+                <h2 class="pro-title">
+                    <span class="pro-title-icon">💊</span>
+                    <span>Xem Giá Thuốc</span>
+                </h2>
+                <div class="pro-header-actions">
+                    <div class="pro-search-box">
+                        <input type="text" id="searchInput" placeholder="Tìm kiếm trong bảng giá..." />
+                    </div>
+                    <button class="pro-menu-btn" id="toolsMenuBtn" title="Mở menu công cụ">
+                        <span>☰ Công cụ</span>
+                        <span class="chevron">▾</span>
+                    </button>
+                    <button class="pro-close-btn" id="closePopupBtn" title="Đóng">&times;</button>
                 </div>
             </div>
-            <div class="search-section">
-                <input type="text" id="searchInput" class="search-input" placeholder="Tìm kiếm trong bảng giá..." />
-                <button class="btn btn-filter" id="filterSelectedBtn" title="Chỉ hiển thị các hàng đã tick">Lọc hàng đã chọn</button>
-                <button class="btn btn-clear" id="clearSelectionBtn" title="Xóa mọi tick và trở về danh sách ban đầu">Refresh (xóa chọn)</button>
+            
+            <!-- MENU THẢ - CHỨA CÁC CÔNG CỤ -->
+            <div class="pro-tools-menu" id="proToolsMenu">
+                <div class="pro-tools-inner">
+                    
+                    <!-- Tải file & Files list -->
+                    <div class="pro-tool-card">
+                        <h4>📁 Tải dữ liệu</h4>
+                        <div class="upload-section" style="margin:0; padding:8px; background:white;">
+                            <div class="file-input-container">
+                                <label for="excelFileInput" class="file-input-label">Chọn file Excel</label>
+                                <input type="file" id="excelFileInput" class="file-input" accept=".xlsx, .xls" multiple />
+                                <span class="file-name" id="fileNameDisplay">Chưa chọn file</span>
+                            </div>
+                        </div>
+                        <div class="files-list" id="filesList"></div>
+                    </div>
+                    
+                    <!-- Lọc & Chọn hàng -->
+                    <div class="pro-tool-card">
+                        <h4>🔘 Lọc & Chọn hàng</h4>
+                        <div class="pro-row">
+                            <button class="btn btn-filter" id="filterSelectedBtn" title="Chỉ hiển thị các hàng đã tick">Lọc hàng đã chọn</button>
+                            <button class="btn btn-clear" id="clearSelectionBtn" title="Xóa mọi tick và trở về danh sách ban đầu">Refresh</button>
+                        </div>
+                        <div class="pro-row">
+                            <button class="btn" id="selectAllBtn" style="background:#2196F3; color:white;">Chọn tất cả</button>
+                            <span class="range-label">Từ</span>
+                            <input type="number" id="fromRowInput" class="range-input" min="1" value="1" />
+                            <span class="range-label">đến</span>
+                            <input type="number" id="toRowInput" class="range-input" min="1" value="1" />
+                            <button class="btn" id="selectRangeBtn" style="background:#009688; color:white;">Chọn phạm vi</button>
+                        </div>
+                        <!-- Chọn tất cả danh sách đã lọc -->
+                        <div class="select-all-filtered-section" id="selectAllFilteredSection" style="display: none; margin-top:8px;">
+                            <button class="select-all-filtered-btn" id="selectAllFilteredBtn">
+                                <span>✓</span> Chọn tất cả đã lọc
+                            </button>
+                            <span class="filtered-count" id="filteredCount">0 sản phẩm</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Quản lý cột -->
+                    <div class="pro-tool-card">
+                        <h4>📋 Ẩn/Hiện cột</h4>
+                        <div class="toolbar" id="columnToolbar" style="display:none; margin:0; padding:0; background:transparent; border:none;">
+                            <div class="column-list" id="columnList" style="width:100%;"></div>
+                            <div class="pro-row" style="margin-top:8px;">
+                                <button class="btn-hide" id="btnHide">Ẩn cột</button>
+                                <button class="btn-unhide" id="btnUnhide">Hiện cột</button>
+                                <button class="btn-showall" id="btnShowAll">Hiện tất cả</button>
+                            </div>
+                        </div>
+                        <div id="noColumnMsg" style="font-size:12px; color:#999; font-style:italic;">Tải file Excel để hiển thị các cột</div>
+                    </div>
+                    
+                    <!-- Hành động trên dữ liệu -->
+                    <div class="pro-tool-card">
+                        <h4>⚙️ Hành động dữ liệu</h4>
+                        <div class="pro-row">
+                            <button class="export-btn" id="addNewRowBtn" style="background: #4caf50; color:#fff;">➕ Thêm hàng</button>
+                            <button class="export-btn" id="editRowBtn" style="background: #ffc107; color:#fff;" disabled>✏️ Sửa hàng</button>
+                            <button class="export-btn" id="deleteRowBtn" style="background: #f44336; color:#fff;" disabled>🗑️ Xóa hàng</button>
+                        </div>
+                        <div class="pro-row">
+                            <button class="export-btn" id="exportBtn" style="background:#1976d2; color:#fff;">📊 Xuất Excel</button>
+                            <button class="export-btn" id="manageImagesBtn" style="background: #9c27b0; color:#fff;">🖼️ Quản lý ảnh</button>
+                        </div>
+                    </div>
+                    
+                </div>
             </div>
             
-            <!-- PHẦN BỔ SUNG: Chọn tất cả danh sách đã lọc -->
-            <div class="select-all-filtered-section" id="selectAllFilteredSection" style="display: none;">
-                <button class="select-all-filtered-btn" id="selectAllFilteredBtn">
-                    <span>✓</span> Chọn tất cả danh sách đã lọc
-                </button>
-                <span class="filtered-count" id="filteredCount">0 sản phẩm</span>
+            <!-- BODY - DỮ LIỆU CUỘN ĐƯỢC -->
+            <div class="pro-body">
+                <div class="loading" id="loadingIndicator">
+                    <div class="spinner"></div>
+                    <p>Đang tải dữ liệu...</p>
+                </div>
+                <div class="table-container" id="tableContainer"></div>
             </div>
             
-            <div class="select-range-section">
-                <button class="btn" id="selectAllBtn" style="background:#2196F3; color:white;">Chọn tất cả</button>
-                <span class="range-label">Từ hàng</span>
-                <input type="number" id="fromRowInput" class="range-input" min="1" value="1" />
-                <span class="range-label">đến</span>
-                <input type="number" id="toRowInput" class="range-input" min="1" value="1" />
-                <button class="btn" id="selectRangeBtn" style="background:#009688; color:white;">Chọn phạm vi</button>
-            </div>
-            <div class="toolbar" id="columnToolbar" style="display:none">
-                <span class="section-title">Chọn cột:</span>
-                <div class="column-list" id="columnList"></div>
-                <button class="btn-hide" id="btnHide">Ẩn cột đã chọn</button>
-                <button class="btn-unhide" id="btnUnhide">Hiện cột đã chọn</button>
-                <button class="btn-showall" id="btnShowAll">Hiện tất cả</button>
-            </div>
-            <div class="files-list" id="filesList"></div>
-            <div class="loading" id="loadingIndicator">
-                <div class="spinner"></div>
-                <p>Đang tải dữ liệu...</p>
-            </div>
-            <div class="table-container" id="tableContainer"></div>
-            <div class="footer-actions">
-                <button class="export-btn" id="addNewRowBtn" style="background: #4caf50;">Thêm hàng mới</button>
-                <button class="export-btn" id="editRowBtn" style="background: #ffc107;" disabled>Sửa hàng đã chọn</button>
-                <button class="export-btn" id="deleteRowBtn" style="background: #f44336;" disabled>Xóa hàng đã chọn</button>
-                <button class="export-btn" id="exportBtn">Xuất Excel theo giao diện hiện tại</button>
-                <button class="export-btn" id="manageImagesBtn" style="background: #9c27b0;">Quản lý hình ảnh</button>
-            </div>
         </div>
     </div>
     <div class="popup-overlay" id="customerDbOverlay">
@@ -749,7 +1154,8 @@
         loadDataFromFirebase();
     });
     closePopupBtn.addEventListener("click", () => (popupOverlay.style.display = "none"));
-    popupOverlay.addEventListener("click", (e) => { if (e.target === popupOverlay) popupOverlay.style.display = "none"; });
+    // ĐÃ XÓA: popup không tự đóng khi click ra ngoài, chỉ đóng khi bấm nút X
+    // popupOverlay.addEventListener("click", (e) => { if (e.target === popupOverlay) popupOverlay.style.display = "none"; });
     excelFileInput.addEventListener("change", handleFileSelect);
     searchInput.addEventListener("input", ()=>{ 
         showingOnlySelected=false; 
@@ -796,13 +1202,129 @@
         updateActionButtonsState(); 
         updateFilteredSection(); // Cập nhật phần chọn tất cả danh sách đã lọc
     });
-    createQuoteBtn.addEventListener('click', () => {
-        if (selectedRowIdx.size === 0) {
-            alert('Vui lòng chọn ít nhất một sản phẩm để tạo báo giá.');
+    // ============ DROPDOWN BÁO GIÁ + AUTO CHỌN NHÀ THUỐC ============
+    // Loại báo giá hiện tại: 'general' | 'longchau' | 'pharmacity'
+    let currentQuoteType = 'general';
+    const quoteMenuDropdown = document.getElementById('quoteMenuDropdown');
+    
+    // Click nút "Tạo Báo Giá" → toggle dropdown
+    createQuoteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        quoteMenuDropdown.classList.toggle('show');
+    });
+    
+    // Click ra ngoài dropdown → đóng dropdown (KHÔNG đóng popup chính)
+    document.addEventListener('click', (e) => {
+        if (!quoteMenuDropdown.contains(e.target) && e.target !== createQuoteBtn) {
+            quoteMenuDropdown.classList.remove('show');
+        }
+    });
+    
+    // Click 1 lựa chọn trong dropdown → xử lý báo giá theo loại
+    quoteMenuDropdown.querySelectorAll('button[data-quote-type]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const quoteType = btn.dataset.quoteType;
+            quoteMenuDropdown.classList.remove('show');
+            handleQuoteTypeSelection(quoteType);
+        });
+    });
+    
+    function handleQuoteTypeSelection(quoteType) {
+        currentQuoteType = quoteType;
+        
+        // ƯU TIÊN 1: Nếu user đã chọn sản phẩm rồi → dùng selection đó cho mọi loại báo giá
+        // (không tự động lọc, không xóa selection của user)
+        if (selectedRowIdx.size > 0) {
+            quoteDialog.style.display = 'flex';
+            if (quoteType === 'longchau') {
+                customerNameInput.value = 'Nhà Thuốc Long Châu';
+            } else if (quoteType === 'pharmacity') {
+                customerNameInput.value = 'Nhà Thuốc Pharmacity';
+            }
+            customerNameInput.focus();
             return;
         }
-        quoteDialog.style.display = 'flex';
-        customerNameInput.focus();
+        
+        // ƯU TIÊN 2: Chưa chọn sản phẩm nào
+        if (quoteType === 'general') {
+            alert('Vui lòng chọn ít nhất một sản phẩm để tạo báo giá.\n\nMở "Xem Giá" để chọn sản phẩm trước.');
+            return;
+        }
+        
+        // Long Châu / Pharmacity: thử auto-lọc theo tên nhà thuốc trong dữ liệu
+        const pharmacyName = quoteType === 'longchau' ? 'Long Châu' : 'Pharmacity';
+        
+        if (popupOverlay.style.display !== 'block') {
+            popupOverlay.style.display = 'block';
+            loadDataFromFirebase().then(() => {
+                autoFilterAndSelectByPharmacy(pharmacyName, quoteType);
+            }).catch(() => {
+                setTimeout(() => autoFilterAndSelectByPharmacy(pharmacyName, quoteType), 800);
+            });
+        } else {
+            autoFilterAndSelectByPharmacy(pharmacyName, quoteType);
+        }
+    }
+    
+    function autoFilterAndSelectByPharmacy(pharmacyName, quoteType) {
+        if (!currentData || currentData.length < 2) {
+            alert('Chưa có dữ liệu để lọc. Vui lòng tải file Excel trước.');
+            return;
+        }
+        
+        // Tìm các hàng có chứa tên nhà thuốc trong bất kỳ cột nào
+        const searchTerm = pharmacyName.toLowerCase();
+        const matchedIndices = [];
+        for (let i = 1; i < currentData.length; i++) {
+            const row = currentData[i];
+            if (!row) continue;
+            for (let j = 0; j < row.length; j++) {
+                if (String(row[j] || '').toLowerCase().includes(searchTerm)) {
+                    matchedIndices.push(i);
+                    break;
+                }
+            }
+        }
+        
+        if (matchedIndices.length === 0) {
+            alert(`Trong dữ liệu không có sản phẩm nào chứa từ "${pharmacyName}".\n\nBạn hãy tự chọn sản phẩm muốn báo giá, sau đó bấm lại "${pharmacyName === 'Long Châu' ? '💊 Nhà Thuốc Long Châu' : '🏥 Nhà Thuốc Pharmacity'}" — các cột giá sẽ được đổi tên cho phù hợp.`);
+            return;
+        }
+        
+        // Auto chọn các hàng khớp
+        selectedRowIdx.clear();
+        matchedIndices.forEach(idx => selectedRowIdx.add(idx));
+        
+        searchInput.value = pharmacyName;
+        showingOnlySelected = false;
+        performSearch();
+        
+        const checkboxes = tableContainer.querySelectorAll('tbody input[type="checkbox"]');
+        checkboxes.forEach(cb => {
+            const tr = cb.closest('tr');
+            const rowIndex = parseInt(tr.dataset.rowIndex);
+            cb.checked = selectedRowIdx.has(rowIndex);
+        });
+        updateActionButtonsState();
+        updateFilteredSection();
+        
+        setTimeout(() => {
+            const proceed = confirm(`Đã tự động chọn ${matchedIndices.length} sản phẩm cho ${pharmacyName}.\n\nBấm OK để tiếp tục tạo báo giá, hoặc Cancel để chỉnh sửa lựa chọn.`);
+            if (proceed) {
+                quoteDialog.style.display = 'flex';
+                customerNameInput.value = `Nhà Thuốc ${pharmacyName}`;
+                customerNameInput.focus();
+            }
+        }, 400);
+    }
+    
+    // ============ NÚT TOGGLE MENU CÔNG CỤ (☰) ============
+    const toolsMenuBtn = document.getElementById('toolsMenuBtn');
+    const proToolsMenu = document.getElementById('proToolsMenu');
+    toolsMenuBtn.addEventListener('click', () => {
+        proToolsMenu.classList.toggle('open');
+        toolsMenuBtn.classList.toggle('active');
     });
     quoteDialogCancel.addEventListener('click', () => {
         quoteDialog.style.display = 'none';
@@ -858,7 +1380,8 @@
         renderCustomerTable(customerDatabase); 
     });
     closeDbPopupBtn.addEventListener("click", () => customerDbOverlay.style.display = "none");
-    customerDbOverlay.addEventListener("click", (e) => { if (e.target === customerDbOverlay) customerDbOverlay.style.display = "none"; });
+    // ĐÃ XÓA: customerDbOverlay không tự đóng khi click ra ngoài
+    // customerDbOverlay.addEventListener("click", (e) => { if (e.target === customerDbOverlay) customerDbOverlay.style.display = "none"; });
     customerFileInput.addEventListener("change", handleCustomerFileSelect);
     selectAllBtn.addEventListener("click", () => {
         const checkboxes = tableContainer.querySelectorAll('tbody input[type="checkbox"]');
@@ -1176,8 +1699,15 @@
     }
     // ========== LOGIC TOOLBAR ẨN/HIỆN CỘT ==========
     function renderColumnSelector(){
-        columnList.innerHTML = ""; if(!headersCache.length){ columnToolbar.style.display = 'none'; return; }
+        const noColumnMsg = document.getElementById('noColumnMsg');
+        columnList.innerHTML = ""; 
+        if(!headersCache.length){ 
+            columnToolbar.style.display = 'none'; 
+            if (noColumnMsg) noColumnMsg.style.display = 'block';
+            return; 
+        }
         columnToolbar.style.display = 'flex';
+        if (noColumnMsg) noColumnMsg.style.display = 'none';
         headersCache.forEach((name, idx)=>{
             const chip = document.createElement('label'); chip.className = 'column-chip';
             const cb = document.createElement('input'); cb.type = 'checkbox'; cb.dataset.index = String(idx);
@@ -1220,7 +1750,7 @@
     }
     function loadDataFromFirebase(){
         loadingIndicator.style.display = 'block'; tableContainer.innerHTML = ''; filesList.innerHTML = '';
-        database.ref('priceData').once('value').then(snapshot=>{
+        return database.ref('priceData').once('value').then(snapshot=>{
             const data = snapshot.val();
             if(data && data.files){ 
                 uploadedFiles = data.files; 
@@ -1267,6 +1797,18 @@
         quoteCustomerPhone.contentEditable = "true";
         quoteCustomerAddress.contentEditable = "true";
 
+        // Cập nhật tiêu đề báo giá theo loại
+        const titleEl = document.querySelector('.quote-title');
+        if (titleEl) {
+            if (currentQuoteType === 'longchau') {
+                titleEl.textContent = 'BÁO GIÁ SẢN PHẨM - NHÀ THUỐC LONG CHÂU';
+            } else if (currentQuoteType === 'pharmacity') {
+                titleEl.textContent = 'BÁO GIÁ SẢN PHẨM - NHÀ THUỐC PHARMACITY';
+            } else {
+                titleEl.textContent = 'BÁO GIÁ SẢN PHẨM THUỐC';
+            }
+        }
+
         const now = new Date();
         const day = String(now.getDate()).padStart(2, '0');
         const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -1288,7 +1830,23 @@
         
         // Lọc cột theo trạng thái ẩn/hiện hiện tại
         const visibleIdx = visibleColumnIndexes();
-        const filteredAoa = aoa.map(row => row.filter((_, idx) => visibleIdx.includes(idx)));
+        
+        // ============ LỌC THÊM CỘT KHI BÁO GIÁ LONG CHÂU / PHARMACITY ============
+        // Ẩn các cột: "CK ≥ 6 hộp", "Giá mua từ 6 hộp (VNĐ)", "Loại điều trị"
+        // (vì các nhà thuốc chuỗi này thường lấy số lượng lớn từ 12 hộp trở lên)
+        let quoteVisibleIdx = visibleIdx;
+        if (currentQuoteType === 'longchau' || currentQuoteType === 'pharmacity') {
+            quoteVisibleIdx = visibleIdx.filter(colIdx => {
+                const h = (headersCache[colIdx] || '').toLowerCase().trim();
+                // Bỏ cột chứa "6 hộp" (cả CK ≥ 6 hộp và Giá mua từ 6 hộp)
+                if (h.includes('6 hộp') || h.includes('6hộp')) return false;
+                // Bỏ cột "Loại điều trị" / "Loại đt"
+                if (h.includes('loại điều trị') || h.includes('loại đt') || h === 'loại') return false;
+                return true;
+            });
+        }
+        
+        const filteredAoa = aoa.map(row => row.filter((_, idx) => quoteVisibleIdx.includes(idx)));
         
         const productNameIndex = findProductNameColumnIndex();
         const table = document.createElement("table");
@@ -1310,10 +1868,29 @@
         thImage.className = "th-resizable";
         headerRow.appendChild(thImage);
         
-        // Các cột dữ liệu
-        visibleIdx.forEach(colIdx => {
+        // Các cột dữ liệu (đổi tên cột nếu là báo giá Long Châu / Pharmacity)
+        quoteVisibleIdx.forEach(colIdx => {
             const th = document.createElement("th");
-            th.textContent = headersCache[colIdx] || "";
+            let headerName = headersCache[colIdx] || "";
+            
+            // ============ ĐỔI TÊN CỘT KHI BÁO GIÁ NHÀ THUỐC RIÊNG ============
+            // Hỗ trợ nhiều cách viết: "Chiết khấu từ 12 hộp", "CK ≥12 hộp", "CK 12 hộp", v.v.
+            if (currentQuoteType === 'longchau' || currentQuoteType === 'pharmacity') {
+                const lower = headerName.toLowerCase();
+                const has12hop = lower.includes('12 hộp') || lower.includes('12hộp');
+                const isChietKhauCol = lower.includes('chiết khấu') || /\bck\b/.test(lower);
+                const isGiaMuaCol = lower.includes('giá mua');
+                
+                if (has12hop) {
+                    if (isChietKhauCol) {
+                        headerName = 'Chiết khấu';
+                    } else if (isGiaMuaCol) {
+                        headerName = 'Giá mua';
+                    }
+                }
+            }
+            
+            th.textContent = headerName;
             th.contentEditable = "true";
             th.className = "th-resizable"; // Thêm class để kích hoạt resize
             headerRow.appendChild(th);
