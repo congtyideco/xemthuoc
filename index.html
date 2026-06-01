@@ -719,6 +719,145 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+
+        /* ====== THÔNG BÁO 2 KHUNG + LỊCH PHÁT (mới) ====== */
+        /* Biến #notificationDisplay thành khung chứa dọc 2 thẻ banner */
+        #notificationDisplay {
+            background: transparent !important;
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            color: inherit !important;
+            font-weight: normal !important;
+            text-align: left !important;
+            width: auto;
+            max-width: 92%;
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            pointer-events: none; /* để click xuyên qua vùng trống */
+        }
+        #notificationDisplay .xt-noti-card {
+            pointer-events: auto;
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.18);
+            overflow: hidden;
+            animation: notiSlideIn 0.3s ease-out;
+            border-left: 5px solid #4285f4;
+        }
+        #notificationDisplay .xt-noti-card.status { border-left-color: #1976d2; }
+        #notificationDisplay .xt-noti-card.stock  { border-left-color: #2e7d32; }
+        #notificationDisplay .xt-noti-head {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .3px;
+            color: #fff;
+            padding: 10px 14px;
+            background: linear-gradient(135deg, #1976d2, #2b569a);
+        }
+        #notificationDisplay .xt-noti-card.stock .xt-noti-head {
+            background: linear-gradient(135deg, #2e7d32, #1b5e20);
+        }
+        #notificationDisplay .xt-noti-body {
+            padding: 12px 14px;
+            font-size: 15px;
+            line-height: 1.55;
+            color: #333;
+            white-space: pre-wrap;
+            max-height: 40vh;
+            overflow-y: auto;
+        }
+        #notificationDisplay .xt-noti-foot {
+            display: flex;
+            justify-content: flex-end;
+            padding: 8px 14px 12px;
+        }
+        #notificationDisplay .xt-noti-read {
+            background: #4caf50;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 7px 18px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            transition: .2s;
+        }
+        #notificationDisplay .xt-noti-read:hover { background: #43a047; transform: translateY(-1px); }
+
+        /* Nhãn & khung lịch trong hộp thoại nhập liệu */
+        .xt-field-label {
+            display: block;
+            font-weight: 700;
+            font-size: 13px;
+            color: #1976d2;
+            margin: 12px 0 6px;
+            text-transform: uppercase;
+            letter-spacing: .3px;
+        }
+        .xt-sched-box {
+            margin-top: 14px;
+            padding: 12px 14px;
+            background: #f1f6ff;
+            border: 1px solid #cfe1ff;
+            border-radius: 8px;
+        }
+        .xt-sched-toggle {
+            display: flex; align-items: center; gap: 8px;
+            font-weight: 700; color: #2b569a; font-size: 14px; cursor: pointer;
+        }
+        .xt-sched-toggle input { width: 17px; height: 17px; cursor: pointer; }
+        .xt-sched-startdate { display:flex; flex-direction:column; gap:4px; margin-top:10px; }
+        .xt-sched-startdate span { font-size:12px; color:#555; font-weight:600; }
+        .xt-sched-startdate input { padding:7px 8px; border:1px solid #cfd8e3; border-radius:6px; font-size:14px; background:#fff; outline:none; }
+        .xt-sched-startdate input:focus { border-color:#4285f4; }
+
+        /* Bộ chọn theo thứ trong tuần */
+        .xt-week { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+        .xt-week-row {
+            display: grid;
+            grid-template-columns: 70px 1fr auto;
+            align-items: center;
+            gap: 10px;
+            background: #fff;
+            border: 1px solid #e1e9f5;
+            border-radius: 8px;
+            padding: 8px 10px;
+        }
+        .xt-week-day { font-weight: 700; color: #2b569a; font-size: 14px; }
+        .xt-week-times { display: flex; flex-wrap: wrap; gap: 6px; min-height: 26px; align-items: center; }
+        .xt-week-times .xt-empty { font-size: 12px; color: #aaa; font-style: italic; }
+        .xt-week-chip {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: #e8f0fe; color: #1967d2; border: 1px solid #c6dafc;
+            border-radius: 999px; padding: 3px 6px 3px 10px; font-size: 13px; font-weight: 600;
+        }
+        .xt-week-chip b { font-weight: 700; }
+        .xt-week-chip .x {
+            cursor: pointer; background: #1967d2; color: #fff; border-radius: 50%;
+            width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center;
+            font-size: 12px; line-height: 1;
+        }
+        .xt-week-chip .x:hover { background: #d32f2f; }
+        .xt-week-add { display: flex; gap: 6px; align-items: center; }
+        .xt-week-add input[type="time"] {
+            padding: 5px 6px; border: 1px solid #cfd8e3; border-radius: 6px; font-size: 13px; outline: none; width: 110px;
+        }
+        .xt-week-add input[type="time"]:focus { border-color: #4285f4; }
+        .xt-week-addbtn {
+            background: #4285f4; color: #fff; border: none; border-radius: 6px;
+            padding: 6px 10px; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap;
+        }
+        .xt-week-addbtn:hover { background: #3367d6; }
+        @media(max-width:768px){
+            .xt-week-row { grid-template-columns: 1fr; gap: 6px; }
+            .xt-week-add input[type="time"] { width: 100%; }
+            #notificationDisplay { max-width: 95%; }
+        }
+        /* ====== HẾT PHẦN THÔNG BÁO MỚI ====== */
     </style>
 </head>
 <body>
@@ -745,11 +884,28 @@
     </div>
     <div class="notification-display" id="notificationDisplay"></div>
     <div class="notification-dialog" id="notificationDialog">
-    <div class="notification-dialog-content">
-        <div class="notification-dialog-title">THÔNG BÁO THÔNG TIN SẢN PHẨM</div>
-        
-        <textarea class="notification-textarea" id="notificationTextarea" placeholder="Nhập nội dung thông báo... (Hệ thống sẽ giữ nguyên định dạng xuống dòng của bạn)"></textarea>
-        
+    <div class="notification-dialog-content" style="width:560px; max-width:94%;">
+        <div class="notification-dialog-title">CÀI ĐẶT THÔNG BÁO</div>
+
+        <div style="padding:0 20px 4px; max-height:74vh; overflow-y:auto;">
+            <label class="xt-field-label">📋 Thông báo tình trạng sản phẩm</label>
+            <textarea class="notification-textarea" id="notiStatusInput" style="height:120px;" placeholder="Nhập nội dung tình trạng sản phẩm... (giữ nguyên định dạng xuống dòng)"></textarea>
+
+            <label class="xt-field-label" style="color:#2e7d32;">📦 Thông báo hàng vừa có nhập về kho</label>
+            <textarea class="notification-textarea" id="notiStockInput" style="height:120px;" placeholder="Nhập nội dung hàng vừa nhập về kho... (giữ nguyên định dạng xuống dòng)"></textarea>
+
+            <div class="xt-sched-box">
+                <label class="xt-sched-toggle">
+                    <input type="checkbox" id="notiSchedEnabled"> ⏰ Tự động phát theo thứ trong tuần (cho script nhúng)
+                </label>
+                <div class="xt-sched-startdate">
+                    <span>Ngày bắt đầu (không phát trước ngày này)</span>
+                    <input type="date" id="notiSchedDate">
+                </div>
+                <div class="xt-week" id="notiWeek"><!-- các thứ sẽ render bằng JS --></div>
+            </div>
+        </div>
+
         <div class="notification-dialog-buttons">
             <button class="notification-dialog-cancel" id="notificationCancelBtn">Hủy</button>
             <button class="notification-dialog-save" id="notificationSaveBtn">Lưu</button>
@@ -1070,7 +1226,15 @@
     const passwordDialogConfirm = document.getElementById("passwordDialogConfirm");
     const notificationBtn = document.getElementById("notificationBtn");
     const notificationDialog = document.getElementById("notificationDialog");
-    const notificationTextarea = document.getElementById("notificationTextarea");
+    const notiStatusInput = document.getElementById("notiStatusInput");
+    const notiStockInput = document.getElementById("notiStockInput");
+    const notiSchedEnabled = document.getElementById("notiSchedEnabled");
+    const notiSchedDate = document.getElementById("notiSchedDate");
+    const notiWeek = document.getElementById("notiWeek");
+    // Trạng thái lịch tuần: { "0".."6": ["HH:MM", ...] }  (0=CN, 1=Thứ2 ... 6=Thứ7)
+    let notiWeekState = {0:[],1:[],2:[],3:[],4:[],5:[],6:[]};
+    const NOTI_DAY_LABELS = { 1:"Thứ 2", 2:"Thứ 3", 3:"Thứ 4", 4:"Thứ 5", 5:"Thứ 6", 6:"Thứ 7", 0:"Chủ nhật" };
+    const NOTI_DAY_ORDER = [1,2,3,4,5,6,0];
     const notificationCancelBtn = document.getElementById("notificationCancelBtn");
     const notificationSaveBtn = document.getElementById("notificationSaveBtn");
     const notificationDisplay = document.getElementById("notificationDisplay");
@@ -1171,13 +1335,77 @@
     });
     notificationBtn.addEventListener("click", () => {
         notificationDialog.style.display = "flex";
-        notificationTextarea.focus();
+        // Mặc định ngày bắt đầu = hôm nay nếu trống
+        if (!notiSchedDate.value) {
+            const d = new Date();
+            notiSchedDate.value = d.getFullYear() + "-" +
+                String(d.getMonth()+1).padStart(2,"0") + "-" +
+                String(d.getDate()).padStart(2,"0");
+        }
         database.ref("notification").once("value").then((snapshot) => {
-            const data = snapshot.val(); if (data && data.text) notificationTextarea.value = data.text;
+            const data = snapshot.val() || {};
+            // Tương thích ngược: dữ liệu cũ chỉ có "text"
+            notiStatusInput.value = (data.status != null ? data.status : (data.text || ""));
+            notiStockInput.value  = (data.stock  != null ? data.stock  : "");
+            const sc = data.schedule || {};
+            notiSchedEnabled.checked = !!sc.enabled;
+            if (sc.startDate) notiSchedDate.value = sc.startDate;
+            // Nạp lịch tuần (nếu dữ liệu cũ chưa có weekly thì để trống)
+            notiWeekState = {0:[],1:[],2:[],3:[],4:[],5:[],6:[]};
+            if (sc.weekly) {
+                Object.keys(sc.weekly).forEach(k => {
+                    if (notiWeekState[k] !== undefined && Array.isArray(sc.weekly[k])) {
+                        notiWeekState[k] = sc.weekly[k].slice().sort();
+                    }
+                });
+            }
+            renderNotiWeek();
         });
+        notiStatusInput.focus();
     });
-    notificationCancelBtn.addEventListener("click", () => { notificationDialog.style.display = "none"; notificationDisplay.style.display = "none"; });
+    notificationCancelBtn.addEventListener("click", () => { notificationDialog.style.display = "none"; });
     notificationSaveBtn.addEventListener("click", saveNotification);
+
+    // ===== Bộ chọn lịch theo thứ trong tuần =====
+    function renderNotiWeek() {
+        notiWeek.innerHTML = "";
+        NOTI_DAY_ORDER.forEach(day => {
+            const times = (notiWeekState[day] || []).slice().sort();
+            const row = document.createElement("div");
+            row.className = "xt-week-row";
+            const chips = times.length
+                ? times.map(t => '<span class="xt-week-chip"><b>'+t+'</b><span class="x" data-day="'+day+'" data-time="'+t+'">×</span></span>').join("")
+                : '<span class="xt-empty">Chưa đặt giờ</span>';
+            row.innerHTML =
+                '<div class="xt-week-day">'+NOTI_DAY_LABELS[day]+'</div>' +
+                '<div class="xt-week-times">'+chips+'</div>' +
+                '<div class="xt-week-add">' +
+                    '<input type="time" class="xt-week-input">' +
+                    '<button type="button" class="xt-week-addbtn" data-day="'+day+'">+ Thêm giờ</button>' +
+                '</div>';
+            notiWeek.appendChild(row);
+        });
+    }
+    notiWeek.addEventListener("click", (e) => {
+        const addBtn = e.target.closest(".xt-week-addbtn");
+        if (addBtn) {
+            const day = addBtn.getAttribute("data-day");
+            const input = addBtn.parentNode.querySelector(".xt-week-input");
+            const val = input.value;
+            if (!val) { input.focus(); return; }
+            if (!notiWeekState[day].includes(val)) notiWeekState[day].push(val);
+            notiWeekState[day].sort();
+            renderNotiWeek();
+            return;
+        }
+        const rm = e.target.closest(".x");
+        if (rm) {
+            const day = rm.getAttribute("data-day");
+            const time = rm.getAttribute("data-time");
+            notiWeekState[day] = notiWeekState[day].filter(t => t !== time);
+            renderNotiWeek();
+        }
+    });
     
     // Sự kiện ẩn hiện cột
     btnHide.addEventListener("click", () => applyColumnSelection("hide"));
@@ -2190,8 +2418,166 @@
         function saveImg(){ localStorage.setItem("productImages", JSON.stringify(productImages)); alert("Đã lưu ảnh."); imageManager.style.display='none'; }
     }
     function loadProductImages(){ try{ productImages=JSON.parse(localStorage.getItem("productImages")||"{}"); }catch(e){} }
-    function saveNotification(){ const t = notificationTextarea.value; database.ref("notification").set({text:t, timestamp:Date.now()}); notificationDialog.style.display='none'; loadNotification(); }
-    function loadNotification(){ database.ref("notification").once("value").then(s=>{ if(s.val()) notificationDisplay.textContent=s.val().text; notificationDisplay.style.display='block'; }); }
+    // ===== THÔNG BÁO 2 KHUNG + LỊCH PHÁT =====
+    let _notiData = null;
+
+    function saveNotification(){
+        const status = notiStatusInput.value;
+        const stock  = notiStockInput.value;
+        // Gom lịch tuần (bỏ thứ không có giờ)
+        const weekly = {};
+        Object.keys(notiWeekState).forEach(d => {
+            const arr = (notiWeekState[d] || []).slice().sort();
+            if (arr.length) weekly[d] = arr;
+        });
+        const payload = {
+            status: status,
+            stock: stock,
+            text: status,                 // giữ tương thích ngược với dữ liệu cũ
+            timestamp: Date.now(),
+            schedule: {
+                enabled: !!notiSchedEnabled.checked,
+                startDate: notiSchedDate.value || "",
+                weekly: weekly
+            }
+        };
+        database.ref("notification").set(payload);
+        notificationDialog.style.display = "none";
+        _notiData = payload;
+        // Bấm Lưu => hiện ngay 2 bảng thông tin (xem trước)
+        renderNotificationBanners(payload, true);
+    }
+
+    function loadNotification(){
+        database.ref("notification").on("value", s => {
+            const data = s.val();
+            if (!data) { notificationDisplay.style.display = "none"; return; }
+            _notiData = data;
+            renderNotificationBanners(data, false); // khi tải trang: tôn trọng lịch phát
+        });
+    }
+
+    // Tính "khung giờ" hiện tại theo lịch -> trả về id phiên hoặc null
+    function notiCurrentSlot(sc, now){
+        if (!sc || !sc.enabled) return null;
+        const ds = d => d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+
+        // Không phát trước ngày bắt đầu (nếu có)
+        if (sc.startDate){
+            const start = new Date(sc.startDate + "T00:00:00");
+            if (!isNaN(start.getTime()) && now < start) return null;
+        }
+
+        // ----- CHẾ ĐỘ MỚI: theo thứ trong tuần -----
+        if (sc.weekly){
+            const times = (sc.weekly[String(now.getDay())] || []).slice().sort();
+            if (!times.length) return null;
+            // Tìm mốc giờ trễ nhất đã tới trong hôm nay
+            let latest = null;
+            for (const t of times){
+                const tp = t.split(":");
+                const occ = new Date(now); occ.setHours(parseInt(tp[0],10)||0, parseInt(tp[1],10)||0, 0, 0);
+                if (now >= occ) latest = t;
+            }
+            return latest ? ("wk_"+ds(now)+"_"+latest) : null;
+        }
+
+        // ----- TƯƠNG THÍCH NGƯỢC: chế độ cũ (once/daily/hourly/interval) -----
+        if (!sc.startDate) return null;
+        const start = new Date(sc.startDate + "T00:00:00");
+        if (isNaN(start.getTime())) return null;
+        const tp = (sc.time || "08:00").split(":");
+        const th = parseInt(tp[0],10)||0, tm = parseInt(tp[1],10)||0;
+        const repeat = sc.repeat || "daily";
+
+        if (repeat === "once"){
+            const occ = new Date(start); occ.setHours(th,tm,0,0);
+            return now >= occ ? "once_"+occ.getTime() : null;
+        }
+        if (repeat === "daily"){
+            const occ = new Date(now); occ.setHours(th,tm,0,0);
+            return now >= occ ? "daily_"+ds(now) : null;
+        }
+        if (repeat === "hourly"){
+            const occ = new Date(now); occ.setMinutes(tm,0,0);
+            if (now < occ) occ.setHours(occ.getHours()-1);
+            return "hourly_"+ds(occ)+"_"+occ.getHours();
+        }
+        if (repeat === "interval"){
+            const anchor = new Date(start); anchor.setHours(th,tm,0,0);
+            if (now < anchor) return null;
+            const mins = parseInt(sc.intervalMinutes,10) || 60;
+            const slot = Math.floor((now - anchor)/60000/mins);
+            return "interval_"+slot;
+        }
+        return null;
+    }
+
+    function renderNotificationBanners(data, forceShow){
+        const status = (data.status != null ? data.status : (data.text || "")).trim();
+        const stock  = (data.stock  != null ? data.stock  : "").trim();
+        if (!status && !stock){ notificationDisplay.style.display = "none"; return; }
+
+        // Nếu không phải xem trước (bấm Lưu) thì áp dụng lịch + trạng thái "đã đọc"
+        let slotKey = "preview";
+        if (!forceShow){
+            const sc = data.schedule;
+            if (sc && sc.enabled){
+                const slot = notiCurrentSlot(sc, new Date());
+                if (!slot){ notificationDisplay.style.display = "none"; return; }
+                slotKey = slot + "_" + (data.timestamp || 0);
+            } else {
+                // Không bật lịch: hiển thị bản mới nhất cho tới khi bấm "Đã đọc"
+                slotKey = "latest_" + (data.timestamp || 0);
+            }
+            if (localStorage.getItem("xtNotifyRead_" + slotKey)){
+                notificationDisplay.style.display = "none"; return;
+            }
+        }
+
+        // Chống nhấp nháy: nếu đang hiển thị đúng phiên này rồi thì không vẽ lại
+        if (!forceShow && notificationDisplay.dataset.slot === slotKey
+            && notificationDisplay.style.display !== "none"
+            && notificationDisplay.querySelector(".xt-noti-card")){
+            return;
+        }
+        notificationDisplay.dataset.slot = slotKey;
+
+        const esc = t => t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+        let html = "";
+        if (status){
+            html += '<div class="xt-noti-card status">'
+                 +  '<div class="xt-noti-head">📋 Thông báo tình trạng sản phẩm</div>'
+                 +  '<div class="xt-noti-body">'+esc(status)+'</div>'
+                 +  '<div class="xt-noti-foot"><button class="xt-noti-read" data-card="status">Đã đọc ✓</button></div>'
+                 +  '</div>';
+        }
+        if (stock){
+            html += '<div class="xt-noti-card stock">'
+                 +  '<div class="xt-noti-head">📦 Thông báo hàng vừa có nhập về kho</div>'
+                 +  '<div class="xt-noti-body">'+esc(stock)+'</div>'
+                 +  '<div class="xt-noti-foot"><button class="xt-noti-read" data-card="stock">Đã đọc ✓</button></div>'
+                 +  '</div>';
+        }
+        notificationDisplay.innerHTML = html;
+        notificationDisplay.style.display = "flex";
+
+        notificationDisplay.querySelectorAll(".xt-noti-read").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const card = btn.closest(".xt-noti-card");
+                if (card) card.remove();
+                if (slotKey !== "preview"){
+                    localStorage.setItem("xtNotifyRead_" + slotKey, "1");
+                }
+                if (!notificationDisplay.querySelector(".xt-noti-card")){
+                    notificationDisplay.style.display = "none";
+                }
+            });
+        });
+    }
+
+    // Định kỳ kiểm tra để tự hiện thông báo đúng giờ đã hẹn (theo lịch)
+    setInterval(() => { if (_notiData) renderNotificationBanners(_notiData, false); }, 30000);
     
     // ========== PHẦN BỔ SUNG: Hàm cập nhật và chọn tất cả danh sách đã lọc ==========
     function updateFilteredSection() {
