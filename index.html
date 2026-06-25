@@ -175,6 +175,14 @@
         
         .table-container{ overflow-x:auto; margin-top:12px }
         .price-table{ width:100%; border-collapse:collapse; table-layout: fixed; }
+        /* Cột Mã SP: td chỉ highlight nhẹ, đồng font với toàn bảng */
+        .price-table tbody td[data-col="masp"] { 
+            color: #1565c0;
+            font-weight: 600;
+            background-color: #e3f2fd !important;
+        }
+        .price-table tr:hover td[data-col="masp"] { background-color: #bbdefb !important; }
+        .price-table tr:nth-child(even) td[data-col="masp"] { background-color: #dceefb !important; }
         .price-table th,.price-table td{ border:1px solid #ddd; padding:8px; text-align:left; white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
         .price-table th{ background:#4285f4; color:#fff; position:sticky; top:0; z-index:1 }
         .price-table tr:nth-child(even){ background:#f2f2f2 }
@@ -940,9 +948,18 @@
                     <!-- Tải file & Files list -->
                     <div class="pro-tool-card">
                         <h4>📁 Tải dữ liệu</h4>
-                        <div class="upload-section" style="margin:0; padding:8px; background:white;">
+                        <!-- Cập nhật bảng giá chính - đồng màu xanh hệ thống -->
+                        <div style="margin-bottom:8px; padding:9px 10px; background:#eef4ff; border-radius:6px; border:1px solid #c5d8ff;">
+                            <div style="font-size:11px; color:#2b569a; font-weight:700; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.4px;">🔄 Cập nhật Bảng Giá chính</div>
                             <div class="file-input-container">
-                                <label for="excelFileInput" class="file-input-label">Chọn file Excel</label>
+                                <label for="updateGiabanInput" class="file-input-label" style="background:#4285f4; font-size:12px; padding:6px 12px;">📂 Chọn file GIABAN</label>
+                                <input type="file" id="updateGiabanInput" class="file-input" accept=".xlsx, .xls" />
+                                <span id="updateGiabanStatus" style="font-size:11px; color:#666;"></span>
+                            </div>
+                        </div>
+                        <div class="upload-section" style="margin:0; padding:8px; background:white; border-radius:5px;">
+                            <div class="file-input-container">
+                                <label for="excelFileInput" class="file-input-label" style="font-size:12px; padding:6px 12px;">➕ Thêm file Excel phụ</label>
                                 <input type="file" id="excelFileInput" class="file-input" accept=".xlsx, .xls" multiple />
                                 <span class="file-name" id="fileNameDisplay">Chưa chọn file</span>
                             </div>
@@ -1321,6 +1338,51 @@
     // ĐÃ XÓA: popup không tự đóng khi click ra ngoài, chỉ đóng khi bấm nút X
     // popupOverlay.addEventListener("click", (e) => { if (e.target === popupOverlay) popupOverlay.style.display = "none"; });
     excelFileInput.addEventListener("change", handleFileSelect);
+    
+    // ========== CẬP NHẬT BẢNG GIÁ CHÍNH TỪ FILE MỚI ==========
+    const updateGiabanInput = document.getElementById("updateGiabanInput");
+    const updateGiabanStatus = document.getElementById("updateGiabanStatus");
+    updateGiabanInput.addEventListener("change", async function(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        updateGiabanStatus.textContent = "⏳ Đang đọc file...";
+        updateGiabanStatus.style.color = "#e65100";
+        try {
+            const newData = await readExcelFile(file);
+            if (!newData || newData.length < 2) {
+                updateGiabanStatus.textContent = "❌ File không có dữ liệu!";
+                return;
+            }
+            // Kiểm tra header để xác nhận đúng file bảng giá
+            const newHeader = newData[0] || [];
+            const hasTenThuoc = newHeader.some(h => h && String(h).toLowerCase().includes('tên'));
+            if (!hasTenThuoc) {
+                if (!confirm("File này không có cột 'Tên thuốc'. Vẫn muốn cập nhật?")) {
+                    updateGiabanStatus.textContent = "";
+                    updateGiabanInput.value = "";
+                    return;
+                }
+            }
+            // Xóa tất cả file BangGia cũ, giữ lại "User Added Data"
+            uploadedFiles = uploadedFiles.filter(f => f.name === "User Added Data");
+            // Thêm file mới vào đầu
+            uploadedFiles.unshift({ name: file.name, data: newData });
+            // Rebuild danh sách file
+            filesList.innerHTML = "";
+            uploadedFiles.forEach((f, i) => addFileToList(f.name, i));
+            updateFileNameDisplay();
+            displayAllData();
+            await saveDataToFirebase();
+            updateGiabanStatus.textContent = `✅ Đã cập nhật ${newData.length - 1} sản phẩm!`;
+            updateGiabanStatus.style.color = "#2e7d32";
+            // Reset input để có thể chọn lại cùng file
+            updateGiabanInput.value = "";
+        } catch(err) {
+            console.error("Lỗi cập nhật bảng giá:", err);
+            updateGiabanStatus.textContent = "❌ Lỗi: " + err.message;
+            updateGiabanStatus.style.color = "#c62828";
+        }
+    });
     searchInput.addEventListener("input", ()=>{ 
         showingOnlySelected=false; 
         performSearch(); 
@@ -1783,16 +1845,31 @@
         }
         return headersCache.map((_, idx)=> idx).filter(idx => !hiddenColumns.has(idx));
     }
+    // Hàm nhận diện cột Mã sp bằng index (tránh lỗi so sánh encoding Vietnamese)
+    function getMaSpColIdx() {
+        return headersCache.findIndex(h => {
+            if (!h) return false;
+            const s = String(h).trim().toLowerCase();
+            // Normalize: bỏ dấu cách, so sánh nhiều dạng
+            return s === 'mã sp' || s === 'masp' || s === 'mã sp' || s.replace(/\s+/g,'') === 'mãsp';
+        });
+    }
+
     function createTable(data, sourceIndexes=null){
         if(!data.length){ tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị.</p>'; columnToolbar.style.display='none'; return; }
         headersCache = data[0] || [];
         const visibleIdx = visibleColumnIndexes();
         renderColumnSelector(); // Hiển thị toolbar chọn cột
         
+        // Tìm index cột Mã sp 1 lần cho toàn bảng
+        const maSpColIdx = getMaSpColIdx();
+        
         const table = document.createElement("table"); table.className = "price-table";
         const thead = document.createElement("thead"); const headerRow = document.createElement("tr");
         visibleIdx.forEach((colIdx)=>{ 
-            const th = document.createElement("th"); th.className = 'th-resizable'; th.textContent = headersCache[colIdx] || ""; 
+            const th = document.createElement("th"); th.className = 'th-resizable'; 
+            const hName = headersCache[colIdx] || "";
+            th.textContent = hName; 
             if(columnWidths[colIdx]){ th.style.width = columnWidths[colIdx] + 'px'; }
             headerRow.appendChild(th); 
         });
@@ -1808,6 +1885,7 @@
                 const td = document.createElement("td"); const cell = rowData[colIdx];
                 td.textContent = (typeof cell === 'string' && cell.includes('%')) ? cell : (cell || '');
                 if(columnWidths[colIdx]){ td.style.width = columnWidths[colIdx] + 'px'; }
+                if(maSpColIdx !== -1 && colIdx === maSpColIdx) td.dataset.col = 'masp';
                 tr.appendChild(td);
             });
             const tdChoose = document.createElement('td');
@@ -1976,12 +2054,36 @@
             alert("Lỗi khi lưu dữ liệu lên server. Vui lòng kiểm tra kết nối mạng.");
         }
     }
+    // ========== TỰ ĐỘNG THÊM CỘT MÃ SP NẾU THIẾU (tương thích ngược data cũ) ==========
+    function injectMaSpIfMissing(filesArr) {
+        filesArr.forEach(file => {
+            if (!file.data || file.data.length === 0) return;
+            const header = file.data[0];
+            if (!header) return;
+            // Kiểm tra xem đã có cột Mã sp chưa
+            const hasMaSp = header.some(h => h && String(h).toLowerCase().replace(/\s/g,'') === 'mãsp');
+            if (hasMaSp) return; // Đã có rồi, bỏ qua
+            // Kiểm tra có cột STT không (để chèn sau STT)
+            const sttIdx = header.findIndex(h => h && String(h).toLowerCase().trim() === 'stt');
+            const insertAt = (sttIdx !== -1) ? sttIdx + 1 : 1; // Chèn sau STT, hoặc vị trí 1 nếu không có STT
+            // Chèn "Mã sp" vào header
+            file.data[0] = [...header.slice(0, insertAt), 'Mã sp', ...header.slice(insertAt)];
+            // Chèn cell trống vào mỗi hàng data
+            for (let i = 1; i < file.data.length; i++) {
+                const row = file.data[i] || [];
+                file.data[i] = [...row.slice(0, insertAt), '', ...row.slice(insertAt)];
+            }
+        });
+    }
+
     function loadDataFromFirebase(){
         loadingIndicator.style.display = 'block'; tableContainer.innerHTML = ''; filesList.innerHTML = '';
         return database.ref('priceData').once('value').then(snapshot=>{
             const data = snapshot.val();
             if(data && data.files){ 
-                uploadedFiles = data.files; 
+                uploadedFiles = data.files;
+                // Tự động thêm cột Mã sp nếu data cũ chưa có
+                injectMaSpIfMissing(uploadedFiles);
                 filesList.innerHTML = '';
                 uploadedFiles.forEach((file,index)=> addFileToList(file.name,index)); 
                 updateFileNameDisplay(); 
@@ -2121,6 +2223,7 @@
             th.textContent = headerName;
             th.contentEditable = "true";
             th.className = "th-resizable"; // Thêm class để kích hoạt resize
+            const hLow = (headersCache[colIdx] || '').toLowerCase();
             headerRow.appendChild(th);
         });
         thead.appendChild(headerRow);
@@ -2150,7 +2253,7 @@
                 }
             }
             tr.appendChild(tdImage);
-            rowData.forEach(cell => {
+            rowData.forEach((cell, cellIdx) => {
                 const td = document.createElement("td");
                 td.textContent = (typeof cell === 'string' && cell.includes('%')) ? cell : (cell || '');
                 td.contentEditable = "true";
