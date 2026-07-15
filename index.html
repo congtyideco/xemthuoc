@@ -8,6 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f5f5f5; }
@@ -327,6 +328,35 @@
         .paper-orientation label { font-weight: bold; color: #4285f4; cursor: pointer; }
         .paper-orientation input[type="radio"] { margin-right: 5px; }
 
+
+        /* ========== PANEL GỬI BÁO GIÁ QUA ZALO ========== */
+        .zalo-send-panel { margin: 25px auto 10px; max-width: 1000px; border: 2px solid #0068ff; border-radius: 12px; background: #f4f9ff; overflow: hidden; }
+        .zalo-panel-header { background: linear-gradient(135deg, #0068ff, #0091ff); color: #fff; padding: 12px 16px; font-weight: bold; font-size: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
+        .zalo-panel-body { padding: 14px 16px; }
+        .zalo-panel-body.collapsed { display: none; }
+        .zalo-toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+        .zalo-toolbar input { flex: 1; min-width: 200px; padding: 9px 12px; border: 1px solid #b6d4fe; border-radius: 6px; font-size: 14px; }
+        .zalo-cust-table-wrap { max-height: 320px; overflow: auto; border: 1px solid #cfe2ff; border-radius: 8px; background: #fff; }
+        .zalo-cust-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .zalo-cust-table th { background: #0068ff; color: #fff; padding: 8px; position: sticky; top: 0; z-index: 1; text-align: left; }
+        .zalo-cust-table td { border-bottom: 1px solid #e8f1ff; padding: 7px 8px; vertical-align: middle; }
+        .zalo-cust-table tr:hover td { background: #eaf3ff; }
+        .zalo-phone-link { color: #0068ff; font-weight: bold; text-decoration: underline; cursor: pointer; white-space: nowrap; }
+        .zalo-send-btn { background: #0068ff; color: #fff; border: none; border-radius: 6px; padding: 6px 12px; cursor: pointer; font-weight: bold; font-size: 13px; white-space: nowrap; }
+        .zalo-send-btn:hover { background: #0052cc; }
+        .zalo-send-btn:disabled { background: #9dbef0; cursor: wait; }
+        .zalo-sent-badge { display: inline-block; background: #e6f4ea; color: #1e7e34; border: 1px solid #b7e0c2; border-radius: 10px; font-size: 11px; padding: 1px 8px; margin-left: 6px; white-space: nowrap; }
+        .zalo-new-cust { margin-top: 14px; border-top: 2px dashed #b6d4fe; padding-top: 12px; }
+        .zalo-new-cust-title { font-weight: bold; color: #0052cc; margin-bottom: 8px; font-size: 14px; }
+        .zalo-new-cust-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; margin-bottom: 10px; }
+        .zalo-new-cust-grid input { padding: 9px 12px; border: 1px solid #b6d4fe; border-radius: 6px; font-size: 14px; }
+        .zalo-add-btn { background: #34a853; color: #fff; border: none; border-radius: 6px; padding: 9px 18px; cursor: pointer; font-weight: bold; font-size: 14px; }
+        .zalo-add-btn:hover { background: #2c8f47; }
+        .zalo-row-new td { background: #fff8e1 !important; }
+        .quote-page.zalo-capturing [contentEditable="true"]:not(th) { background: #ffffff !important; outline: none !important; }
+        .quote-page.zalo-capturing .quote-table th { background: #4285f4 !important; color: #ffffff !important; outline: none !important; }
+        #zaloToast { position: fixed; left: 50%; bottom: 30px; transform: translateX(-50%); background: #222; color: #fff; padding: 12px 22px; border-radius: 8px; font-size: 15px; z-index: 3000; display: none; max-width: 90%; text-align: center; box-shadow: 0 4px 16px rgba(0,0,0,.35); }
+        @media (max-width: 768px) { .zalo-toolbar input { min-width: 130px; } .zalo-cust-table { font-size: 12px; } }
         /* ========= CSS MỚI: ẨN CÁC NÚT KHI IN ========= */
         @media print {
             .view-price-btn, 
@@ -335,6 +365,8 @@
             .notification-btn, 
             .create-quote-btn,
             .quote-actions,
+            .zalo-send-panel,
+            #zaloToast,
             .popup-overlay,
             .notification-display {
                 display: none !important;
@@ -1174,11 +1206,39 @@
                 <div style="margin-top: 60px; font-weight: bold;" contentEditable="true">(Ký và ghi rõ họ tên)</div>
             </div>
         </div>
-        <div class="quote-actions">
+        <div class="quote-actions" data-html2canvas-ignore="true">
             <button class="quote-back-btn" id="quoteBackBtn">Quay lại</button>
             <button class="quote-excel-btn" id="quoteExcelBtn">Xuất Excel</button>
             <button class="quote-print-btn" id="quotePrintBtn">In Báo Giá</button>
             <button class="quote-pdf-btn" id="quotePdfBtn">Xuất PDF</button>
+        </div>
+        <!-- ========== PANEL GỬI BÁO GIÁ QUA ZALO ========== -->
+        <div class="zalo-send-panel" id="zaloSendPanel" data-html2canvas-ignore="true">
+            <div class="zalo-panel-header" id="zaloPanelHeader">
+                <span>📱 GỬI BÁO GIÁ QUA ZALO</span>
+                <span id="zaloPanelToggle">▲</span>
+            </div>
+            <div class="zalo-panel-body" id="zaloPanelBody">
+                <div class="zalo-toolbar">
+                    <input type="text" id="zaloCustSearch" placeholder="🔍 Tìm khách hàng (tên, người liên hệ, SĐT, địa chỉ)..." />
+                </div>
+                <div class="zalo-cust-table-wrap" id="zaloCustListWrap">
+                    <table class="zalo-cust-table">
+                        <thead><tr><th style="width:26%">Tên công ty / KH</th><th style="width:16%">Người liên hệ</th><th style="width:14%">Điện thoại</th><th>Địa chỉ</th><th style="width:150px">Gửi Zalo</th></tr></thead>
+                        <tbody id="zaloCustListBody"></tbody>
+                    </table>
+                </div>
+                <div class="zalo-new-cust">
+                    <div class="zalo-new-cust-title">➕ Khách hàng mới (khai thông tin rồi bấm "Load vào danh sách" — sau đó bấm vào SĐT để gửi Zalo)</div>
+                    <div class="zalo-new-cust-grid">
+                        <input type="text" id="zaloNewName" placeholder="Tên khách hàng / công ty *" />
+                        <input type="text" id="zaloNewContact" placeholder="Người liên hệ" />
+                        <input type="text" id="zaloNewPhone" placeholder="Điện thoại *" />
+                        <input type="text" id="zaloNewAddress" placeholder="Địa chỉ" />
+                    </div>
+                    <button class="zalo-add-btn" id="zaloAddCustBtn">📥 Load vào danh sách &amp; lưu công ty</button>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -2194,6 +2254,7 @@
         
         createQuoteTable();
         quotePage.style.display = 'block';
+        renderZaloCustomerList(zaloCustSearch ? zaloCustSearch.value : '');
         popupOverlay.style.display = 'none';
         quoteDialog.style.display = 'none';
         clearQuoteForm();
@@ -2316,13 +2377,15 @@
         enableColumnResize(table, dummyIndices);
     }
     
-    // ========== HÀM XUẤT PDF HOÀN THIỆN: ĐỔI MÀU CHỮ & KHỔ GIẤY & GIỮ WIDTH CỘT ==========
-    function generatePdf(paperOrientation = 'portrait') {
+    // ========== HÀM XUẤT PDF DÙNG CHUNG: mode 'save' (tải về) hoặc 'blob' (trả về Blob) ==========
+    function runQuotePdf(paperOrientation = 'portrait', mode = 'save', fileName = null) {
         const element = document.getElementById('quotePage');
         const actionsDiv = element.querySelector('.quote-actions');
         
-        // 1. Tạm ẩn nút chức năng
+        // 1. Tạm ẩn nút chức năng + panel Zalo
         if (actionsDiv) actionsDiv.style.display = 'none';
+        const zaloPanelPdf = document.getElementById('zaloSendPanel');
+        if (zaloPanelPdf) zaloPanelPdf.style.display = 'none';
         
         // 2. Tắt chế độ chỉnh sửa
         const editables = element.querySelectorAll('[contentEditable="true"]');
@@ -2334,12 +2397,8 @@
 
         // 3. XỬ LÝ KHỔ GIẤY CHO PDF (Tránh bị cắt cột phải)
         element.classList.remove('landscape-mode');
-        // Lưu lại width gốc
         const originalWidth = element.style.width;
-        
-        // Tính toán width an toàn để vừa trang PDF (trừ lề)
-        // A4 Ngang = 297mm. Lề 5mm x 2 = 10mm. An toàn: 285mm
-        // A4 Dọc = 210mm. Lề 5mm x 2 = 10mm. An toàn: 200mm
+        // A4 Ngang = 297mm, lề 5mm x2 → 285mm an toàn. A4 Dọc = 210mm → 200mm.
         if (paperOrientation === 'landscape') {
             element.classList.add('landscape-mode');
             element.style.width = '285mm'; 
@@ -2350,56 +2409,49 @@
         // 4. XỬ LÝ MÀU SẮC IN ẤN & TẮT RESIZER
         const table = element.querySelector('.quote-table');
         if(table) table.classList.add('printing-mode');
-
-        // Ép màu tiêu đề chính
         const titleEl = element.querySelector('.quote-title');
-        if (titleEl) titleEl.style.color = '#4285f4'; // Xanh đậm
+        if (titleEl) titleEl.style.color = '#4285f4';
 
         const now = new Date();
-        const fileName = `Bao_Gia_IDECO_${now.getDate()}${now.getMonth()+1}_${now.getHours()}${now.getMinutes()}.pdf`;
+        if (!fileName) fileName = `Bao_Gia_IDECO_${now.getDate()}${now.getMonth()+1}_${now.getHours()}${now.getMinutes()}.pdf`;
         
-        // Cấu hình html2pdf chuẩn
         const opt = {
-            margin:       5, // Lề nhỏ 5mm
+            margin:       5,
             filename:     fileName,
             image:        { type: 'jpeg', quality: 1 }, 
-            html2canvas:  { 
-                scale: 2, 
-                useCORS: true, 
-                scrollY: 0,
-            },
+            html2canvas:  { scale: 2, useCORS: true, scrollY: 0 },
             jsPDF:        { unit: 'mm', format: 'a4', orientation: paperOrientation },
             pagebreak:    { mode: ['css', 'legacy'], avoid: ['tr', '.quote-table tr'] }
         };
         
-        const originalText = quotePdfBtn.innerText;
-        quotePdfBtn.innerText = "Đang tạo PDF...";
-        quotePdfBtn.disabled = true;
-        
-        html2pdf().set(opt).from(element).save().then(() => {
-            // KHÔI PHỤC LẠI TRẠNG THÁI CŨ
+        const restore = () => {
             if (actionsDiv) actionsDiv.style.display = 'block';
-            
-            // Xóa class và restore width
+            if (zaloPanelPdf) zaloPanelPdf.style.display = '';
             element.classList.remove('landscape-mode');
-            element.style.width = originalWidth; // Trả về 297mm như cũ
-            
+            element.style.width = originalWidth;
             if(table) table.classList.remove('printing-mode');
-
             editables.forEach(el => {
                 if(el.dataset.wasContentEditable) el.contentEditable = 'true';
             });
-            
+        };
+
+        const worker = html2pdf().set(opt).from(element);
+        const job = (mode === 'blob') ? worker.outputPdf('blob') : worker.save();
+        return job.then(result => { restore(); return result; })
+                  .catch(err => { restore(); throw err; });
+    }
+
+    // Nút "Xuất PDF" trên trang báo giá
+    function generatePdf(paperOrientation = 'portrait') {
+        const originalText = quotePdfBtn.innerText;
+        quotePdfBtn.innerText = "Đang tạo PDF...";
+        quotePdfBtn.disabled = true;
+        runQuotePdf(paperOrientation, 'save').then(() => {
             quotePdfBtn.innerText = originalText;
             quotePdfBtn.disabled = false;
         }).catch(err => {
             console.error(err);
             alert("Lỗi PDF: " + err.message);
-            // Khôi phục nếu lỗi
-            if (actionsDiv) actionsDiv.style.display = 'block';
-            element.classList.remove('landscape-mode');
-            element.style.width = originalWidth;
-            if(table) table.classList.remove('printing-mode');
             quotePdfBtn.innerText = originalText;
             quotePdfBtn.disabled = false;
         });
@@ -2776,6 +2828,267 @@
         updateFilteredSection();
     }
     
+
+    // ============================================================
+    // ========== GỬI BÁO GIÁ QUA ZALO (panel trang báo giá) =======
+    // ============================================================
+    const zaloPanelHeader = document.getElementById('zaloPanelHeader');
+    const zaloPanelBody = document.getElementById('zaloPanelBody');
+    const zaloPanelToggle = document.getElementById('zaloPanelToggle');
+    const zaloCustSearch = document.getElementById('zaloCustSearch');
+    const zaloCustListBody = document.getElementById('zaloCustListBody');
+    const zaloNewName = document.getElementById('zaloNewName');
+    const zaloNewContact = document.getElementById('zaloNewContact');
+    const zaloNewPhone = document.getElementById('zaloNewPhone');
+    const zaloNewAddress = document.getElementById('zaloNewAddress');
+    const zaloAddCustBtn = document.getElementById('zaloAddCustBtn');
+    let zaloLastAddedPhone = null;
+
+    zaloPanelHeader.addEventListener('click', () => {
+        zaloPanelBody.classList.toggle('collapsed');
+        zaloPanelToggle.textContent = zaloPanelBody.classList.contains('collapsed') ? '▼' : '▲';
+    });
+    zaloCustSearch.addEventListener('input', () => renderZaloCustomerList(zaloCustSearch.value));
+
+    function zaloEsc(s) {
+        return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function zaloNormalizePhone(p) {
+        let d = String(p || '').replace(/[^0-9]/g, '');
+        if (!d) return null;
+        if (d.startsWith('84')) return d;
+        if (d.startsWith('0')) return '84' + d.slice(1);
+        if (d.length >= 9 && d.length <= 10) return '84' + d;
+        return d;
+    }
+    function zaloSentStoreKey() {
+        const n = new Date();
+        return 'zaloQuoteSent_' + n.getFullYear() + '-' + String(n.getMonth()+1).padStart(2,'0') + '-' + String(n.getDate()).padStart(2,'0');
+    }
+    function zaloWasSentToday(phone) {
+        try { const s = JSON.parse(localStorage.getItem(zaloSentStoreKey()) || '{}'); return !!s[zaloNormalizePhone(phone)]; } catch(e) { return false; }
+    }
+    function zaloMarkSent(phone) {
+        try {
+            const k = zaloSentStoreKey();
+            const s = JSON.parse(localStorage.getItem(k) || '{}');
+            s[zaloNormalizePhone(phone)] = Date.now();
+            localStorage.setItem(k, JSON.stringify(s));
+        } catch(e) {}
+    }
+    function zaloToast(msg, ms) {
+        const t = document.getElementById('zaloToast');
+        t.innerHTML = msg; t.style.display = 'block';
+        clearTimeout(t._tm);
+        t._tm = setTimeout(() => { t.style.display = 'none'; }, ms || 6000);
+    }
+
+    // Render ảnh PNG của bảng báo giá (loại trừ nút & panel nhờ data-html2canvas-ignore)
+    function renderQuoteImageBlob() {
+        const element = document.getElementById('quotePage');
+        const h2c = window.html2canvas;
+        if (typeof h2c !== 'function') {
+            return Promise.reject(new Error('Thiếu thư viện html2canvas (kiểm tra kết nối mạng rồi tải lại trang).'));
+        }
+        element.classList.add('zalo-capturing');
+        const cleanup = () => element.classList.remove('zalo-capturing');
+        let p;
+        try {
+            p = h2c(element, { scale: 2, useCORS: true, allowTaint: false, scrollY: 0, backgroundColor: '#ffffff', imageTimeout: 8000 });
+        } catch (e) { cleanup(); return Promise.reject(e); }
+        return p.then(canvas => {
+            cleanup();
+            return downscaleCanvasForZalo(canvas);
+        }).then(canvas => new Promise((resolve, reject) => {
+            canvas.toBlob(b => b ? resolve(b) : reject(new Error('Không tạo được ảnh')), 'image/png');
+        })).catch(err => { cleanup(); throw err; });
+    }
+
+    // Zalo báo lỗi với ảnh quá lớn/quá dài → thu nhỏ về mức an toàn (rộng ≤1400px, ≤5.5 triệu pixel)
+    function downscaleCanvasForZalo(canvas) {
+        const MAX_W = 1400, MAX_PIXELS = 5500000;
+        let w = canvas.width, h = canvas.height;
+        let ratio = 1;
+        if (w > MAX_W) ratio = MAX_W / w;
+        if ((w * ratio) * (h * ratio) > MAX_PIXELS) {
+            ratio = Math.sqrt(MAX_PIXELS / (w * h));
+        }
+        if (ratio >= 1) return canvas;
+        const out = document.createElement('canvas');
+        out.width = Math.round(w * ratio);
+        out.height = Math.round(h * ratio);
+        const ctx = out.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, out.width, out.height);
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(canvas, 0, 0, out.width, out.height);
+        return out;
+    }
+
+    function withTimeout(promise, ms, msg) {
+        return Promise.race([
+            promise,
+            new Promise((_, rej) => setTimeout(() => rej(new Error(msg || 'Quá thời gian xử lý')), ms))
+        ]);
+    }
+
+    function openZaloChat(intlPhone) {
+        // Mở Zalo PC/app qua deep link; nếu không có app thì mở zalo.me trên web
+        const start = Date.now();
+        window.location.href = 'zalo://conversation?phone=' + intlPhone;
+        setTimeout(() => {
+            if (document.hasFocus() && Date.now() - start < 3000) {
+                window.open('https://zalo.me/' + intlPhone, '_blank');
+            }
+        }, 1600);
+    }
+
+    function sendQuoteViaZalo(phone, name, btnEl) {
+        const intl = zaloNormalizePhone(phone);
+        if (!intl) { alert('Số điện thoại không hợp lệ: ' + phone); return; }
+        if (btnEl) { btnEl.disabled = true; btnEl.textContent = 'Đang tạo ảnh...'; }
+
+        const blobPromise = withTimeout(renderQuoteImageBlob(), 25000, 'Tạo ảnh báo giá quá lâu');
+        let clipboardPromise;
+        if (navigator.clipboard && window.ClipboardItem) {
+            // Pattern promise: giữ user-gesture để được phép ghi clipboard
+            try {
+                clipboardPromise = navigator.clipboard.write([ new ClipboardItem({ 'image/png': blobPromise }) ]);
+            } catch(e) {
+                clipboardPromise = blobPromise.then(b => navigator.clipboard.write([ new ClipboardItem({ 'image/png': b }) ]));
+            }
+        } else {
+            clipboardPromise = Promise.reject(new Error('Trình duyệt không hỗ trợ copy ảnh'));
+        }
+
+        let done = false;
+        const finish = (copied, errMsg) => {
+            if (done) return; done = true;
+            document.getElementById('quotePage').classList.remove('zalo-capturing');
+            if (btnEl) { btnEl.disabled = false; btnEl.textContent = '🖼 Ảnh'; }
+            zaloMarkSent(phone);
+            if (copied) {
+                zaloToast('✅ <b>Đã copy ảnh báo giá!</b><br>Đang mở Zalo của <b>' + zaloEsc(name || phone) + '</b> — trong khung chat bấm <b>Ctrl+V</b> để dán rồi <b>Enter</b> để gửi.', 9000);
+            } else {
+                zaloToast('⚠️ Không copy được ảnh tự động' + (errMsg ? ' (' + zaloEsc(errMsg) + ')' : '') + '.<br>Hãy dùng nút <b>Xuất PDF</b> rồi kéo file vào khung chat Zalo đang mở.', 9000);
+            }
+            openZaloChat(intl);
+            renderZaloCustomerList(zaloCustSearch.value);
+        };
+        withTimeout(clipboardPromise, 30000, 'Copy ảnh quá lâu')
+            .then(() => finish(true))
+            .catch(err => { console.warn('Zalo send:', err); finish(false, err && err.message); });
+    }
+
+    // Gửi báo giá dạng FILE PDF: tải file về máy rồi mở Zalo để kéo file vào khung chat
+    function sendQuotePdfViaZalo(phone, name, btnEl) {
+        const intl = zaloNormalizePhone(phone);
+        if (!intl) { alert('Số điện thoại không hợp lệ: ' + phone); return; }
+        if (btnEl) { btnEl.disabled = true; btnEl.textContent = 'Đang tạo PDF...'; }
+        const now = new Date();
+        const safeName = String(name || 'KhachHang').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D').replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,40) || 'KhachHang';
+        const fileName = 'BaoGia_IDECO_' + safeName + '_' + now.getDate() + '-' + (now.getMonth()+1) + '.pdf';
+
+        withTimeout(runQuotePdf(currentPaperOrientation, 'blob', fileName), 60000, 'Tạo PDF quá lâu')
+            .then(blob => {
+                // Tải file PDF về máy (thư mục Downloads)
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = fileName;
+                document.body.appendChild(a); a.click(); a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 30000);
+
+                if (btnEl) { btnEl.disabled = false; btnEl.textContent = '📄 PDF'; }
+                zaloMarkSent(phone);
+                zaloToast('✅ <b>Đã tải file ' + zaloEsc(fileName) + '</b> về thư mục <b>Downloads</b>.<br>Đang mở Zalo của <b>' + zaloEsc(name || phone) + '</b> — <b>kéo file PDF</b> từ Downloads thả vào khung chat (hoặc bấm nút 📎 đính kèm) rồi <b>Enter</b> để gửi.', 12000);
+                openZaloChat(intl);
+                renderZaloCustomerList(zaloCustSearch.value);
+            })
+            .catch(err => {
+                console.warn('Zalo PDF:', err);
+                if (btnEl) { btnEl.disabled = false; btnEl.textContent = '📄 PDF'; }
+                zaloToast('⚠️ Lỗi tạo PDF: ' + zaloEsc(err && err.message || err), 8000);
+            });
+    }
+
+    function renderZaloCustomerList(filter) {
+        if (!zaloCustListBody) return;
+        const kw = String(filter || '').toLowerCase().trim();
+        let list = (customerDatabase || []).map((c, i) => ({ ...c, _idx: i }));
+        if (kw) {
+            list = list.filter(c =>
+                String(c.tenKhachHang||'').toLowerCase().includes(kw) ||
+                String(c.nguoiPhuTrach||'').toLowerCase().includes(kw) ||
+                String(c.dienThoai||'').toLowerCase().includes(kw) ||
+                String(c.diaChi||'').toLowerCase().includes(kw));
+        }
+        // Khách vừa thêm mới đưa lên đầu
+        if (zaloLastAddedPhone) {
+            list.sort((a,b) => (String(b.dienThoai)===zaloLastAddedPhone?1:0) - (String(a.dienThoai)===zaloLastAddedPhone?1:0));
+        }
+        if (!list.length) {
+            zaloCustListBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;padding:14px">' +
+                (customerDatabase && customerDatabase.length ? 'Không tìm thấy khách hàng phù hợp.' : 'Chưa có dữ liệu khách hàng. Hãy tải danh sách KH ở tab Database hoặc khai KH mới bên dưới.') + '</td></tr>';
+            return;
+        }
+        let html = '';
+        list.slice(0, 300).forEach(c => {
+            const isNew = zaloLastAddedPhone && String(c.dienThoai) === zaloLastAddedPhone;
+            const sent = c.dienThoai && zaloWasSentToday(c.dienThoai);
+            html += '<tr class="' + (isNew ? 'zalo-row-new' : '') + '">' +
+                '<td><b>' + zaloEsc(c.tenKhachHang) + '</b>' + (sent ? '<span class="zalo-sent-badge">✓ đã gửi hôm nay</span>' : '') + '</td>' +
+                '<td>' + zaloEsc(c.nguoiPhuTrach) + '</td>' +
+                '<td>' + (c.dienThoai ? '<span class="zalo-phone-link" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Bấm để gửi báo giá qua Zalo">' + zaloEsc(c.dienThoai) + '</span>' : '<span style="color:#aaa">—</span>') + '</td>' +
+                '<td>' + zaloEsc(c.diaChi) + '</td>' +
+                '<td style="white-space:nowrap">' + (c.dienThoai ? '<button class="zalo-send-btn" data-mode="img" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Copy ảnh báo giá rồi dán Ctrl+V vào Zalo">🖼 Ảnh</button> <button class="zalo-send-btn" data-mode="pdf" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Tải file PDF báo giá rồi kéo vào Zalo — phù hợp danh mục dài">📄 PDF</button>' : '') + '</td>' +
+                '</tr>';
+        });
+        zaloCustListBody.innerHTML = html;
+    }
+
+    // Uỷ quyền sự kiện: bấm nút Gửi Zalo hoặc bấm vào SĐT
+    zaloCustListBody.addEventListener('click', (e) => {
+        const el = e.target.closest('.zalo-send-btn, .zalo-phone-link');
+        if (!el) return;
+        const isBtn = el.classList.contains('zalo-send-btn');
+        // Bấm vào SĐT hoặc nút 📄 PDF → gửi file PDF (an toàn cho danh mục dài); nút 🖼 Ảnh → copy ảnh dán nhanh
+        if (!isBtn || el.dataset.mode === 'pdf') {
+            sendQuotePdfViaZalo(el.dataset.phone, el.dataset.name, isBtn ? el : null);
+        } else {
+            sendQuoteViaZalo(el.dataset.phone, el.dataset.name, el);
+        }
+    });
+
+    // Khai khách hàng mới → load vào danh sách + lưu Firebase
+    zaloAddCustBtn.addEventListener('click', async () => {
+        const name = zaloNewName.value.trim();
+        const contact = zaloNewContact.value.trim();
+        const phone = zaloNewPhone.value.trim();
+        const address = zaloNewAddress.value.trim();
+        if (!name) { alert('Vui lòng nhập tên khách hàng / công ty.'); zaloNewName.focus(); return; }
+        if (!phone || !zaloNormalizePhone(phone)) { alert('Vui lòng nhập số điện thoại hợp lệ.'); zaloNewPhone.focus(); return; }
+        if (!Array.isArray(customerDatabase)) customerDatabase = [];
+        const dup = customerDatabase.find(c => zaloNormalizePhone(c.dienThoai) === zaloNormalizePhone(phone));
+        if (dup) {
+            if (!confirm('SĐT này đã có trong danh sách (KH: ' + dup.tenKhachHang + ').\nVẫn thêm mới?')) {
+                zaloLastAddedPhone = String(dup.dienThoai);
+                zaloCustSearch.value = '';
+                renderZaloCustomerList('');
+                return;
+            }
+        }
+        const newCust = { tenKhachHang: name, nguoiPhuTrach: contact, dienThoai: phone, diaChi: address };
+        customerDatabase.push(newCust);
+        zaloLastAddedPhone = phone;
+        try { await database.ref('customerData').set(customerDatabase); } catch(e) { console.warn('Lưu Firebase lỗi:', e); }
+        zaloNewName.value = ''; zaloNewContact.value = ''; zaloNewPhone.value = ''; zaloNewAddress.value = '';
+        zaloCustSearch.value = '';
+        renderZaloCustomerList('');
+        zaloToast('✅ Đã thêm <b>' + zaloEsc(name) + '</b> vào danh sách (dòng vàng đầu bảng).<br>Bấm <b>🖼 Ảnh</b> (dán nhanh Ctrl+V) hoặc <b>📄 PDF</b> / bấm vào SĐT (kéo file — hợp danh mục dài) để gửi báo giá.', 8000);
+        // Cập nhật gợi ý ở form tạo báo giá luôn dùng được
+    });
+
     document.addEventListener('DOMContentLoaded', ()=>{ 
         loadNotification(); 
         loadDataFromFirebase(); 
@@ -2783,5 +3096,6 @@
         loadCustomerDataFromFirebase(); 
     });
 </script>
+<div id="zaloToast"></div>
 </body>
 </html>
