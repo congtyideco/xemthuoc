@@ -353,6 +353,19 @@
         .zalo-add-btn { background: #34a853; color: #fff; border: none; border-radius: 6px; padding: 9px 18px; cursor: pointer; font-weight: bold; font-size: 14px; }
         .zalo-add-btn:hover { background: #2c8f47; }
         .zalo-row-new td { background: #fff8e1 !important; }
+        .zalo-row-selected td { background: #e6f4ea !important; box-shadow: inset 3px 0 0 #1e7e34; }
+        .zalo-cust-table tbody tr { cursor: pointer; }
+        .zalo-pick-btn { background: #8e24aa; color: #fff; border: none; border-radius: 6px; padding: 6px 10px; cursor: pointer; font-weight: bold; font-size: 13px; white-space: nowrap; }
+        .zalo-pick-btn:hover { background: #6a1b9a; }
+        .zalo-pick-btn.picked { background: #1e7e34; }
+        .zalo-upload-badge { display: inline-block; background: #fff3e0; color: #e65100; border: 1px solid #ffcc80; border-radius: 10px; font-size: 11px; padding: 1px 8px; margin-left: 6px; white-space: nowrap; }
+        .zalo-upload-label { background: #ff9800; color: #fff; border: none; border-radius: 6px; padding: 9px 14px; cursor: pointer; font-weight: bold; font-size: 13px; white-space: nowrap; display: inline-flex; align-items: center; }
+        .zalo-upload-label:hover { background: #f57c00; }
+        .zalo-clear-upload-btn { background: #f44336; color: #fff; border: none; border-radius: 6px; padding: 9px 14px; cursor: pointer; font-weight: bold; font-size: 13px; white-space: nowrap; display: none; }
+        .zalo-clear-upload-btn:hover { background: #d32f2f; }
+        #quoteCustomerName:empty::before { content: '(chưa chọn — bấm chọn khách hàng trong danh sách 📱 GỬI BÁO GIÁ QUA ZALO bên dưới)'; color: #c62828; font-style: italic; font-weight: normal; font-size: 13px; }
+        .quote-page.zalo-capturing #quoteCustomerName:empty::before,
+        .quote-page.pdf-exporting #quoteCustomerName:empty::before { content: none; }
         .quote-page.zalo-capturing [contentEditable="true"]:not(th) { background: #ffffff !important; outline: none !important; }
         .quote-page.zalo-capturing .quote-table th { background: #4285f4 !important; color: #ffffff !important; outline: none !important; }
         #zaloToast { position: fixed; left: 50%; bottom: 30px; transform: translateX(-50%); background: #222; color: #fff; padding: 12px 22px; border-radius: 8px; font-size: 15px; z-index: 3000; display: none; max-width: 90%; text-align: center; box-shadow: 0 4px 16px rgba(0,0,0,.35); }
@@ -367,6 +380,8 @@
             .quote-actions,
             .zalo-send-panel,
             #zaloToast,
+            #quoteCustomerName:empty::before,
+            #appFooter,
             .popup-overlay,
             .notification-display {
                 display: none !important;
@@ -1098,12 +1113,16 @@
     </div>
     <div class="quote-dialog" id="quoteDialog">
         <div class="quote-dialog-content">
-            <div class="quote-dialog-title">THÔNG TIN KHÁCH HÀNG</div>
-            <input type="text" class="quote-input" id="customerNameInput" placeholder="Tên khách hàng" list="customerSuggestions" autocomplete="off" />
+            <div class="quote-dialog-title">TẠO BÁO GIÁ</div>
+            <div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:13px;color:#1b5e20;line-height:1.5">
+                ✅ <b>Quy trình mới:</b> Tạo báo giá <b>chưa cần</b> thông tin khách hàng.<br>
+                Sau khi báo giá hiện ra, mở danh sách <b>📱 GỬI BÁO GIÁ QUA ZALO</b> bên dưới, <b>bấm chọn khách hàng</b> → thông tin tự load lên báo giá → bấm gửi Zalo (không lo nhầm tên).
+            </div>
+            <input type="text" class="quote-input" id="customerNameInput" placeholder="Tên khách hàng (có thể bỏ trống — chọn từ danh sách sau)" list="customerSuggestions" autocomplete="off" />
             <datalist id="customerSuggestions"></datalist>
-            <input type="text" class="quote-input" id="customerContactInput" placeholder="Người phụ trách" />
-            <input type="text" class="quote-input" id="customerPhoneInput" placeholder="Điện thoại" />
-            <input type="text" class="quote-input" id="customerAddressInput" placeholder="Địa chỉ" />
+            <input type="text" class="quote-input" id="customerContactInput" placeholder="Người phụ trách (có thể bỏ trống)" />
+            <input type="text" class="quote-input" id="customerPhoneInput" placeholder="Điện thoại (có thể bỏ trống)" />
+            <input type="text" class="quote-input" id="customerAddressInput" placeholder="Địa chỉ (có thể bỏ trống)" />
             <div class="paper-orientation">
                 <span style="font-weight: bold; margin-right: 10px;">Khổ giấy xuất PDF:</span>
                 <label>
@@ -1219,17 +1238,20 @@
                 <span id="zaloPanelToggle">▲</span>
             </div>
             <div class="zalo-panel-body" id="zaloPanelBody">
+                <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:13px;color:#795548;line-height:1.5">
+                    👉 <b>Bước 1:</b> Bấm nút <b>📋 Chọn</b> (hoặc bấm vào hàng) khách hàng → tên, SĐT, địa chỉ tự load lên báo giá phía trên. <b>Bước 2:</b> Kiểm tra đúng KH rồi bấm <b>🖼 Ảnh</b> / <b>📄 PDF</b> để gửi Zalo.
+                </div>
                 <div class="zalo-toolbar">
                     <input type="text" id="zaloCustSearch" placeholder="🔍 Tìm khách hàng (tên, người liên hệ, SĐT, địa chỉ)..." />
                 </div>
                 <div class="zalo-cust-table-wrap" id="zaloCustListWrap">
                     <table class="zalo-cust-table">
-                        <thead><tr><th style="width:26%">Tên công ty / KH</th><th style="width:16%">Người liên hệ</th><th style="width:14%">Điện thoại</th><th>Địa chỉ</th><th style="width:150px">Gửi Zalo</th></tr></thead>
+                        <thead><tr><th style="width:80px">Chọn KH</th><th style="width:24%">Tên công ty / KH</th><th style="width:14%">Người liên hệ</th><th style="width:13%">Điện thoại</th><th>Địa chỉ</th><th style="width:150px">Gửi Zalo</th></tr></thead>
                         <tbody id="zaloCustListBody"></tbody>
                     </table>
                 </div>
                 <div class="zalo-new-cust">
-                    <div class="zalo-new-cust-title">➕ Khách hàng mới (khai thông tin rồi bấm "Load vào danh sách" — sau đó bấm vào SĐT để gửi Zalo)</div>
+                    <div class="zalo-new-cust-title">➕ Khách hàng mới (khai thông tin rồi bấm "Load vào danh sách" — thông tin sẽ tự load lên báo giá, sau đó bấm 🖼 Ảnh / 📄 PDF để gửi Zalo)</div>
                     <div class="zalo-new-cust-grid">
                         <input type="text" id="zaloNewName" placeholder="Tên khách hàng / công ty *" />
                         <input type="text" id="zaloNewContact" placeholder="Người liên hệ" />
@@ -1237,6 +1259,12 @@
                         <input type="text" id="zaloNewAddress" placeholder="Địa chỉ" />
                     </div>
                     <button class="zalo-add-btn" id="zaloAddCustBtn">📥 Load vào danh sách &amp; lưu công ty</button>
+                    <div style="margin-top:12px;padding-top:10px;border-top:1px dashed #b6d4fe;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+                        <span style="font-weight:bold;color:#0052cc;font-size:14px">📁 Hoặc upload file Excel danh sách khách hàng:</span>
+                        <label for="zaloUploadInput" class="zalo-upload-label" title="Upload file Excel danh sách khách hàng (dùng tạm cho phiên này, không ghi đè dữ liệu đã lưu)">📁 Upload Excel DSKH</label>
+                        <input type="file" id="zaloUploadInput" accept=".xlsx, .xls" style="display:none" />
+                        <button class="zalo-clear-upload-btn" id="zaloClearUploadBtn" title="Xóa danh sách KH vừa upload để upload lại file khác">🗑 Xóa DS upload</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2221,7 +2249,7 @@
         const customerContact = customerContactInput.value.trim();
         const customerPhone = customerPhoneInput.value.trim();
         const customerAddress = customerAddressInput.value.trim();
-        if (!customerName) { alert('Vui lòng nhập tên khách hàng'); return; }
+        // Quy trình mới: KHÔNG bắt buộc tên KH khi tạo báo giá — chọn KH từ danh sách Zalo phía dưới sau
         quoteCustomerName.textContent = customerName;
         quoteCustomerContact.textContent = customerContact;
         quoteCustomerPhone.textContent = customerPhone;
@@ -2253,6 +2281,9 @@
         quoteDateYear.textContent = year;
         
         createQuoteTable();
+        // Reset khách hàng đã chọn nếu báo giá mới không khai sẵn KH
+        if (!customerName) zaloSelectedPhone = null;
+        else zaloSelectedPhone = zaloNormalizePhone(customerPhone) || null;
         quotePage.style.display = 'block';
         renderZaloCustomerList(zaloCustSearch ? zaloCustSearch.value : '');
         popupOverlay.style.display = 'none';
@@ -2383,6 +2414,7 @@
         const actionsDiv = element.querySelector('.quote-actions');
         
         // 1. Tạm ẩn nút chức năng + panel Zalo
+        element.classList.add('pdf-exporting');
         if (actionsDiv) actionsDiv.style.display = 'none';
         const zaloPanelPdf = document.getElementById('zaloSendPanel');
         if (zaloPanelPdf) zaloPanelPdf.style.display = 'none';
@@ -2425,6 +2457,7 @@
         };
         
         const restore = () => {
+            element.classList.remove('pdf-exporting');
             if (actionsDiv) actionsDiv.style.display = 'block';
             if (zaloPanelPdf) zaloPanelPdf.style.display = '';
             element.classList.remove('landscape-mode');
@@ -2843,6 +2876,82 @@
     const zaloNewAddress = document.getElementById('zaloNewAddress');
     const zaloAddCustBtn = document.getElementById('zaloAddCustBtn');
     let zaloLastAddedPhone = null;
+    let zaloSelectedPhone = null;          // SĐT (chuẩn hoá) của KH đang được load lên báo giá
+    let zaloUploadedCustomers = [];        // DSKH upload từ Excel (dùng tạm, không lưu Firebase)
+    let zaloRenderedList = [];             // Danh sách đang hiển thị trong bảng (để tra theo data-ridx)
+    const zaloUploadInput = document.getElementById('zaloUploadInput');
+    const zaloClearUploadBtn = document.getElementById('zaloClearUploadBtn');
+
+    // Load thông tin 1 khách hàng lên bảng báo giá (tên, người PT, SĐT, địa chỉ)
+    function loadCustomerToQuote(c) {
+        if (!c) return;
+        quoteCustomerName.textContent = c.tenKhachHang || '';
+        quoteCustomerContact.textContent = c.nguoiPhuTrach || '';
+        quoteCustomerPhone.textContent = c.dienThoai || '';
+        quoteCustomerAddress.textContent = c.diaChi || '';
+        zaloSelectedPhone = zaloNormalizePhone(c.dienThoai || '') || null;
+        renderZaloCustomerList(zaloCustSearch.value);
+        zaloToast('📋 Đã load KH <b>' + zaloEsc(c.tenKhachHang) + '</b> lên báo giá.<br>Kiểm tra thông tin phía trên, sau đó bấm <b>🖼 Ảnh</b> hoặc <b>📄 PDF</b> ở đúng hàng KH này để gửi Zalo.', 7000);
+    }
+
+    // Bỏ chọn KH: xóa thông tin KH trên báo giá để chọn khách hàng khác
+    function unselectCustomerFromQuote() {
+        quoteCustomerName.textContent = '';
+        quoteCustomerContact.textContent = '';
+        quoteCustomerPhone.textContent = '';
+        quoteCustomerAddress.textContent = '';
+        zaloSelectedPhone = null;
+        renderZaloCustomerList(zaloCustSearch.value);
+        zaloToast('↩️ Đã bỏ chọn khách hàng. Bấm <b>📋 Chọn</b> khách hàng khác để load lên báo giá.', 5000);
+    }
+
+    // Parse file Excel DSKH: tự nhận diện cột theo tiêu đề, nếu không có thì dùng format chuẩn (STT | Tên KH | Người PT | SĐT | Địa chỉ)
+    function parseCustomerAoa(aoa) {
+        if (!aoa || !aoa.length) return [];
+        const header = (aoa[0] || []).map(x => String(x || '').toLowerCase());
+        const findCol = (kws) => header.findIndex(h => kws.some(k => h.includes(k)));
+        let iName = findCol(['tên khách', 'ten khach', 'khách hàng', 'khach hang', 'tên kh', 'ten kh', 'công ty', 'cong ty', 'tên công', 'ten cong']);
+        let iContact = findCol(['người', 'nguoi', 'liên hệ', 'lien he', 'phụ trách', 'phu trach']);
+        let iPhone = findCol(['điện thoại', 'dien thoai', 'sđt', 'sdt', 'phone', 'di động', 'di dong']);
+        let iAddr = findCol(['địa chỉ', 'dia chi']);
+        if (iName === -1) { iName = 1; iContact = 2; iPhone = 3; iAddr = 4; } // fallback format chuẩn cũ
+        return aoa.slice(1).map(r => ({
+            tenKhachHang: String((r && r[iName]) || '').trim(),
+            nguoiPhuTrach: iContact > -1 ? String((r && r[iContact]) || '').trim() : '',
+            dienThoai: iPhone > -1 ? String((r && r[iPhone]) || '').trim() : '',
+            diaChi: iAddr > -1 ? String((r && r[iAddr]) || '').trim() : ''
+        })).filter(c => c.tenKhachHang);
+    }
+
+    // Upload Excel DSKH → load vào danh sách gửi Zalo (dùng tạm, KHÔNG ghi đè Firebase)
+    if (zaloUploadInput) zaloUploadInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        try {
+            const aoa = await readExcelFile(file);
+            const parsed = parseCustomerAoa(aoa);
+            if (!parsed.length) {
+                alert('File không có dữ liệu khách hàng hợp lệ.\n\nFormat: dòng đầu là tiêu đề, các cột gồm Tên KH / Người phụ trách / Điện thoại / Địa chỉ (hoặc format chuẩn: STT | Tên KH | Người PT | SĐT | Địa chỉ).');
+            } else {
+                zaloUploadedCustomers = parsed;
+                zaloClearUploadBtn.style.display = 'inline-block';
+                zaloCustSearch.value = '';
+                renderZaloCustomerList('');
+                zaloToast('📁 Đã load <b>' + parsed.length + '</b> KH từ file <b>' + zaloEsc(file.name) + '</b> (hiển thị đầu danh sách, chỉ dùng tạm — không ghi đè dữ liệu đã lưu).<br>Bấm <b>📋 Chọn</b> KH để load lên báo giá.', 9000);
+            }
+        } catch (err) {
+            alert('Lỗi đọc file Excel: ' + (err && err.message || err));
+        }
+        zaloUploadInput.value = '';
+    });
+
+    // Xóa DSKH đã upload để upload lại file khác
+    if (zaloClearUploadBtn) zaloClearUploadBtn.addEventListener('click', () => {
+        zaloUploadedCustomers = [];
+        zaloClearUploadBtn.style.display = 'none';
+        renderZaloCustomerList(zaloCustSearch.value);
+        zaloToast('🗑 Đã xóa danh sách KH upload. Có thể upload lại file khác.', 4000);
+    });
 
     zaloPanelHeader.addEventListener('click', () => {
         zaloPanelBody.classList.toggle('collapsed');
@@ -3015,7 +3124,10 @@
     function renderZaloCustomerList(filter) {
         if (!zaloCustListBody) return;
         const kw = String(filter || '').toLowerCase().trim();
-        let list = (customerDatabase || []).map((c, i) => ({ ...c, _idx: i }));
+        // Gộp: DSKH upload từ Excel (đầu danh sách) + DSKH đã lưu (Firebase)
+        let list = []
+            .concat((zaloUploadedCustomers || []).map(c => ({ ...c, _src: 'upload' })))
+            .concat((customerDatabase || []).map(c => ({ ...c, _src: 'db' })));
         if (kw) {
             list = list.filter(c =>
                 String(c.tenKhachHang||'').toLowerCase().includes(kw) ||
@@ -3028,35 +3140,65 @@
             list.sort((a,b) => (String(b.dienThoai)===zaloLastAddedPhone?1:0) - (String(a.dienThoai)===zaloLastAddedPhone?1:0));
         }
         if (!list.length) {
-            zaloCustListBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;padding:14px">' +
-                (customerDatabase && customerDatabase.length ? 'Không tìm thấy khách hàng phù hợp.' : 'Chưa có dữ liệu khách hàng. Hãy tải danh sách KH ở tab Database hoặc khai KH mới bên dưới.') + '</td></tr>';
+            zaloRenderedList = [];
+            zaloCustListBody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#888;padding:14px">' +
+                ((customerDatabase && customerDatabase.length) || (zaloUploadedCustomers && zaloUploadedCustomers.length) ? 'Không tìm thấy khách hàng phù hợp.' : 'Chưa có dữ liệu khách hàng. Hãy bấm 📁 Upload Excel DSKH, tải danh sách KH ở tab Database, hoặc khai KH mới bên dưới.') + '</td></tr>';
             return;
         }
+        zaloRenderedList = list.slice(0, 300);
         let html = '';
-        list.slice(0, 300).forEach(c => {
+        zaloRenderedList.forEach((c, ridx) => {
             const isNew = zaloLastAddedPhone && String(c.dienThoai) === zaloLastAddedPhone;
+            const isSelected = zaloSelectedPhone && zaloNormalizePhone(c.dienThoai || '') === zaloSelectedPhone;
             const sent = c.dienThoai && zaloWasSentToday(c.dienThoai);
-            html += '<tr class="' + (isNew ? 'zalo-row-new' : '') + '">' +
-                '<td><b>' + zaloEsc(c.tenKhachHang) + '</b>' + (sent ? '<span class="zalo-sent-badge">✓ đã gửi hôm nay</span>' : '') + '</td>' +
+            const rowCls = (isSelected ? 'zalo-row-selected ' : '') + (isNew && !isSelected ? 'zalo-row-new' : '');
+            html += '<tr class="' + rowCls + '" data-ridx="' + ridx + '" title="Bấm để load thông tin KH này lên báo giá">' +
+                '<td style="white-space:nowrap"><button class="zalo-pick-btn' + (isSelected ? ' picked' : '') + '" data-ridx="' + ridx + '" title="Bấm để load KH này lên báo giá — bấm lại lần nữa để BỎ CHỌN">' + (isSelected ? '✓ Đã chọn' : '📋 Chọn') + '</button></td>' +
+                '<td><b>' + zaloEsc(c.tenKhachHang) + '</b>' + (c._src === 'upload' ? '<span class="zalo-upload-badge">📁 upload</span>' : '') + (sent ? '<span class="zalo-sent-badge">✓ đã gửi hôm nay</span>' : '') + '</td>' +
                 '<td>' + zaloEsc(c.nguoiPhuTrach) + '</td>' +
-                '<td>' + (c.dienThoai ? '<span class="zalo-phone-link" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Bấm để gửi báo giá qua Zalo">' + zaloEsc(c.dienThoai) + '</span>' : '<span style="color:#aaa">—</span>') + '</td>' +
+                '<td>' + (c.dienThoai ? '<span class="zalo-phone-link" data-ridx="' + ridx + '" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Bấm để gửi báo giá qua Zalo (tự load thông tin KH này lên báo giá trước khi gửi)">' + zaloEsc(c.dienThoai) + '</span>' : '<span style="color:#aaa">—</span>') + '</td>' +
                 '<td>' + zaloEsc(c.diaChi) + '</td>' +
-                '<td style="white-space:nowrap">' + (c.dienThoai ? '<button class="zalo-send-btn" data-mode="img" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Copy ảnh báo giá rồi dán Ctrl+V vào Zalo">🖼 Ảnh</button> <button class="zalo-send-btn" data-mode="pdf" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Tải file PDF báo giá rồi kéo vào Zalo — phù hợp danh mục dài">📄 PDF</button>' : '') + '</td>' +
+                '<td style="white-space:nowrap">' + (c.dienThoai ? '<button class="zalo-send-btn" data-mode="img" data-ridx="' + ridx + '" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Copy ảnh báo giá rồi dán Ctrl+V vào Zalo">🖼 Ảnh</button> <button class="zalo-send-btn" data-mode="pdf" data-ridx="' + ridx + '" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Tải file PDF báo giá rồi kéo vào Zalo — phù hợp danh mục dài">📄 PDF</button>' : '') + '</td>' +
                 '</tr>';
         });
         zaloCustListBody.innerHTML = html;
     }
 
-    // Uỷ quyền sự kiện: bấm nút Gửi Zalo hoặc bấm vào SĐT
+    // Uỷ quyền sự kiện trên danh sách KH:
+    // - Bấm 📋 Chọn (hoặc bấm vào hàng) → load thông tin KH lên báo giá
+    // - Bấm 🖼 Ảnh / 📄 PDF / SĐT → nếu KH này CHƯA được load lên báo giá thì tự load trước, rồi mới gửi (chống nhầm tên)
     zaloCustListBody.addEventListener('click', (e) => {
-        const el = e.target.closest('.zalo-send-btn, .zalo-phone-link');
-        if (!el) return;
-        const isBtn = el.classList.contains('zalo-send-btn');
-        // Bấm vào SĐT hoặc nút 📄 PDF → gửi file PDF (an toàn cho danh mục dài); nút 🖼 Ảnh → copy ảnh dán nhanh
-        if (!isBtn || el.dataset.mode === 'pdf') {
-            sendQuotePdfViaZalo(el.dataset.phone, el.dataset.name, isBtn ? el : null);
-        } else {
-            sendQuoteViaZalo(el.dataset.phone, el.dataset.name, el);
+        const sendEl = e.target.closest('.zalo-send-btn, .zalo-phone-link');
+        if (sendEl) {
+            const cust = zaloRenderedList[parseInt(sendEl.dataset.ridx)] || { tenKhachHang: sendEl.dataset.name, dienThoai: sendEl.dataset.phone };
+            const isBtn = sendEl.classList.contains('zalo-send-btn');
+            const doSend = () => {
+                if (!isBtn || sendEl.dataset.mode === 'pdf') {
+                    sendQuotePdfViaZalo(sendEl.dataset.phone, sendEl.dataset.name, isBtn ? sendEl : null);
+                } else {
+                    sendQuoteViaZalo(sendEl.dataset.phone, sendEl.dataset.name, sendEl);
+                }
+            };
+            // Chống nhầm tên: đảm bảo thông tin KH trên báo giá đúng là KH đang bấm gửi
+            if (zaloNormalizePhone(sendEl.dataset.phone || '') !== zaloSelectedPhone) {
+                loadCustomerToQuote(cust);
+                setTimeout(doSend, 300); // chờ DOM cập nhật xong mới chụp ảnh/xuất PDF
+            } else {
+                doSend();
+            }
+            return;
+        }
+        const pickEl = e.target.closest('.zalo-pick-btn');
+        const rowEl = e.target.closest('tr[data-ridx]');
+        const ridx = pickEl ? pickEl.dataset.ridx : (rowEl ? rowEl.dataset.ridx : null);
+        if (ridx !== null && ridx !== undefined) {
+            const cust = zaloRenderedList[parseInt(ridx)];
+            // Bấm lại KH đang chọn → BỎ CHỌN để chọn khách hàng khác
+            if (cust && zaloSelectedPhone && zaloNormalizePhone(cust.dienThoai || '') === zaloSelectedPhone) {
+                unselectCustomerFromQuote();
+            } else {
+                loadCustomerToQuote(cust);
+            }
         }
     });
 
@@ -3074,7 +3216,7 @@
             if (!confirm('SĐT này đã có trong danh sách (KH: ' + dup.tenKhachHang + ').\nVẫn thêm mới?')) {
                 zaloLastAddedPhone = String(dup.dienThoai);
                 zaloCustSearch.value = '';
-                renderZaloCustomerList('');
+                loadCustomerToQuote(dup);
                 return;
             }
         }
@@ -3084,8 +3226,9 @@
         try { await database.ref('customerData').set(customerDatabase); } catch(e) { console.warn('Lưu Firebase lỗi:', e); }
         zaloNewName.value = ''; zaloNewContact.value = ''; zaloNewPhone.value = ''; zaloNewAddress.value = '';
         zaloCustSearch.value = '';
-        renderZaloCustomerList('');
-        zaloToast('✅ Đã thêm <b>' + zaloEsc(name) + '</b> vào danh sách (dòng vàng đầu bảng).<br>Bấm <b>🖼 Ảnh</b> (dán nhanh Ctrl+V) hoặc <b>📄 PDF</b> / bấm vào SĐT (kéo file — hợp danh mục dài) để gửi báo giá.', 8000);
+        // Tự động load KH mới lên bảng báo giá luôn (quy trình mới: chọn KH → load → gửi)
+        loadCustomerToQuote(newCust);
+        zaloToast('✅ Đã thêm <b>' + zaloEsc(name) + '</b> vào danh sách và <b>load lên báo giá</b>.<br>Kiểm tra thông tin phía trên rồi bấm <b>🖼 Ảnh</b> (dán nhanh Ctrl+V) hoặc <b>📄 PDF</b> để gửi Zalo.', 9000);
         // Cập nhật gợi ý ở form tạo báo giá luôn dùng được
     });
 
@@ -3097,5 +3240,6 @@
     });
 </script>
 <div id="zaloToast"></div>
+<div id="appFooter" data-html2canvas-ignore="true" style="text-align:center;padding:18px 10px 26px;font-size:13px;font-weight:bold;letter-spacing:1px;color:#8e24aa;">✨ ỨNG DỤNG AI ĐƯỢC PHÁT TRIỂN BỞI MTRIET ✨</div>
 </body>
 </html>
