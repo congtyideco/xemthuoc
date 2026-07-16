@@ -359,6 +359,8 @@
         .zalo-pick-btn:hover { background: #6a1b9a; }
         .zalo-pick-btn.picked { background: #1e7e34; }
         .zalo-upload-badge { display: inline-block; background: #fff3e0; color: #e65100; border: 1px solid #ffcc80; border-radius: 10px; font-size: 11px; padding: 1px 8px; margin-left: 6px; white-space: nowrap; }
+        .zalo-upload-table th { background: #ff9800 !important; }
+        #zaloUploadListWrap { margin-top: 10px; border-color: #ffcc80; display: none; }
         .zalo-upload-label { background: #ff9800; color: #fff; border: none; border-radius: 6px; padding: 9px 14px; cursor: pointer; font-weight: bold; font-size: 13px; white-space: nowrap; display: inline-flex; align-items: center; }
         .zalo-upload-label:hover { background: #f57c00; }
         .zalo-clear-upload-btn { background: #f44336; color: #fff; border: none; border-radius: 6px; padding: 9px 14px; cursor: pointer; font-weight: bold; font-size: 13px; white-space: nowrap; display: none; }
@@ -1260,10 +1262,16 @@
                     </div>
                     <button class="zalo-add-btn" id="zaloAddCustBtn">📥 Load vào danh sách &amp; lưu công ty</button>
                     <div style="margin-top:12px;padding-top:10px;border-top:1px dashed #b6d4fe;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-                        <span style="font-weight:bold;color:#0052cc;font-size:14px">📁 Hoặc upload file Excel danh sách khách hàng:</span>
+                        <span style="font-weight:bold;color:#0052cc;font-size:14px">📁 Hoặc upload file Excel DSKH mới (hiển thị riêng bên dưới, chỉ lưu trên máy này — KHÔNG thêm vào danh sách công ty đã lưu):</span>
                         <label for="zaloUploadInput" class="zalo-upload-label" title="Upload file Excel danh sách khách hàng (dùng tạm cho phiên này, không ghi đè dữ liệu đã lưu)">📁 Upload Excel DSKH</label>
                         <input type="file" id="zaloUploadInput" accept=".xlsx, .xls" style="display:none" />
                         <button class="zalo-clear-upload-btn" id="zaloClearUploadBtn" title="Xóa danh sách KH vừa upload để upload lại file khác">🗑 Xóa DS upload</button>
+                    </div>
+                    <div class="zalo-cust-table-wrap" id="zaloUploadListWrap">
+                        <table class="zalo-cust-table zalo-upload-table">
+                            <thead><tr><th style="width:80px">Chọn KH</th><th style="width:24%">Tên khách hàng</th><th style="width:14%">Người liên hệ</th><th style="width:13%">Điện thoại</th><th>Địa chỉ</th><th style="width:150px">Gửi Zalo</th></tr></thead>
+                            <tbody id="zaloUploadListBody"></tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -2286,6 +2294,7 @@
         else zaloSelectedPhone = zaloNormalizePhone(customerPhone) || null;
         quotePage.style.display = 'block';
         renderZaloCustomerList(zaloCustSearch ? zaloCustSearch.value : '');
+        renderZaloUploadList(zaloCustSearch ? zaloCustSearch.value : '');
         popupOverlay.style.display = 'none';
         quoteDialog.style.display = 'none';
         clearQuoteForm();
@@ -2877,7 +2886,18 @@
     const zaloAddCustBtn = document.getElementById('zaloAddCustBtn');
     let zaloLastAddedPhone = null;
     let zaloSelectedPhone = null;          // SĐT (chuẩn hoá) của KH đang được load lên báo giá
-    let zaloUploadedCustomers = [];        // DSKH upload từ Excel (dùng tạm, không lưu Firebase)
+    let zaloUploadedCustomers = [];        // DSKH upload từ Excel — hiển thị RIÊNG ở khung thêm mới, chỉ lưu localStorage
+    let zaloUploadRenderedList = [];       // Danh sách upload đang hiển thị (tra theo data-ridx)
+    const ZALO_UPLOAD_LS_KEY = 'zaloUploadedCustomers_v1';
+    function saveUploadedCustomersToLocal() {
+        try { localStorage.setItem(ZALO_UPLOAD_LS_KEY, JSON.stringify(zaloUploadedCustomers)); } catch(e) { console.warn('LS save:', e); }
+    }
+    function loadUploadedCustomersFromLocal() {
+        try {
+            const raw = localStorage.getItem(ZALO_UPLOAD_LS_KEY);
+            if (raw) { const arr = JSON.parse(raw); if (Array.isArray(arr)) zaloUploadedCustomers = arr; }
+        } catch(e) { console.warn('LS load:', e); }
+    }
     let zaloRenderedList = [];             // Danh sách đang hiển thị trong bảng (để tra theo data-ridx)
     const zaloUploadInput = document.getElementById('zaloUploadInput');
     const zaloClearUploadBtn = document.getElementById('zaloClearUploadBtn');
@@ -2891,6 +2911,7 @@
         quoteCustomerAddress.textContent = c.diaChi || '';
         zaloSelectedPhone = zaloNormalizePhone(c.dienThoai || '') || null;
         renderZaloCustomerList(zaloCustSearch.value);
+        renderZaloUploadList(zaloCustSearch.value);
         zaloToast('📋 Đã load KH <b>' + zaloEsc(c.tenKhachHang) + '</b> lên báo giá.<br>Kiểm tra thông tin phía trên, sau đó bấm <b>🖼 Ảnh</b> hoặc <b>📄 PDF</b> ở đúng hàng KH này để gửi Zalo.', 7000);
     }
 
@@ -2902,10 +2923,12 @@
         quoteCustomerAddress.textContent = '';
         zaloSelectedPhone = null;
         renderZaloCustomerList(zaloCustSearch.value);
+        renderZaloUploadList(zaloCustSearch.value);
         zaloToast('↩️ Đã bỏ chọn khách hàng. Bấm <b>📋 Chọn</b> khách hàng khác để load lên báo giá.', 5000);
     }
 
-    // Parse file Excel DSKH: tự nhận diện cột theo tiêu đề, nếu không có thì dùng format chuẩn (STT | Tên KH | Người PT | SĐT | Địa chỉ)
+    // Parse file Excel DSKH — linh hoạt theo cấu trúc form: Tên KH | Người liên hệ | Điện thoại | Địa chỉ
+    // Nếu file KHÔNG đúng form (ví dụ chỉ có Tên KH | Điện thoại | Địa chỉ) vẫn load được, cột thiếu (Người liên hệ...) để trống
     function parseCustomerAoa(aoa) {
         if (!aoa || !aoa.length) return [];
         const header = (aoa[0] || []).map(x => String(x || '').toLowerCase());
@@ -2914,12 +2937,56 @@
         let iContact = findCol(['người', 'nguoi', 'liên hệ', 'lien he', 'phụ trách', 'phu trach']);
         let iPhone = findCol(['điện thoại', 'dien thoai', 'sđt', 'sdt', 'phone', 'di động', 'di dong']);
         let iAddr = findCol(['địa chỉ', 'dia chi']);
-        if (iName === -1) { iName = 1; iContact = 2; iPhone = 3; iAddr = 4; } // fallback format chuẩn cũ
-        return aoa.slice(1).map(r => ({
-            tenKhachHang: String((r && r[iName]) || '').trim(),
-            nguoiPhuTrach: iContact > -1 ? String((r && r[iContact]) || '').trim() : '',
-            dienThoai: iPhone > -1 ? String((r && r[iPhone]) || '').trim() : '',
-            diaChi: iAddr > -1 ? String((r && r[iAddr]) || '').trim() : ''
+        let dataRows;
+        const isPhoneVal = v => { const t = String(v || '').replace(/[\s.\-()+]/g, ''); return /^\d{8,12}$/.test(t); };
+        if (iName > -1 || iPhone > -1) {
+            // Có dòng tiêu đề — cột nào không tìm thấy thì để trống
+            dataRows = aoa.slice(1);
+            const maxCols = Math.max.apply(null, aoa.map(r => (r || []).length));
+            if (iPhone === -1) { // dò cột SĐT theo dữ liệu
+                let best = -1, bestCnt = 0;
+                for (let j = 0; j < maxCols; j++) {
+                    let cnt = 0; dataRows.forEach(r => { if (r && isPhoneVal(r[j])) cnt++; });
+                    if (cnt > bestCnt) { bestCnt = cnt; best = j; }
+                }
+                iPhone = best;
+            }
+            if (iName === -1) iName = 0;
+        } else {
+            // KHÔNG có dòng tiêu đề chuẩn → tự dò cấu trúc theo nội dung
+            const maxCols = Math.max.apply(null, aoa.map(r => (r || []).length));
+            let best = -1, bestCnt = 0;
+            for (let j = 0; j < maxCols; j++) {
+                let cnt = 0; aoa.forEach(r => { if (r && isPhoneVal(r[j])) cnt++; });
+                if (cnt > bestCnt) { bestCnt = cnt; best = j; }
+            }
+            iPhone = best;
+            // Dòng đầu là tiêu đề nếu ô ở cột SĐT của nó không phải số điện thoại
+            const firstIsHeader = iPhone > -1 && aoa.length > 1 && !isPhoneVal((aoa[0] || [])[iPhone]);
+            dataRows = firstIsHeader ? aoa.slice(1) : aoa.slice(0);
+            // Các cột CHỮ đứng trước cột SĐT (bỏ qua cột STT toàn số)
+            const textCols = [];
+            const limit = iPhone > -1 ? iPhone : maxCols;
+            for (let j = 0; j < limit; j++) {
+                const vals = dataRows.map(r => String(((r || [])[j] != null ? (r || [])[j] : '')).trim()).filter(Boolean);
+                if (!vals.length) continue;
+                if (!vals.every(v => /^\d+$/.test(v))) textCols.push(j);
+            }
+            iName = textCols.length ? textCols[0] : 0;
+            iContact = textCols.length > 1 ? textCols[1] : -1; // không có cột Người liên hệ → để trống
+            iAddr = -1;
+            if (iPhone > -1) {
+                for (let j = iPhone + 1; j < maxCols; j++) {
+                    if (dataRows.some(r => String(((r || [])[j] != null ? (r || [])[j] : '')).trim())) { iAddr = j; break; }
+                }
+            }
+        }
+        const cell = (r, i) => (i > -1 && r && r[i] != null) ? String(r[i]).trim() : '';
+        return dataRows.map(r => ({
+            tenKhachHang: cell(r, iName),
+            nguoiPhuTrach: cell(r, iContact),
+            dienThoai: cell(r, iPhone),
+            diaChi: cell(r, iAddr)
         })).filter(c => c.tenKhachHang);
     }
 
@@ -2931,13 +2998,13 @@
             const aoa = await readExcelFile(file);
             const parsed = parseCustomerAoa(aoa);
             if (!parsed.length) {
-                alert('File không có dữ liệu khách hàng hợp lệ.\n\nFormat: dòng đầu là tiêu đề, các cột gồm Tên KH / Người phụ trách / Điện thoại / Địa chỉ (hoặc format chuẩn: STT | Tên KH | Người PT | SĐT | Địa chỉ).');
+                alert('File không có dữ liệu khách hàng hợp lệ.\n\nForm chuẩn: Tên khách hàng | Người liên hệ | Điện thoại | Địa chỉ.\nFile chỉ có Tên KH | Điện thoại | Địa chỉ vẫn load được (cột Người liên hệ để trống) — miễn có cột tên và cột số điện thoại.');
             } else {
                 zaloUploadedCustomers = parsed;
-                zaloClearUploadBtn.style.display = 'inline-block';
+                saveUploadedCustomersToLocal();
                 zaloCustSearch.value = '';
-                renderZaloCustomerList('');
-                zaloToast('📁 Đã load <b>' + parsed.length + '</b> KH từ file <b>' + zaloEsc(file.name) + '</b> (hiển thị đầu danh sách, chỉ dùng tạm — không ghi đè dữ liệu đã lưu).<br>Bấm <b>📋 Chọn</b> KH để load lên báo giá.', 9000);
+                renderZaloUploadList('');
+                zaloToast('📁 Đã load <b>' + parsed.length + '</b> KH từ file <b>' + zaloEsc(file.name) + '</b> vào bảng riêng bên dưới (chỉ lưu trên máy này — KHÔNG thêm vào DSKH công ty đã lưu).<br>Bấm <b>📋 Chọn</b> KH để load lên báo giá.', 9000);
             }
         } catch (err) {
             alert('Lỗi đọc file Excel: ' + (err && err.message || err));
@@ -2948,16 +3015,17 @@
     // Xóa DSKH đã upload để upload lại file khác
     if (zaloClearUploadBtn) zaloClearUploadBtn.addEventListener('click', () => {
         zaloUploadedCustomers = [];
-        zaloClearUploadBtn.style.display = 'none';
-        renderZaloCustomerList(zaloCustSearch.value);
-        zaloToast('🗑 Đã xóa danh sách KH upload. Có thể upload lại file khác.', 4000);
+        try { localStorage.removeItem(ZALO_UPLOAD_LS_KEY); } catch(e) {}
+        // Nếu KH đang chọn thuộc DS upload thì bỏ chọn để tránh gửi nhầm
+        renderZaloUploadList('');
+        zaloToast('🗑 Đã xóa danh sách KH upload (cả bản lưu trên máy). Có thể upload lại file khác.', 5000);
     });
 
     zaloPanelHeader.addEventListener('click', () => {
         zaloPanelBody.classList.toggle('collapsed');
         zaloPanelToggle.textContent = zaloPanelBody.classList.contains('collapsed') ? '▼' : '▲';
     });
-    zaloCustSearch.addEventListener('input', () => renderZaloCustomerList(zaloCustSearch.value));
+    zaloCustSearch.addEventListener('input', () => { renderZaloCustomerList(zaloCustSearch.value); renderZaloUploadList(zaloCustSearch.value); });
 
     function zaloEsc(s) {
         return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -3084,6 +3152,7 @@
             }
             openZaloChat(intl);
             renderZaloCustomerList(zaloCustSearch.value);
+            renderZaloUploadList(zaloCustSearch.value);
         };
         withTimeout(clipboardPromise, 30000, 'Copy ảnh quá lâu')
             .then(() => finish(true))
@@ -3113,6 +3182,7 @@
                 zaloToast('✅ <b>Đã tải file ' + zaloEsc(fileName) + '</b> về thư mục <b>Downloads</b>.<br>Đang mở Zalo của <b>' + zaloEsc(name || phone) + '</b> — <b>kéo file PDF</b> từ Downloads thả vào khung chat (hoặc bấm nút 📎 đính kèm) rồi <b>Enter</b> để gửi.', 12000);
                 openZaloChat(intl);
                 renderZaloCustomerList(zaloCustSearch.value);
+                renderZaloUploadList(zaloCustSearch.value);
             })
             .catch(err => {
                 console.warn('Zalo PDF:', err);
@@ -3124,10 +3194,8 @@
     function renderZaloCustomerList(filter) {
         if (!zaloCustListBody) return;
         const kw = String(filter || '').toLowerCase().trim();
-        // Gộp: DSKH upload từ Excel (đầu danh sách) + DSKH đã lưu (Firebase)
-        let list = []
-            .concat((zaloUploadedCustomers || []).map(c => ({ ...c, _src: 'upload' })))
-            .concat((customerDatabase || []).map(c => ({ ...c, _src: 'db' })));
+        // Danh sách KH công ty đã lưu (Firebase) — DSKH upload từ Excel hiển thị RIÊNG ở khung thêm mới bên dưới
+        let list = (customerDatabase || []).map(c => ({ ...c, _src: 'db' }));
         if (kw) {
             list = list.filter(c =>
                 String(c.tenKhachHang||'').toLowerCase().includes(kw) ||
@@ -3142,7 +3210,7 @@
         if (!list.length) {
             zaloRenderedList = [];
             zaloCustListBody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#888;padding:14px">' +
-                ((customerDatabase && customerDatabase.length) || (zaloUploadedCustomers && zaloUploadedCustomers.length) ? 'Không tìm thấy khách hàng phù hợp.' : 'Chưa có dữ liệu khách hàng. Hãy bấm 📁 Upload Excel DSKH, tải danh sách KH ở tab Database, hoặc khai KH mới bên dưới.') + '</td></tr>';
+                ((customerDatabase && customerDatabase.length) ? 'Không tìm thấy khách hàng phù hợp.' : 'Chưa có dữ liệu khách hàng công ty. Hãy tải danh sách KH ở tab Database, hoặc khai KH mới / upload Excel ở khung bên dưới.') + '</td></tr>';
             return;
         }
         zaloRenderedList = list.slice(0, 300);
@@ -3154,7 +3222,7 @@
             const rowCls = (isSelected ? 'zalo-row-selected ' : '') + (isNew && !isSelected ? 'zalo-row-new' : '');
             html += '<tr class="' + rowCls + '" data-ridx="' + ridx + '" title="Bấm để load thông tin KH này lên báo giá">' +
                 '<td style="white-space:nowrap"><button class="zalo-pick-btn' + (isSelected ? ' picked' : '') + '" data-ridx="' + ridx + '" title="Bấm để load KH này lên báo giá — bấm lại lần nữa để BỎ CHỌN">' + (isSelected ? '✓ Đã chọn' : '📋 Chọn') + '</button></td>' +
-                '<td><b>' + zaloEsc(c.tenKhachHang) + '</b>' + (c._src === 'upload' ? '<span class="zalo-upload-badge">📁 upload</span>' : '') + (sent ? '<span class="zalo-sent-badge">✓ đã gửi hôm nay</span>' : '') + '</td>' +
+                '<td><b>' + zaloEsc(c.tenKhachHang) + '</b>' + (sent ? '<span class="zalo-sent-badge">✓ đã gửi hôm nay</span>' : '') + '</td>' +
                 '<td>' + zaloEsc(c.nguoiPhuTrach) + '</td>' +
                 '<td>' + (c.dienThoai ? '<span class="zalo-phone-link" data-ridx="' + ridx + '" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Bấm để gửi báo giá qua Zalo (tự load thông tin KH này lên báo giá trước khi gửi)">' + zaloEsc(c.dienThoai) + '</span>' : '<span style="color:#aaa">—</span>') + '</td>' +
                 '<td>' + zaloEsc(c.diaChi) + '</td>' +
@@ -3164,13 +3232,59 @@
         zaloCustListBody.innerHTML = html;
     }
 
-    // Uỷ quyền sự kiện trên danh sách KH:
-    // - Bấm 📋 Chọn (hoặc bấm vào hàng) → load thông tin KH lên báo giá
+    // Hiển thị DSKH upload từ Excel — bảng RIÊNG (màu cam) trong khung "Khách hàng mới", chỉ lưu localStorage
+    function renderZaloUploadList(filter) {
+        const wrap = document.getElementById('zaloUploadListWrap');
+        const body = document.getElementById('zaloUploadListBody');
+        if (!wrap || !body) return;
+        if (!zaloUploadedCustomers || !zaloUploadedCustomers.length) {
+            wrap.style.display = 'none';
+            zaloClearUploadBtn.style.display = 'none';
+            zaloUploadRenderedList = [];
+            body.innerHTML = '';
+            return;
+        }
+        wrap.style.display = 'block';
+        zaloClearUploadBtn.style.display = 'inline-block';
+        const kw = String(filter || '').toLowerCase().trim();
+        let list = zaloUploadedCustomers.slice(0);
+        if (kw) {
+            list = list.filter(c =>
+                String(c.tenKhachHang||'').toLowerCase().includes(kw) ||
+                String(c.nguoiPhuTrach||'').toLowerCase().includes(kw) ||
+                String(c.dienThoai||'').toLowerCase().includes(kw) ||
+                String(c.diaChi||'').toLowerCase().includes(kw));
+        }
+        if (!list.length) {
+            zaloUploadRenderedList = [];
+            body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#888;padding:12px">Không tìm thấy KH upload phù hợp từ khóa tìm kiếm.</td></tr>';
+            return;
+        }
+        zaloUploadRenderedList = list.slice(0, 500);
+        let html = '';
+        zaloUploadRenderedList.forEach((c, ridx) => {
+            const isSelected = zaloSelectedPhone && zaloNormalizePhone(c.dienThoai || '') === zaloSelectedPhone;
+            const sent = c.dienThoai && zaloWasSentToday(c.dienThoai);
+            html += '<tr class="' + (isSelected ? 'zalo-row-selected' : '') + '" data-ridx="' + ridx + '" title="Bấm để load thông tin KH này lên báo giá — bấm lại lần nữa để BỎ CHỌN">' +
+                '<td style="white-space:nowrap"><button class="zalo-pick-btn' + (isSelected ? ' picked' : '') + '" data-ridx="' + ridx + '">' + (isSelected ? '✓ Đã chọn' : '📋 Chọn') + '</button></td>' +
+                '<td><b>' + zaloEsc(c.tenKhachHang) + '</b><span class="zalo-upload-badge">📁 upload</span>' + (sent ? '<span class="zalo-sent-badge">✓ đã gửi hôm nay</span>' : '') + '</td>' +
+                '<td>' + (c.nguoiPhuTrach ? zaloEsc(c.nguoiPhuTrach) : '<span style="color:#bbb">—</span>') + '</td>' +
+                '<td>' + (c.dienThoai ? '<span class="zalo-phone-link" data-ridx="' + ridx + '" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Bấm để gửi báo giá qua Zalo (tự load thông tin KH này lên báo giá trước khi gửi)">' + zaloEsc(c.dienThoai) + '</span>' : '<span style="color:#aaa">—</span>') + '</td>' +
+                '<td>' + zaloEsc(c.diaChi) + '</td>' +
+                '<td style="white-space:nowrap">' + (c.dienThoai ? '<button class="zalo-send-btn" data-mode="img" data-ridx="' + ridx + '" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Copy ảnh báo giá rồi dán Ctrl+V vào Zalo">🖼 Ảnh</button> <button class="zalo-send-btn" data-mode="pdf" data-ridx="' + ridx + '" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Tải file PDF báo giá rồi kéo vào Zalo — phù hợp danh mục dài">📄 PDF</button>' : '') + '</td>' +
+                '</tr>';
+        });
+        body.innerHTML = html;
+    }
+
+    // Uỷ quyền sự kiện dùng chung cho CẢ 2 bảng (DSKH công ty đã lưu + DSKH upload):
+    // - Bấm 📋 Chọn (hoặc bấm vào hàng) → load thông tin KH lên báo giá; bấm lại KH đang chọn → BỎ CHỌN
     // - Bấm 🖼 Ảnh / 📄 PDF / SĐT → nếu KH này CHƯA được load lên báo giá thì tự load trước, rồi mới gửi (chống nhầm tên)
-    zaloCustListBody.addEventListener('click', (e) => {
+    function handleZaloListClick(e, getList) {
+        const list = getList() || [];
         const sendEl = e.target.closest('.zalo-send-btn, .zalo-phone-link');
         if (sendEl) {
-            const cust = zaloRenderedList[parseInt(sendEl.dataset.ridx)] || { tenKhachHang: sendEl.dataset.name, dienThoai: sendEl.dataset.phone };
+            const cust = list[parseInt(sendEl.dataset.ridx)] || { tenKhachHang: sendEl.dataset.name, dienThoai: sendEl.dataset.phone };
             const isBtn = sendEl.classList.contains('zalo-send-btn');
             const doSend = () => {
                 if (!isBtn || sendEl.dataset.mode === 'pdf') {
@@ -3179,7 +3293,6 @@
                     sendQuoteViaZalo(sendEl.dataset.phone, sendEl.dataset.name, sendEl);
                 }
             };
-            // Chống nhầm tên: đảm bảo thông tin KH trên báo giá đúng là KH đang bấm gửi
             if (zaloNormalizePhone(sendEl.dataset.phone || '') !== zaloSelectedPhone) {
                 loadCustomerToQuote(cust);
                 setTimeout(doSend, 300); // chờ DOM cập nhật xong mới chụp ảnh/xuất PDF
@@ -3192,15 +3305,16 @@
         const rowEl = e.target.closest('tr[data-ridx]');
         const ridx = pickEl ? pickEl.dataset.ridx : (rowEl ? rowEl.dataset.ridx : null);
         if (ridx !== null && ridx !== undefined) {
-            const cust = zaloRenderedList[parseInt(ridx)];
-            // Bấm lại KH đang chọn → BỎ CHỌN để chọn khách hàng khác
+            const cust = list[parseInt(ridx)];
             if (cust && zaloSelectedPhone && zaloNormalizePhone(cust.dienThoai || '') === zaloSelectedPhone) {
                 unselectCustomerFromQuote();
             } else {
                 loadCustomerToQuote(cust);
             }
         }
-    });
+    }
+    zaloCustListBody.addEventListener('click', (e) => handleZaloListClick(e, () => zaloRenderedList));
+    document.getElementById('zaloUploadListBody').addEventListener('click', (e) => handleZaloListClick(e, () => zaloUploadRenderedList));
 
     // Khai khách hàng mới → load vào danh sách + lưu Firebase
     zaloAddCustBtn.addEventListener('click', async () => {
@@ -3237,6 +3351,8 @@
         loadDataFromFirebase(); 
         loadProductImages(); 
         loadCustomerDataFromFirebase(); 
+        loadUploadedCustomersFromLocal();   // khôi phục DSKH upload đã lưu trên máy
+        renderZaloUploadList('');
     });
 </script>
 <div id="zaloToast"></div>
