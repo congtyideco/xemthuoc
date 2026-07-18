@@ -346,6 +346,26 @@
         .zalo-send-btn:hover { background: #0052cc; }
         .zalo-send-btn:disabled { background: #9dbef0; cursor: wait; }
         .zalo-sent-badge { display: inline-block; background: #e6f4ea; color: #1e7e34; border: 1px solid #b7e0c2; border-radius: 10px; font-size: 11px; padding: 1px 8px; margin-left: 6px; white-space: nowrap; }
+        /* ===== Tên NV đã gửi (khách hàng upload) ===== */
+        .zalo-claim-badge { display: inline-block; background: #fff3cd; color: #8a6100; border: 1px solid #ffe08a; border-radius: 10px; font-size: 11px; font-weight: bold; padding: 1px 8px; margin-left: 6px; white-space: nowrap; }
+        .zalo-claim-btn { background: #6f42c1; color: #fff; border: none; border-radius: 5px; padding: 4px 8px; font-size: 12px; cursor: pointer; white-space: nowrap; }
+        .zalo-claim-btn:hover { background: #59339d; }
+        .zalo-claim-btn.claimed { background: #fd7e14; }
+        .zalo-claim-btn.claimed:hover { background: #d9690a; }
+        tr.zalo-row-claimed td { background: #fffbe9 !important; }
+        #zaloClaimOverlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 4000; display: none; align-items: center; justify-content: center; }
+        #zaloClaimPopup { background: #fff; border-radius: 10px; box-shadow: 0 8px 30px rgba(0,0,0,.35); width: 92%; max-width: 380px; padding: 18px 20px; }
+        #zaloClaimPopup h4 { margin: 0 0 6px; font-size: 16px; color: #0052cc; }
+        #zaloClaimPopup .zc-cust { font-size: 13px; color: #555; margin-bottom: 12px; word-break: break-word; }
+        #zaloClaimPopup input { width: 100%; box-sizing: border-box; padding: 9px 10px; font-size: 15px; border: 1px solid #ccc; border-radius: 6px; }
+        #zaloClaimPopup .zc-hint { font-size: 12px; color: #888; margin: 6px 0 12px; }
+        #zaloClaimPopup .zc-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+        #zaloClaimPopup .zc-actions button { border: none; border-radius: 6px; padding: 8px 14px; font-size: 13px; font-weight: bold; cursor: pointer; }
+        #zcSaveBtn { background: #28a745; color: #fff; }
+        #zcSaveBtn:hover { background: #1f8a38; }
+        #zcRemoveBtn { background: #dc3545; color: #fff; display: none; }
+        #zcRemoveBtn:hover { background: #bb2d3b; }
+        #zcCancelBtn { background: #e9ecef; color: #333; }
         .zalo-new-cust { margin-top: 14px; border-top: 2px dashed #b6d4fe; padding-top: 12px; }
         .zalo-new-cust-title { font-weight: bold; color: #0052cc; margin-bottom: 8px; font-size: 14px; }
         .zalo-new-cust-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; margin-bottom: 10px; }
@@ -1269,7 +1289,7 @@
                     </div>
                     <div class="zalo-cust-table-wrap" id="zaloUploadListWrap">
                         <table class="zalo-cust-table zalo-upload-table">
-                            <thead><tr><th style="width:80px">Chọn KH</th><th style="width:24%">Tên khách hàng</th><th style="width:14%">Người liên hệ</th><th style="width:13%">Điện thoại</th><th>Địa chỉ</th><th style="width:150px">Gửi Zalo</th></tr></thead>
+                            <thead><tr><th style="width:80px">Chọn KH</th><th style="width:24%">Tên khách hàng</th><th style="width:14%">Người liên hệ</th><th style="width:13%">Điện thoại</th><th>Địa chỉ</th><th style="width:230px">Gửi Zalo / Tên NV</th></tr></thead>
                             <tbody id="zaloUploadListBody"></tbody>
                         </table>
                     </div>
@@ -3053,6 +3073,86 @@
             localStorage.setItem(k, JSON.stringify(s));
         } catch(e) {}
     }
+    // ===== Ghi nhận Tên NV đã gửi cho KH upload (đồng bộ Firebase cho mọi máy) =====
+    let zaloClaims = {};                      // { key: { staff, at } }
+    const ZC_STAFF_LS_KEY = 'zaloClaimStaffName_v1'; // nhớ tên NV nhập lần trước trên máy này
+    function zaloClaimKeyFor(c) {
+        const p = zaloNormalizePhone(c && c.dienThoai || '');
+        if (p) return 'p' + p;
+        // KH không có SĐT → key theo tên (bỏ ký tự Firebase cấm . # $ [ ] /)
+        const n = String(c && c.tenKhachHang || '').trim().toLowerCase().replace(/[.#$\[\]\/\s]+/g, '_');
+        return n ? ('n_' + n.slice(0, 80)) : null;
+    }
+    function zaloClaimOf(c) {
+        const k = zaloClaimKeyFor(c);
+        return (k && zaloClaims[k]) ? zaloClaims[k] : null;
+    }
+    try {
+        database.ref('zaloUploadClaims').on('value', snap => {
+            zaloClaims = snap.val() || {};
+            renderZaloUploadList(zaloCustSearch ? zaloCustSearch.value : '');
+        });
+    } catch (e) { console.warn('zaloUploadClaims listener:', e); }
+
+    const zcOverlay = document.getElementById('zaloClaimOverlay');
+    const zcCustInfo = document.getElementById('zcCustInfo');
+    const zcStaffInput = document.getElementById('zcStaffInput');
+    const zcSaveBtn = document.getElementById('zcSaveBtn');
+    const zcRemoveBtn = document.getElementById('zcRemoveBtn');
+    const zcCancelBtn = document.getElementById('zcCancelBtn');
+    let zcCurrentCust = null;
+
+    function openClaimPopup(cust) {
+        if (!cust) return;
+        const key = zaloClaimKeyFor(cust);
+        if (!key) { alert('KH này thiếu cả tên lẫn SĐT nên không ghi nhận được.'); return; }
+        zcCurrentCust = cust;
+        const claim = zaloClaimOf(cust);
+        zcCustInfo.innerHTML = 'KH: <b>' + zaloEsc(cust.tenKhachHang || '') + '</b>' +
+            (cust.dienThoai ? ' — SĐT: <b>' + zaloEsc(cust.dienThoai) + '</b>' : '') +
+            (claim ? '<br><span style="color:#8a6100">Đang ghi nhận: <b>NV ' + zaloEsc(claim.staff) + '</b>' + (claim.at ? ' (' + new Date(claim.at).toLocaleString('vi-VN') + ')' : '') + '</span>' : '');
+        zcStaffInput.value = claim ? (claim.staff || '') : (localStorage.getItem(ZC_STAFF_LS_KEY) || '');
+        zcRemoveBtn.style.display = claim ? 'inline-block' : 'none';
+        zcOverlay.style.display = 'flex';
+        setTimeout(() => { zcStaffInput.focus(); zcStaffInput.select(); }, 50);
+    }
+    function closeClaimPopup() { zcOverlay.style.display = 'none'; zcCurrentCust = null; }
+    zcCancelBtn.addEventListener('click', closeClaimPopup);
+    zcOverlay.addEventListener('click', e => { if (e.target === zcOverlay) closeClaimPopup(); });
+    zcStaffInput.addEventListener('keydown', e => { if (e.key === 'Enter') zcSaveBtn.click(); if (e.key === 'Escape') closeClaimPopup(); });
+    zcSaveBtn.addEventListener('click', async () => {
+        const staff = zcStaffInput.value.trim();
+        if (!staff) { alert('Vui lòng nhập tên nhân viên.'); zcStaffInput.focus(); return; }
+        const key = zaloClaimKeyFor(zcCurrentCust);
+        if (!key) return;
+        const custName = zcCurrentCust.tenKhachHang || '';
+        try { localStorage.setItem(ZC_STAFF_LS_KEY, staff); } catch(e) {}
+        try {
+            await database.ref('zaloUploadClaims/' + key).set({
+                staff: staff,
+                custName: custName,
+                phone: zcCurrentCust.dienThoai || '',
+                at: firebase.database.ServerValue.TIMESTAMP
+            });
+            zaloToast('✅ Đã ghi nhận <b>NV ' + zaloEsc(staff) + '</b> gửi cho KH <b>' + zaloEsc(custName) + '</b>.<br>Mọi máy đều thấy — NV khác sẽ không khai thác nhầm KH này.', 7000);
+        } catch (err) {
+            alert('Lỗi lưu Firebase: ' + (err && err.message || err));
+        }
+        closeClaimPopup();
+    });
+    zcRemoveBtn.addEventListener('click', async () => {
+        const key = zaloClaimKeyFor(zcCurrentCust);
+        if (!key) return;
+        if (!confirm('Xóa ghi nhận NV đã gửi cho KH "' + (zcCurrentCust.tenKhachHang || '') + '"?')) return;
+        try {
+            await database.ref('zaloUploadClaims/' + key).remove();
+            zaloToast('🗑 Đã xóa ghi nhận — KH này trở về trạng thái <b>chưa ai gửi</b>.', 5000);
+        } catch (err) {
+            alert('Lỗi xóa trên Firebase: ' + (err && err.message || err));
+        }
+        closeClaimPopup();
+    });
+
     function zaloToast(msg, ms) {
         const t = document.getElementById('zaloToast');
         t.innerHTML = msg; t.style.display = 'block';
@@ -3265,13 +3365,14 @@
         zaloUploadRenderedList.forEach((c, ridx) => {
             const isSelected = zaloSelectedPhone && zaloNormalizePhone(c.dienThoai || '') === zaloSelectedPhone;
             const sent = c.dienThoai && zaloWasSentToday(c.dienThoai);
-            html += '<tr class="' + (isSelected ? 'zalo-row-selected' : '') + '" data-ridx="' + ridx + '" title="Bấm để load thông tin KH này lên báo giá — bấm lại lần nữa để BỎ CHỌN">' +
+            const claim = zaloClaimOf(c);
+            html += '<tr class="' + (isSelected ? 'zalo-row-selected' : '') + (claim ? ' zalo-row-claimed' : '') + '" data-ridx="' + ridx + '" title="Bấm để load thông tin KH này lên báo giá — bấm lại lần nữa để BỎ CHỌN">' +
                 '<td style="white-space:nowrap"><button class="zalo-pick-btn' + (isSelected ? ' picked' : '') + '" data-ridx="' + ridx + '">' + (isSelected ? '✓ Đã chọn' : '📋 Chọn') + '</button></td>' +
-                '<td><b>' + zaloEsc(c.tenKhachHang) + '</b><span class="zalo-upload-badge">📁 upload</span>' + (sent ? '<span class="zalo-sent-badge">✓ đã gửi hôm nay</span>' : '') + '</td>' +
+                '<td><b>' + zaloEsc(c.tenKhachHang) + '</b><span class="zalo-upload-badge">📁 upload</span>' + (sent ? '<span class="zalo-sent-badge">✓ đã gửi hôm nay</span>' : '') + (claim ? '<span class="zalo-claim-badge" title="Nhân viên đã ghi nhận gửi cho KH này' + (claim.at ? ' — ' + new Date(claim.at).toLocaleString('vi-VN') : '') + '">👤 NV ' + zaloEsc(claim.staff) + ' đã gửi</span>' : '') + '</td>' +
                 '<td>' + (c.nguoiPhuTrach ? zaloEsc(c.nguoiPhuTrach) : '<span style="color:#bbb">—</span>') + '</td>' +
                 '<td>' + (c.dienThoai ? '<span class="zalo-phone-link" data-ridx="' + ridx + '" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Bấm để gửi báo giá qua Zalo (tự load thông tin KH này lên báo giá trước khi gửi)">' + zaloEsc(c.dienThoai) + '</span>' : '<span style="color:#aaa">—</span>') + '</td>' +
                 '<td>' + zaloEsc(c.diaChi) + '</td>' +
-                '<td style="white-space:nowrap">' + (c.dienThoai ? '<button class="zalo-send-btn" data-mode="img" data-ridx="' + ridx + '" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Copy ảnh báo giá rồi dán Ctrl+V vào Zalo">🖼 Ảnh</button> <button class="zalo-send-btn" data-mode="pdf" data-ridx="' + ridx + '" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Tải file PDF báo giá rồi kéo vào Zalo — phù hợp danh mục dài">📄 PDF</button>' : '') + '</td>' +
+                '<td style="white-space:nowrap">' + (c.dienThoai ? '<button class="zalo-send-btn" data-mode="img" data-ridx="' + ridx + '" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Copy ảnh báo giá rồi dán Ctrl+V vào Zalo">🖼 Ảnh</button> <button class="zalo-send-btn" data-mode="pdf" data-ridx="' + ridx + '" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Tải file PDF báo giá rồi kéo vào Zalo — phù hợp danh mục dài">📄 PDF</button> ' : '') + '<button class="zalo-claim-btn' + (claim ? ' claimed' : '') + '" data-ridx="' + ridx + '" title="' + (claim ? 'Đã ghi nhận NV ' + zaloEsc(claim.staff) + ' gửi — bấm để sửa/xóa' : 'Ghi nhận tên NV đã gửi cho KH này (đồng bộ mọi máy để NV khác không khai thác nhầm)') + '">' + (claim ? '👤 NV: ' + zaloEsc(claim.staff) : '👤 Tên NV') + '</button></td>' +
                 '</tr>';
         });
         body.innerHTML = html;
@@ -3282,9 +3383,20 @@
     // - Bấm 🖼 Ảnh / 📄 PDF / SĐT → nếu KH này CHƯA được load lên báo giá thì tự load trước, rồi mới gửi (chống nhầm tên)
     function handleZaloListClick(e, getList) {
         const list = getList() || [];
+        const claimEl = e.target.closest('.zalo-claim-btn');
+        if (claimEl) {
+            openClaimPopup(list[parseInt(claimEl.dataset.ridx)]);
+            return;
+        }
         const sendEl = e.target.closest('.zalo-send-btn, .zalo-phone-link');
         if (sendEl) {
             const cust = list[parseInt(sendEl.dataset.ridx)] || { tenKhachHang: sendEl.dataset.name, dienThoai: sendEl.dataset.phone };
+            // Cảnh báo nếu KH này đã được NV khác ghi nhận gửi (chống khai thác nhầm)
+            const claim = zaloClaimOf(cust);
+            const myName = (localStorage.getItem(ZC_STAFF_LS_KEY) || '').trim().toLowerCase();
+            if (claim && String(claim.staff || '').trim().toLowerCase() !== myName) {
+                if (!confirm('⚠️ KH "' + (cust.tenKhachHang || '') + '" đã được NV ' + (claim.staff || '') + ' ghi nhận gửi' + (claim.at ? ' lúc ' + new Date(claim.at).toLocaleString('vi-VN') : '') + '.\n\nVẫn tiếp tục gửi cho KH này?')) return;
+            }
             const isBtn = sendEl.classList.contains('zalo-send-btn');
             const doSend = () => {
                 if (!isBtn || sendEl.dataset.mode === 'pdf') {
@@ -3356,6 +3468,19 @@
     });
 </script>
 <div id="zaloToast"></div>
+<div id="zaloClaimOverlay">
+    <div id="zaloClaimPopup">
+        <h4>👤 Ghi nhận nhân viên đã gửi</h4>
+        <div class="zc-cust" id="zcCustInfo"></div>
+        <input type="text" id="zcStaffInput" placeholder="Nhập tên nhân viên (VD: Huyền, Dũng...)" maxlength="40" />
+        <div class="zc-hint">Tên NV sẽ hiển thị trên hàng KH này cho <b>tất cả máy</b> (lưu Firebase) — nhân viên khác thấy sẽ không khai thác nhầm.</div>
+        <div class="zc-actions">
+            <button id="zcRemoveBtn" title="Xóa ghi nhận để KH này trở về trạng thái chưa ai gửi">🗑 Xóa ghi nhận</button>
+            <button id="zcCancelBtn">Hủy</button>
+            <button id="zcSaveBtn">💾 Lưu</button>
+        </div>
+    </div>
+</div>
 <div id="appFooter" data-html2canvas-ignore="true" style="text-align:center;padding:18px 10px 26px;font-size:13px;font-weight:bold;letter-spacing:1px;color:#8e24aa;">✨ ỨNG DỤNG AI ĐƯỢC PHÁT TRIỂN BỞI MTRIET ✨</div>
 </body>
 </html>
