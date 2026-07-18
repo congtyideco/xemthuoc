@@ -3094,6 +3094,21 @@
         });
     } catch (e) { console.warn('zaloUploadClaims listener:', e); }
 
+    // Tạo popup bằng JS (script nằm trước cuối body nên phải tự chèn HTML trước khi query)
+    if (!document.getElementById('zaloClaimOverlay')) {
+        document.body.insertAdjacentHTML('beforeend',
+            '<div id="zaloClaimOverlay">' +
+            '<div id="zaloClaimPopup">' +
+            '<h4>👤 Ghi nhận nhân viên đã gửi</h4>' +
+            '<div class="zc-cust" id="zcCustInfo"></div>' +
+            '<input type="text" id="zcStaffInput" placeholder="Nhập tên nhân viên (VD: Huyền, Dũng...)" maxlength="40" />' +
+            '<div class="zc-hint">Tên NV sẽ hiển thị trên hàng KH này cho <b>tất cả máy</b> (lưu Firebase) — nhân viên khác thấy sẽ không khai thác nhầm.</div>' +
+            '<div class="zc-actions">' +
+            '<button id="zcRemoveBtn" title="Xóa ghi nhận để KH này trở về trạng thái chưa ai gửi">🗑 Xóa ghi nhận</button>' +
+            '<button id="zcCancelBtn">Hủy</button>' +
+            '<button id="zcSaveBtn">💾 Lưu</button>' +
+            '</div></div></div>');
+    }
     const zcOverlay = document.getElementById('zaloClaimOverlay');
     const zcCustInfo = document.getElementById('zcCustInfo');
     const zcStaffInput = document.getElementById('zcStaffInput');
@@ -3468,19 +3483,6 @@
     });
 </script>
 <div id="zaloToast"></div>
-<div id="zaloClaimOverlay">
-    <div id="zaloClaimPopup">
-        <h4>👤 Ghi nhận nhân viên đã gửi</h4>
-        <div class="zc-cust" id="zcCustInfo"></div>
-        <input type="text" id="zcStaffInput" placeholder="Nhập tên nhân viên (VD: Huyền, Dũng...)" maxlength="40" />
-        <div class="zc-hint">Tên NV sẽ hiển thị trên hàng KH này cho <b>tất cả máy</b> (lưu Firebase) — nhân viên khác thấy sẽ không khai thác nhầm.</div>
-        <div class="zc-actions">
-            <button id="zcRemoveBtn" title="Xóa ghi nhận để KH này trở về trạng thái chưa ai gửi">🗑 Xóa ghi nhận</button>
-            <button id="zcCancelBtn">Hủy</button>
-            <button id="zcSaveBtn">💾 Lưu</button>
-        </div>
-    </div>
-</div>
 <div id="appFooter" data-html2canvas-ignore="true" style="text-align:center;padding:18px 10px 26px;font-size:13px;font-weight:bold;letter-spacing:1px;color:#8e24aa;">✨ ỨNG DỤNG AI ĐƯỢC PHÁT TRIỂN BỞI MTRIET ✨</div>
 </body>
 </html>
