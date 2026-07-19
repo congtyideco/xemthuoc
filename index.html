@@ -175,20 +175,43 @@
         .btn-hide{ background:#ff7043; color:#fff } .btn-unhide{ background:#43a047; color:#fff } .btn-showall{ background:#546e7a; color:#fff }
         
         .table-container{ overflow-x:auto; margin-top:12px }
-        .price-table{ width:100%; border-collapse:collapse; table-layout: fixed; }
+        .price-table{ width:100%; border-collapse:separate; border-spacing:0; table-layout: fixed; font-size:13.5px; background:#fff; }
         /* Cột Mã SP: td chỉ highlight nhẹ, đồng font với toàn bảng */
         .price-table tbody td[data-col="masp"] { 
-            color: #1565c0;
-            font-weight: 600;
-            background-color: #e3f2fd !important;
+            color: #0d47a1;
+            font-weight: 700;
+            background-color: #eef5ff !important;
+            font-family: 'Consolas','SFMono-Regular',monospace;
+            letter-spacing:0.2px;
         }
-        .price-table tr:hover td[data-col="masp"] { background-color: #bbdefb !important; }
-        .price-table tr:nth-child(even) td[data-col="masp"] { background-color: #dceefb !important; }
-        .price-table th,.price-table td{ border:1px solid #ddd; padding:8px; text-align:left; white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
-        .price-table th{ background:#4285f4; color:#fff; position:sticky; top:0; z-index:1 }
-        .price-table tr:nth-child(even){ background:#f2f2f2 }
-        .price-table tr:hover{ background:#e6f2ff }
-        .highlight{ background:yellow }
+        .price-table tbody tr:hover td[data-col="masp"] { background-color: #cfe4ff !important; }
+        .price-table th,.price-table td{ border-bottom:1px solid #e8ebf0; border-right:1px solid #eef0f4; padding:9px 11px; text-align:left; white-space: normal; overflow-wrap: anywhere; word-break: break-word; vertical-align:middle; }
+        .price-table td:first-child, .price-table th:first-child { border-left:1px solid #eef0f4; }
+        .price-table th{
+            background:linear-gradient(180deg,#4f8cf7 0%,#3a72d8 100%);
+            color:#fff; position:sticky; top:0; z-index:2;
+            font-weight:700; font-size:12.5px; text-transform:uppercase; letter-spacing:0.4px;
+            text-align:center; padding:11px 10px; box-shadow:0 2px 4px rgba(0,0,0,.12);
+            border-right:1px solid rgba(255,255,255,.18); border-bottom:none;
+        }
+        .price-table tbody tr{ transition:background .12s ease; }
+        .price-table tbody tr:nth-child(even){ background:#f6f9fe }
+        .price-table tbody tr:hover{ background:#e3f0ff; box-shadow:inset 3px 0 0 #4285f4; }
+        /* Ô giá / phần trăm căn phải, đậm, dễ đọc */
+        .price-table td.cell-price{ text-align:right; font-weight:700; color:#1b5e20; font-variant-numeric:tabular-nums; white-space:nowrap; }
+        .price-table td.cell-pct{ text-align:center; color:#c62828; font-weight:600; }
+        .price-table td.cell-num{ text-align:center; color:#546e7a; font-weight:600; }
+        /* Hàng tiêu đề NHÓM điều trị -> thanh phân nhóm nổi bật */
+        .price-table tr.group-row td{
+            background:linear-gradient(90deg,#e8f0fe 0%,#f3f8ff 100%) !important;
+            color:#1a3d7c !important; font-weight:800; font-size:13.5px;
+            letter-spacing:0.3px; padding:11px 14px; text-align:left !important;
+            border-top:2px solid #4285f4; border-bottom:1px solid #c7dbff;
+            box-shadow:none !important; position:sticky; top:42px; z-index:1;
+        }
+        .price-table tr.group-row:hover{ background:none; box-shadow:none; }
+        .price-table tr.group-row:hover td{ box-shadow:none; }
+        .highlight{ background:#fff59d; border-radius:2px; padding:0 1px; box-shadow:0 0 0 1px #fbc02d inset; }
         .editing-cell { background-color: #fffde7; outline: 2px solid #ffc107; }
         
         /* Tay nắm kéo giãn cột - Dùng chung cho cả bảng xem giá và bảng báo giá */
@@ -1000,8 +1023,14 @@
                 </h2>
                 <div class="pro-header-actions">
                     <div class="pro-search-box">
-                        <input type="text" id="searchInput" placeholder="Tìm kiếm trong bảng giá..." />
+                        <input type="text" id="searchInput" placeholder="🔍 Tìm tên thuốc, hoạt chất, mã SP..." />
                     </div>
+                    <select id="groupFilter" title="Lọc theo nhóm điều trị"
+                        style="padding:8px 10px; border:1px solid #c5d8ff; border-radius:8px; background:#fff; font-size:13px; color:#1a3d7c; font-weight:600; max-width:220px; cursor:pointer;">
+                        <option value="">📂 Tất cả nhóm</option>
+                    </select>
+                    <span id="rowCountBadge" title="Số sản phẩm hiển thị"
+                        style="display:none; align-items:center; background:#e8f5e9; color:#2e7d32; border:1px solid #a5d6a7; border-radius:16px; font-size:12px; font-weight:700; padding:5px 12px; white-space:nowrap;">0 SP</span>
                     <button class="pro-menu-btn" id="toolsMenuBtn" title="Mở menu công cụ">
                         <span>☰ Công cụ</span>
                         <span class="chevron">▾</span>
@@ -1351,6 +1380,9 @@
     const fileNameDisplay = document.getElementById("fileNameDisplay");
     const filesList = document.getElementById("filesList");
     const searchInput = document.getElementById("searchInput");
+    const groupFilter = document.getElementById("groupFilter");
+    const rowCountBadge = document.getElementById("rowCountBadge");
+    if(groupFilter){ groupFilter.addEventListener("change", ()=>{ showingOnlySelected=false; applyFilters(); }); }
     const tableContainer = document.getElementById("tableContainer");
     const loadingIndicator = document.getElementById("loadingIndicator");
     const passwordDialog = document.getElementById("passwordDialog");
@@ -1501,7 +1533,7 @@
     });
     searchInput.addEventListener("input", ()=>{ 
         showingOnlySelected=false; 
-        performSearch(); 
+        applyFilters(); 
     });
     passwordDialogCancel.addEventListener("click", () => { passwordDialog.style.display = "none"; passwordInput.value = ""; fileIndexToRemove = null; });
     passwordDialogConfirm.addEventListener("click", () => {
@@ -1995,9 +2027,61 @@
             }
         });
         selectedRowIdx.clear(); showingOnlySelected=false; searchInput.value='';
+        populateGroupFilter();          // Nạp danh sách nhóm điều trị vào dropdown
+        if(groupFilter) groupFilter.value = '';
         createTable(currentData); 
         updateActionButtonsState();
         updateFilteredSection(); // Cập nhật phần chọn tất cả danh sách đã lọc
+    }
+    // ===== LỌC THEO NHÓM ĐIỀU TRỊ =====
+    // Tìm index cột "Nhóm điều trị"
+    function getGroupColIdx(){
+        return headersCache.findIndex(h => {
+            const s = String(h||'').normalize('NFC').toLowerCase();
+            return s.includes('nhóm điều trị') || s.includes('nhóm bệnh') || s.trim() === 'nhóm';
+        });
+    }
+    // Nạp các nhóm duy nhất vào dropdown
+    function populateGroupFilter(){
+        if(!groupFilter) return;
+        const gIdx = getGroupColIdx();
+        const set = new Set();
+        if(gIdx !== -1){
+            for(let i=1;i<currentData.length;i++){
+                const v = String((currentData[i]||[])[gIdx]||'').trim();
+                if(v) set.add(v);
+            }
+        }
+        const cur = groupFilter.value;
+        groupFilter.innerHTML = '<option value="">📂 Tất cả nhóm</option>' +
+            Array.from(set).sort((a,b)=>a.localeCompare(b,'vi')).map(g=>`<option value="${g.replace(/"/g,'&quot;')}">${g}</option>`).join('');
+        groupFilter.style.display = set.size ? '' : 'none';
+        if(cur && set.has(cur)) groupFilter.value = cur;
+    }
+    // Áp dụng đồng thời: từ khóa tìm kiếm + nhóm điều trị đã chọn
+    function applyFilters(){
+        const term = (searchInput.value||'').trim().toLowerCase();
+        const grp = groupFilter ? groupFilter.value : '';
+        const gIdx = getGroupColIdx();
+        if(!term && !grp){ createTable(currentData); return; }
+        const filtered = [currentData[0]];
+        const sourceIdx = [];
+        for(let i=1;i<currentData.length;i++){
+            const row = currentData[i] || [];
+            // Giữ lại hàng tiêu đề nhóm để bảng vẫn phân nhóm trực quan (chỉ khi không lọc theo nhóm cụ thể)
+            const nonEmpty = row.filter(c=>String(c).trim().length>0);
+            const firstTxt = String(row.find(c=>String(c).trim().length>0)||'');
+            const isGroupRow = nonEmpty.length===1 && (firstTxt.includes('NHÓM')||/^[◆▲■]/.test(firstTxt.trim()));
+            if(isGroupRow){ if(!grp && !term){ filtered.push(row); sourceIdx.push(i);} continue; }
+            let ok = true;
+            if(grp){ ok = String(row[gIdx]||'').trim() === grp; }
+            if(ok && term){
+                ok = row.some(c => String(c).toLowerCase().includes(term));
+            }
+            if(ok){ filtered.push(row); sourceIdx.push(i); }
+        }
+        createTable(filtered, sourceIdx);
+        if(term) highlightSearchResults(term);
     }
     // HÀM LỌC CỘT HIỂN THỊ (QUAN TRỌNG CHO ẨN CỘT)
     function visibleColumnIndexes(){
@@ -2024,6 +2108,15 @@
         
         // Tìm index cột Mã sp 1 lần cho toàn bảng
         const maSpColIdx = getMaSpColIdx();
+        // Phân loại kiểu cột theo tên tiêu đề (để căn phải giá, tô màu %, STT) — tra cứu 1 lần
+        const colKind = headersCache.map(h => {
+            const s = String(h||'').normalize('NFC').toLowerCase();
+            if(s.includes('đơn giá') || s.includes('giá mua') || s.includes('giá bán') || (s.includes('giá') && s.includes('vnđ'))) return 'price';
+            if(s.startsWith('ck') || s.includes('chiết khấu') || s.includes('%')) return 'pct';
+            const sc = s.replace(/\s+/g,'').replace(/\./g,'');
+            if(sc === 'stt' || sc === 'sothutu' || sc === 'số thứ tự'.replace(/\s+/g,'')) return 'num';
+            return '';
+        });
         
         const table = document.createElement("table"); table.className = "price-table";
         const thead = document.createElement("thead"); const headerRow = document.createElement("tr");
@@ -2042,11 +2135,32 @@
             const tr = document.createElement("tr");
             const rowIdx = sourceIndexes ? sourceIndexes[i-1] : i;
             tr.dataset.rowIndex = rowIdx;
+
+            // Nhận diện HÀNG TIÊU ĐỀ NHÓM (ví dụ "◆ NHÓM: TIM MẠCH..."): chỉ có 1 ô đầu có nội dung
+            const nonEmpty = rowData.filter(c => String(c).trim().length>0);
+            const firstTxt = String(rowData.find(c => String(c).trim().length>0) || '');
+            const isGroupRow = nonEmpty.length === 1 && (firstTxt.includes('NHÓM') || firstTxt.trim().startsWith('◆') || firstTxt.trim().startsWith('▲') || firstTxt.trim().startsWith('■'));
+
+            if(isGroupRow){
+                tr.className = 'group-row';
+                const td = document.createElement('td');
+                td.colSpan = visibleIdx.length + 1; // trải hết bảng (gồm cả cột Chọn)
+                td.textContent = firstTxt.replace(/^[◆▲■]\s*/, '► ');
+                tr.appendChild(td);
+                tbody.appendChild(tr);
+                continue; // Hàng nhóm không có checkbox chọn
+            }
+
             visibleIdx.forEach((colIdx, visPos)=>{
                 const td = document.createElement("td"); const cell = rowData[colIdx];
                 td.textContent = (typeof cell === 'string' && cell.includes('%')) ? cell : (cell || '');
                 if(columnWidths[colIdx]){ td.style.width = columnWidths[colIdx] + 'px'; }
                 if(maSpColIdx !== -1 && colIdx === maSpColIdx) td.dataset.col = 'masp';
+                // Gán class căn chỉnh theo kiểu cột
+                const kind = colKind[colIdx];
+                if(kind === 'price' && String(cell).trim()!=='') td.className = 'cell-price';
+                else if(kind === 'pct' && String(cell).trim()!=='') td.className = 'cell-pct';
+                else if(kind === 'num') td.className = 'cell-num';
                 tr.appendChild(td);
             });
             const tdChoose = document.createElement('td');
@@ -2068,7 +2182,12 @@
         tableContainer.innerHTML = ""; (tbody.rows.length>0 || headersCache.length>0) ? tableContainer.appendChild(table) : (tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị sau khi lọc.</p>');
         enableColumnResize(table, visibleIdx);
         
-        const visibleRowCount = tbody.querySelectorAll('tr').length;
+        const productRowCount = tbody.querySelectorAll('tr:not(.group-row)').length;
+        if(rowCountBadge){
+            if(currentData.length > 1){ rowCountBadge.style.display='inline-flex'; rowCountBadge.textContent = productRowCount + ' SP'; }
+            else rowCountBadge.style.display='none';
+        }
+        const visibleRowCount = productRowCount;
         fromRowInput.max = visibleRowCount;
         toRowInput.max = visibleRowCount;
         toRowInput.value = visibleRowCount;
@@ -2195,7 +2314,7 @@
     }
     function redrawWithFilters(){
         if(showingOnlySelected){ renderSelectedOnly(); return; }
-        const term = searchInput.value.trim(); if(term){ performSearch(); } else { createTable(currentData); }
+        applyFilters();
     }
     // ========== LƯU/TẢI FIREBASE ==========
     async function saveDataToFirebase(){
