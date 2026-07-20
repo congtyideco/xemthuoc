@@ -3023,8 +3023,16 @@
     // Nếu file KHÔNG đúng form (ví dụ chỉ có Tên KH | Điện thoại | Địa chỉ) vẫn load được, cột thiếu (Người liên hệ...) để trống
     function parseCustomerAoa(aoa) {
         if (!aoa || !aoa.length) return [];
-        const header = (aoa[0] || []).map(x => String(x || '').toLowerCase());
-        const findCol = (kws) => header.findIndex(h => kws.some(k => h.includes(k)));
+        // Chuẩn hóa Unicode: file Excel có thể lưu tiếng Việt dạng tổ hợp (NFD) — "Điện thoại" nhìn giống
+        // nhưng khác mã ký tự → phải normalize NFC + bản không dấu để so khớp chắc chắn
+        const zNfc = x => String(x || '').normalize ? String(x || '').normalize('NFC').toLowerCase() : String(x || '').toLowerCase();
+        const zFold = x => zNfc(x).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
+        const header = (aoa[0] || []).map(zNfc);
+        const headerPlain = (aoa[0] || []).map(zFold);
+        const findCol = (kws) => {
+            const kwsPlain = kws.map(zFold);
+            return header.findIndex((h, i) => kws.some(k => h.includes(k)) || kwsPlain.some(k => headerPlain[i].includes(k)));
+        };
         let iName = findCol(['tên khách', 'ten khach', 'khách hàng', 'khach hang', 'tên kh', 'ten kh', 'công ty', 'cong ty', 'tên công', 'ten cong']);
         let iContact = findCol(['người', 'nguoi', 'liên hệ', 'lien he', 'phụ trách', 'phu trach']);
         let iPhone = findCol(['điện thoại', 'dien thoai', 'sđt', 'sdt', 'phone', 'di động', 'di dong']);
