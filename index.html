@@ -2544,8 +2544,19 @@
         data.forEach(c => html += `<tr><td>${c.tenKhachHang}</td><td>${c.nguoiPhuTrach}</td><td>${c.dienThoai}</td><td>${c.diaChi}</td></tr>`);
         customerTableContainer.innerHTML = html + '</tbody></table>';
     }
-    async function loadCustomerDataFromFirebase() {
-        try { const snap = await database.ref('customerData').once('value'); if(snap.val()) customerDatabase = snap.val(); } catch(e){}
+    function loadCustomerDataFromFirebase() {
+        // Lắng nghe REALTIME: upload DSKH mới ở menu Cơ sở dữ liệu (máy này hoặc máy khác)
+        // → khung GỬI BÁO GIÁ QUA ZALO và bảng CSDL tự cập nhật ngay, không cần tải lại trang
+        database.ref('customerData').on('value', snap => {
+            const v = snap.val();
+            customerDatabase = Array.isArray(v) ? v : (v ? Object.values(v) : []);
+            try { renderCustomerTable(customerDatabase); } catch(e) {}
+            try {
+                if (typeof renderZaloCustomerList === 'function') {
+                    renderZaloCustomerList((typeof zaloCustSearch !== 'undefined' && zaloCustSearch) ? zaloCustSearch.value : '');
+                }
+            } catch(e) {}
+        }, err => console.warn('customerData listener:', err));
     }
     function showCustomerSuggestions(event) {
         const val = event.target.value.toLowerCase(); customerSuggestions.innerHTML = ''; if(val.length<1) return;
