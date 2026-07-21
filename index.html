@@ -12,11 +12,12 @@
     
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f5f5f5; }
-        .view-price-btn,.database-btn,.home-erp-btn,.notification-btn,.create-quote-btn{ position:fixed; right:20px; color:#fff; border:none; border-radius:8px; width:120px; height:50px; font-size:16px; font-weight:bold; cursor:pointer; box-shadow:0 4px 8px rgba(0,0,0,.2); display:flex; justify-content:center; align-items:center; text-align:center; transition:all .3s; z-index:1000; }
+        .view-price-btn,.database-btn,.home-erp-btn,.notification-btn,.create-quote-btn,.report-btn{ position:fixed; right:20px; color:#fff; border:none; border-radius:8px; width:120px; height:50px; font-size:16px; font-weight:bold; cursor:pointer; box-shadow:0 4px 8px rgba(0,0,0,.2); display:flex; justify-content:center; align-items:center; text-align:center; transition:all .3s; z-index:1000; }
         .view-price-btn{ bottom:130px; background:#4285f4; } .view-price-btn:hover{ background:#3367d6; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,.3)}
         .database-btn{ bottom:70px; background:#8e24aa; } .database-btn:hover{ background:#7b1fa2; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,.3)}
         .home-erp-btn{ bottom:190px; background:#34a853; text-decoration:none } .home-erp-btn:hover{ background:#2d8e47; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,.3)}
         .notification-btn{ bottom:250px; background:#f44336 } .notification-btn:hover{ background:#d32f2f; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,.3)}
+        .report-btn{ bottom:370px; background:#00897b } .report-btn:hover{ background:#00695c; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,.3)}
         /* --- CODE GIAO DIỆN THÔNG BÁO MỚI (PROFESSIONAL STYLE) --- */
 
 /* Hộp thoại nhập liệu - Canh giữa và đẹp hơn */
@@ -249,6 +250,32 @@
         .export-btn{ background:#1976d2; color:#fff; border:none; padding:10px 14px; border-radius:6px; font-weight:700; cursor:pointer }
         .export-btn:disabled { background-color: #ccc; cursor: not-allowed; }
         .password-dialog,.notification-dialog,.quote-dialog{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1002; justify-content:center; align-items:center }
+        /* ===== Báo cáo tuần ===== */
+        #reportOverlay{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:1003; justify-content:center; align-items:center; padding:16px; }
+        #reportBox{ background:#fff; border-radius:14px; box-shadow:0 12px 40px rgba(0,0,0,.35); width:100%; max-width:1080px; max-height:92vh; display:flex; flex-direction:column; overflow:hidden; }
+        #reportBox .rp-head{ background:linear-gradient(135deg,#00897b,#00695c); color:#fff; padding:16px 20px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+        #reportBox .rp-head h3{ margin:0; font-size:19px; font-weight:800; letter-spacing:.3px; }
+        #reportBox .rp-range{ background:rgba(255,255,255,.2); border-radius:999px; padding:4px 12px; font-size:13px; font-weight:600; }
+        #reportBox .rp-close{ margin-left:auto; background:rgba(255,255,255,.18); border:none; color:#fff; width:34px; height:34px; border-radius:50%; font-size:20px; cursor:pointer; }
+        #reportBox .rp-close:hover{ background:rgba(255,255,255,.32); }
+        #reportBox .rp-tools{ padding:12px 20px; display:flex; gap:10px; flex-wrap:wrap; align-items:center; border-bottom:1px solid #eee; background:#f7fbfa; }
+        #reportBox .rp-tools input{ flex:1; min-width:180px; padding:8px 12px; border:1px solid #cfd8dc; border-radius:8px; font-size:14px; }
+        #reportBox .rp-summary{ display:flex; gap:10px; flex-wrap:wrap; }
+        #reportBox .rp-chip{ background:#e0f2f1; color:#00695c; border-radius:999px; padding:5px 12px; font-size:13px; font-weight:700; }
+        #reportBox .rp-body{ overflow:auto; padding:0 20px 20px; }
+        #reportBox .rp-staff{ margin-top:18px; }
+        #reportBox .rp-staff-title{ font-size:15px; font-weight:800; color:#00695c; margin:0 0 8px; display:flex; align-items:center; gap:10px; position:sticky; top:0; background:#fff; padding:8px 0; z-index:1; }
+        #reportBox .rp-staff-title .rp-staff-count{ background:#00897b; color:#fff; border-radius:999px; padding:2px 10px; font-size:12px; }
+        #reportBox table.rp-table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+        #reportBox table.rp-table th,#reportBox table.rp-table td{ border:1px solid #e0e0e0; padding:8px 10px; text-align:left; vertical-align:top; }
+        #reportBox table.rp-table th{ background:#00897b; color:#fff; font-weight:700; position:sticky; top:40px; }
+        #reportBox table.rp-table td.rp-times{ text-align:center; font-weight:800; color:#c62828; white-space:nowrap; }
+        #reportBox table.rp-table tr:nth-child(even){ background:#f5faf9; }
+        #reportBox .rp-empty{ text-align:center; color:#888; padding:40px 10px; font-size:15px; }
+        #reportBox .rp-note{ font-size:12px; color:#78909c; margin:14px 0 0; font-style:italic; }
+        #reportBox .rp-print{ background:#00897b; color:#fff; border:none; border-radius:8px; padding:8px 14px; font-size:13px; font-weight:700; cursor:pointer; }
+        #reportBox .rp-print:hover{ background:#00695c; }
+        @media print{ body *{ visibility:hidden; } #reportOverlay,#reportOverlay *{ visibility:visible; } #reportOverlay{ position:absolute; inset:0; background:#fff; display:block!important; } #reportBox{ max-width:100%; max-height:none; box-shadow:none; } #reportBox .rp-close,#reportBox .rp-tools .rp-print,#reportBox .rp-tools input{ display:none!important; } }
         .password-dialog-content,.notification-dialog-content,.quote-dialog-content{ background:#fff; padding:20px; border-radius:8px; width:300px; box-shadow:0 5px 15px rgba(0,0,0,.3) }
         .notification-dialog-content,.quote-dialog-content{ width:400px }
         .password-dialog-title,.notification-dialog-title,.quote-dialog-title{ font-size:18px; margin-bottom:15px }
@@ -356,12 +383,13 @@
         @media(max-width:768px){ 
             .popup-content{ width:95%; padding:15px } 
             .price-table{ font-size:14px } 
-            .view-price-btn,.database-btn,.home-erp-btn,.notification-btn,.create-quote-btn{ width:60px; height:60px; font-size:14px } 
+            .view-price-btn,.database-btn,.home-erp-btn,.notification-btn,.create-quote-btn,.report-btn{ width:60px; height:60px; font-size:12px } 
             .database-btn { bottom: 70px }
             .view-price-btn { bottom: 130px }
             .home-erp-btn{ bottom:190px } 
             .notification-btn{ bottom:250px } 
             .create-quote-btn{ bottom:310px }
+            .report-btn{ bottom:370px }
             .notification-dialog-content,.quote-dialog-content{ width:90% } 
             .notification-display{ top:10px; max-width:95%; font-size:14px; padding:10px } 
             .customer-info-row { flex-direction: column; }
@@ -453,6 +481,7 @@
             .home-erp-btn, 
             .notification-btn, 
             .create-quote-btn,
+            .report-btn,
             .quote-actions,
             .zalo-send-panel,
             #zaloToast,
@@ -811,7 +840,7 @@
         .quote-menu-dropdown button.pharmacity .icon { background: #e8f5e9; color: #2e7d32; }
         
         /* Floating buttons - thêm hiệu ứng đẹp */
-        .view-price-btn,.database-btn,.home-erp-btn,.notification-btn,.create-quote-btn {
+        .view-price-btn,.database-btn,.home-erp-btn,.notification-btn,.create-quote-btn,.report-btn {
             font-family: 'Segoe UI', Arial, sans-serif;
             letter-spacing: 0.3px;
         }
@@ -995,6 +1024,7 @@
     <button class="notification-btn" id="notificationBtn">Thông báo</button>
     <a href="https://erp-ideco.skyit.vn/#/app/order/index/" class="home-erp-btn" id="homeErpBtn">HOME ERP</a>
     <button class="view-price-btn" id="viewPriceBtn">Xem Giá</button>
+    <button class="report-btn" id="reportBtn" title="Báo cáo tuần: nhân viên đã gửi báo giá cho khách hàng nào, bao nhiêu lần (Thứ 2 → Chủ nhật)">Báo Cáo Tuần</button>
     <button class="database-btn" id="databaseBtn">Cơ sở dữ liệu</button>
     <div class="quote-menu-container">
         <button class="create-quote-btn" id="createQuoteBtn">Tạo Báo Giá ▾</button>
@@ -3643,6 +3673,151 @@
             });
         } catch(e) { console.warn('zaloMarkSent firebase:', e); }
     }
+    // ============ BÁO CÁO TUẦN: nhân viên nào gửi KH nào, bao nhiêu lần (Thứ 2 → Chủ nhật) ============
+    // Khóa tuần = ngày Thứ 2 (YYYY-MM-DD) của tuần hiện tại
+    function zaloWeekKey(d) {
+        const dt = d ? new Date(d) : new Date();
+        dt.setHours(0,0,0,0);
+        const dow = dt.getDay();               // 0=CN,1=T2,...6=T7
+        const diff = (dow === 0) ? -6 : (1 - dow); // lùi về Thứ 2
+        dt.setDate(dt.getDate() + diff);
+        return dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0');
+    }
+    function zaloWeekRangeLabel(weekKey) {
+        const mon = new Date(weekKey + 'T00:00:00');
+        const sun = new Date(mon); sun.setDate(sun.getDate() + 6);
+        const f = dt => String(dt.getDate()).padStart(2,'0') + '/' + String(dt.getMonth()+1).padStart(2,'0') + '/' + dt.getFullYear();
+        return 'Thứ 2 ' + f(mon) + '  →  Chủ nhật ' + f(sun);
+    }
+    // Ghi 1 lần gửi vào báo cáo tuần (append — đếm được số lần). Đồng bộ Firebase mọi máy.
+    function logWeeklyReportSend(cust, mode) {
+        try {
+            const staff = (localStorage.getItem(ZC_STAFF_LS_KEY) || '').trim();
+            const wk = zaloWeekKey();
+            database.ref('zaloWeeklyReport/' + wk).push({
+                tenKhachHang: (cust && cust.tenKhachHang) || '',
+                nguoiPhuTrach: (cust && cust.nguoiPhuTrach) || '',
+                diaChi: (cust && cust.diaChi) || '',
+                dienThoai: (cust && cust.dienThoai) || '',
+                staff: staff,
+                mode: mode || '',
+                at: firebase.database.ServerValue.TIMESTAMP
+            });
+            // Dọn các tuần cũ (giữ đúng tuần hiện tại) → "tự xóa lặp lại đầu tuần mới"
+            purgeOldWeeklyReports(wk);
+        } catch(e) { console.warn('logWeeklyReportSend:', e); }
+    }
+    // Xóa mọi tuần khác tuần hiện tại → mỗi đầu tuần mới báo cáo tự làm mới
+    let _purgedWeek = null;
+    function purgeOldWeeklyReports(currentWk) {
+        if (_purgedWeek === currentWk) return; // mỗi phiên chỉ dọn 1 lần cho tuần này
+        _purgedWeek = currentWk;
+        try {
+            database.ref('zaloWeeklyReport').once('value').then(snap => {
+                const val = snap.val() || {};
+                Object.keys(val).forEach(wk => {
+                    if (wk !== currentWk) database.ref('zaloWeeklyReport/' + wk).remove();
+                });
+            });
+        } catch(e) { console.warn('purgeOldWeeklyReports:', e); }
+    }
+    // ============ GIAO DIỆN BÁO CÁO TUẦN (cho giám đốc) ============
+    let rpEvents = [];  // các lần gửi trong tuần hiện tại
+    function _rp(id){ return document.getElementById(id); }
+
+    function openReport() {
+        const rpOverlay = _rp('reportOverlay'), rpBody = _rp('rpBody'), rpRange = _rp('rpRange');
+        if (!rpOverlay) return;
+        const wk = zaloWeekKey();
+        rpRange.textContent = zaloWeekRangeLabel(wk);
+        rpBody.innerHTML = '<div class="rp-empty">⏳ Đang tải dữ liệu tuần này...</div>';
+        rpOverlay.style.display = 'flex';
+        purgeOldWeeklyReports(wk);
+        database.ref('zaloWeeklyReport/' + wk).once('value').then(snap => {
+            const val = snap.val() || {};
+            rpEvents = Object.keys(val).map(k => val[k]);
+            renderReport(_rp('rpSearch') ? _rp('rpSearch').value : '');
+        }).catch(err => {
+            rpBody.innerHTML = '<div class="rp-empty">⚠️ Lỗi tải báo cáo: ' + zaloEsc(err && err.message || err) + '</div>';
+        });
+    }
+    function closeReport() { const o = _rp('reportOverlay'); if (o) o.style.display = 'none'; }
+
+    function renderReport(filter) {
+        const rpBody = _rp('rpBody'), rpSummary = _rp('rpSummary');
+        if (!rpBody) return;
+        const kw = String(filter || '').toLowerCase().trim();
+        let evts = rpEvents.slice(0);
+        if (kw) {
+            evts = evts.filter(e =>
+                String(e.staff||'').toLowerCase().includes(kw) ||
+                String(e.tenKhachHang||'').toLowerCase().includes(kw) ||
+                String(e.nguoiPhuTrach||'').toLowerCase().includes(kw) ||
+                String(e.diaChi||'').toLowerCase().includes(kw) ||
+                String(e.dienThoai||'').toLowerCase().includes(kw));
+        }
+        if (!evts.length) {
+            if (rpSummary) rpSummary.innerHTML = '';
+            rpBody.innerHTML = '<div class="rp-empty">' + (rpEvents.length ? 'Không có kết quả khớp bộ lọc.' : 'Tuần này chưa có nhân viên nào gửi báo giá.') + '</div>';
+            return;
+        }
+        // Gom theo Nhân viên → Khách hàng (đếm số lần gửi)
+        const byStaff = {};
+        evts.forEach(e => {
+            const staff = (e.staff || '').trim() || '(Chưa nhập tên NV)';
+            const key = zaloNormalizePhone(e.dienThoai || '') || ('n_' + String(e.tenKhachHang||'').toLowerCase().trim());
+            if (!byStaff[staff]) byStaff[staff] = {};
+            if (!byStaff[staff][key]) {
+                byStaff[staff][key] = { tenKhachHang: e.tenKhachHang||'', nguoiPhuTrach: e.nguoiPhuTrach||'', diaChi: e.diaChi||'', dienThoai: e.dienThoai||'', times: 0, last: 0 };
+            }
+            const r = byStaff[staff][key];
+            r.times++;
+            if (e.at && e.at > r.last) r.last = e.at;
+            if (!r.nguoiPhuTrach && e.nguoiPhuTrach) r.nguoiPhuTrach = e.nguoiPhuTrach;
+            if (!r.diaChi && e.diaChi) r.diaChi = e.diaChi;
+        });
+        const staffNames = Object.keys(byStaff).sort((a,b) => {
+            const sa = Object.values(byStaff[a]).reduce((s,r)=>s+r.times,0);
+            const sb = Object.values(byStaff[b]).reduce((s,r)=>s+r.times,0);
+            return sb - sa;
+        });
+        const totalSends = evts.length;
+        const totalCusts = new Set(evts.map(e => zaloNormalizePhone(e.dienThoai||'') || String(e.tenKhachHang||'').toLowerCase())).size;
+        if (rpSummary) rpSummary.innerHTML =
+            '<span class="rp-chip">👥 ' + staffNames.length + ' nhân viên</span>' +
+            '<span class="rp-chip">🧾 ' + totalSends + ' lượt gửi</span>' +
+            '<span class="rp-chip">🏢 ' + totalCusts + ' khách hàng</span>';
+
+        let html = '';
+        staffNames.forEach(staff => {
+            const rows = Object.values(byStaff[staff]).sort((a,b)=> b.times - a.times || b.last - a.last);
+            const staffTotal = rows.reduce((s,r)=>s+r.times,0);
+            html += '<div class="rp-staff">' +
+                '<div class="rp-staff-title">👤 ' + zaloEsc(staff) +
+                    '<span class="rp-staff-count">' + staffTotal + ' lượt • ' + rows.length + ' KH</span></div>' +
+                '<table class="rp-table"><thead><tr>' +
+                    '<th style="width:40px">#</th>' +
+                    '<th>Tên khách hàng</th>' +
+                    '<th style="width:16%">Người liên hệ</th>' +
+                    '<th style="width:14%">Điện thoại</th>' +
+                    '<th>Địa chỉ</th>' +
+                    '<th style="width:70px">Số lần</th>' +
+                '</tr></thead><tbody>';
+            rows.forEach((r, i) => {
+                html += '<tr>' +
+                    '<td>' + (i+1) + '</td>' +
+                    '<td><b>' + zaloEsc(r.tenKhachHang || '—') + '</b></td>' +
+                    '<td>' + zaloEsc(r.nguoiPhuTrach || '—') + '</td>' +
+                    '<td>' + zaloEsc(r.dienThoai || '—') + '</td>' +
+                    '<td>' + zaloEsc(r.diaChi || '—') + '</td>' +
+                    '<td class="rp-times">' + r.times + '</td>' +
+                '</tr>';
+            });
+            html += '</tbody></table></div>';
+        });
+        html += '<p class="rp-note">Báo cáo tính từ Thứ 2 đến Chủ nhật và tự làm mới vào đầu tuần mới. Dữ liệu đồng bộ real-time giữa các máy.</p>';
+        rpBody.innerHTML = html;
+    }
     // ===== Ghi nhận Tên NV đã gửi cho KH upload (đồng bộ Firebase cho mọi máy) =====
     let zaloClaims = {};                      // { key: { staff, at } }
     const ZC_STAFF_LS_KEY = 'zaloClaimStaffName_v1'; // nhớ tên NV nhập lần trước trên máy này
@@ -3983,6 +4158,8 @@
             }
             const isBtn = sendEl.classList.contains('zalo-send-btn');
             const doSend = () => {
+                const sendMode = (!isBtn || sendEl.dataset.mode === 'pdf') ? 'pdf' : 'img';
+                logWeeklyReportSend(cust, sendMode); // ghi báo cáo tuần cho giám đốc (đếm số lần gửi)
                 if (!isBtn || sendEl.dataset.mode === 'pdf') {
                     sendQuotePdfViaZalo(sendEl.dataset.phone, sendEl.dataset.name, isBtn ? sendEl : null);
                 } else {
@@ -4048,9 +4225,32 @@
         loadProductImages(); 
         loadCustomerDataFromFirebase(); 
         // DSKH upload giờ đồng bộ real-time qua Firebase (listener zaloUploadedDSKH ở trên) — không cần load local
+        // ===== Báo cáo tuần =====
+        const rBtn = _rp('reportBtn');
+        if (rBtn) rBtn.addEventListener('click', openReport);
+        const cBtn = _rp('rpCloseBtn'); if (cBtn) cBtn.addEventListener('click', closeReport);
+        const ov = _rp('reportOverlay'); if (ov) ov.addEventListener('click', e => { if (e.target === ov) closeReport(); });
+        const sInp = _rp('rpSearch'); if (sInp) sInp.addEventListener('input', () => renderReport(sInp.value));
+        const pBtn = _rp('rpPrintBtn'); if (pBtn) pBtn.addEventListener('click', () => window.print());
+        document.addEventListener('keydown', e => { const o=_rp('reportOverlay'); if (e.key === 'Escape' && o && o.style.display === 'flex') closeReport(); });
     });
 </script>
 <div id="zaloToast"></div>
+<div id="reportOverlay">
+  <div id="reportBox">
+    <div class="rp-head">
+      <h3>📊 Báo cáo gửi báo giá trong tuần</h3>
+      <span class="rp-range" id="rpRange">—</span>
+      <button class="rp-close" id="rpCloseBtn" title="Đóng">×</button>
+    </div>
+    <div class="rp-tools">
+      <input type="text" id="rpSearch" placeholder="🔍 Lọc theo nhân viên / khách hàng / SĐT / địa chỉ..." />
+      <div class="rp-summary" id="rpSummary"></div>
+      <button class="rp-print" id="rpPrintBtn" title="In / xuất PDF báo cáo">🖨 In báo cáo</button>
+    </div>
+    <div class="rp-body" id="rpBody"></div>
+  </div>
+</div>
 <div id="appFooter" data-html2canvas-ignore="true" style="text-align:center;padding:18px 10px 26px;font-size:13px;font-weight:bold;letter-spacing:1px;color:#8e24aa;">✨ ỨNG DỤNG AI ĐƯỢC PHÁT TRIỂN BỞI MTRIET ✨</div>
 </body>
 </html>
