@@ -175,21 +175,68 @@
         .btn-hide{ background:#ff7043; color:#fff } .btn-unhide{ background:#43a047; color:#fff } .btn-showall{ background:#546e7a; color:#fff }
         
         .table-container{ overflow-x:auto; margin-top:12px }
-        .price-table{ width:100%; border-collapse:collapse; table-layout: fixed; }
+        .price-table{ width:100%; border-collapse:separate; border-spacing:0; table-layout: fixed; font-size:13.5px; background:#fff; }
         /* Cột Mã SP: td chỉ highlight nhẹ, đồng font với toàn bảng */
         .price-table tbody td[data-col="masp"] { 
-            color: #1565c0;
-            font-weight: 600;
-            background-color: #e3f2fd !important;
+            color: #0d47a1;
+            font-weight: 700;
+            background-color: #eef5ff !important;
+            font-family: 'Consolas','SFMono-Regular',monospace;
+            letter-spacing:0.2px;
         }
-        .price-table tr:hover td[data-col="masp"] { background-color: #bbdefb !important; }
-        .price-table tr:nth-child(even) td[data-col="masp"] { background-color: #dceefb !important; }
-        .price-table th,.price-table td{ border:1px solid #ddd; padding:8px; text-align:left; white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
-        .price-table th{ background:#4285f4; color:#fff; position:sticky; top:0; z-index:1 }
-        .price-table tr:nth-child(even){ background:#f2f2f2 }
-        .price-table tr:hover{ background:#e6f2ff }
-        .highlight{ background:yellow }
+        .price-table tbody tr:hover td[data-col="masp"] { background-color: #cfe4ff !important; }
+        .price-table th,.price-table td{ border-bottom:1px solid #e8ebf0; border-right:1px solid #eef0f4; padding:9px 11px; text-align:left; white-space: normal; overflow-wrap: anywhere; word-break: break-word; vertical-align:middle; }
+        .price-table td:first-child, .price-table th:first-child { border-left:1px solid #eef0f4; }
+        .price-table th{
+            background:linear-gradient(180deg,#4f8cf7 0%,#3a72d8 100%);
+            color:#fff; position:sticky; top:0; z-index:2;
+            font-weight:700; font-size:12.5px; text-transform:uppercase; letter-spacing:0.4px;
+            text-align:center; padding:11px 10px; box-shadow:0 2px 4px rgba(0,0,0,.12);
+            border-right:1px solid rgba(255,255,255,.18); border-bottom:none;
+        }
+        .price-table tbody tr{ transition:background .12s ease; }
+        .price-table tbody tr:nth-child(even){ background:#f6f9fe }
+        .price-table tbody tr:hover{ background:#e3f0ff; box-shadow:inset 3px 0 0 #4285f4; }
+        /* Ô giá / phần trăm căn phải, đậm, dễ đọc */
+        .price-table td.cell-price{ text-align:right; font-weight:700; color:#1b5e20; font-variant-numeric:tabular-nums; white-space:nowrap; }
+        .price-table td.cell-pct{ text-align:center; color:#c62828; font-weight:600; }
+        .price-table td.cell-num{ text-align:center; color:#546e7a; font-weight:600; }
+        /* Hàng tiêu đề NHÓM điều trị -> thanh phân nhóm nổi bật */
+        .price-table tr.group-row td{
+            background:linear-gradient(90deg,#e8f0fe 0%,#f3f8ff 100%) !important;
+            color:#1a3d7c !important; font-weight:800; font-size:13.5px;
+            letter-spacing:0.3px; padding:11px 14px; text-align:left !important;
+            border-top:2px solid #4285f4; border-bottom:1px solid #c7dbff;
+            box-shadow:none !important; position:sticky; top:42px; z-index:1;
+        }
+        .price-table tr.group-row:hover{ background:none; box-shadow:none; }
+        .price-table tr.group-row:hover td{ box-shadow:none; }
+        .highlight{ background:#fff59d; border-radius:2px; padding:0 1px; box-shadow:0 0 0 1px #fbc02d inset; }
         .editing-cell { background-color: #fffde7; outline: 2px solid #ffc107; }
+        /* ===== Bấm tiêu đề cột để chọn cột đưa vào báo giá (chỉ đổi màu, không có ô vuông) ===== */
+        .price-table th.col-pick{ cursor:pointer; -webkit-user-select:none; user-select:none; transition:background .15s, box-shadow .15s; }
+        .price-table th.col-pick:hover{ filter:brightness(1.06); }
+        .price-table th.col-picked{
+            background:linear-gradient(180deg,#28c76f 0%,#1b9e54 100%) !important;
+            box-shadow: inset 0 0 0 2px #ffffff, 0 2px 6px rgba(27,158,84,.35) !important;
+        }
+        .price-table th.col-picked::after{ content:' ✓'; font-weight:900; }
+        .price-table td.col-picked-cell{ background:#eafbef !important; }
+        .price-table tbody tr:nth-child(even) td.col-picked-cell{ background:#dff5e6 !important; }
+        .price-table tbody tr:hover td.col-picked-cell{ background:#c9f0d5 !important; }
+        /* Thanh trạng thái cột đã chọn cho báo giá */
+        .colpick-bar{ display:none; align-items:center; gap:8px; flex-wrap:wrap; margin:0 0 12px; padding:9px 14px;
+            background:linear-gradient(90deg,#eafbef 0%,#f3fff7 100%); border:1px solid #b6e6c4; border-radius:10px;
+            font-size:13px; color:#1b5e2a; box-shadow:0 1px 3px rgba(27,158,84,.12); }
+        .colpick-bar .cp-tag{ background:#fff; border:1px solid #b6e6c4; color:#0f7a30; border-radius:999px; padding:3px 10px; font-weight:600; }
+        .colpick-bar .cp-clear{ margin-left:auto; background:#e53935; color:#fff; border:none; border-radius:7px; padding:5px 12px; font-size:12px; font-weight:600; cursor:pointer; }
+        .colpick-bar .cp-clear:hover{ background:#c62828; }
+        /* Ô nhập chiết khấu trong bảng xem giá */
+        .ck-input{ width:64px; max-width:92%; border:1px solid #4285f4; border-radius:6px; padding:4px 6px; font-size:13px;
+            text-align:center; outline:none; font-weight:600; color:#c62828; }
+        .ck-input:focus{ border-color:#1b9e54; box-shadow:0 0 0 2px rgba(27,158,84,.22); }
+        /* Ô Giá mua được tính tự động */
+        .price-table td.gia-mua-auto{ background:#fff8e1; color:#c47b00 !important; font-weight:700; text-align:right; white-space:nowrap; }
         
         /* Tay nắm kéo giãn cột - Dùng chung cho cả bảng xem giá và bảng báo giá */
         .th-resizable{ position: relative; }
@@ -378,12 +425,7 @@
         .zalo-pick-btn { background: #8e24aa; color: #fff; border: none; border-radius: 6px; padding: 6px 10px; cursor: pointer; font-weight: bold; font-size: 13px; white-space: nowrap; }
         .zalo-pick-btn:hover { background: #6a1b9a; }
         .zalo-pick-btn.picked { background: #1e7e34; }
-        .zalo-upload-badge { display: inline-block; background: #fff3e0; color: #e65100; border: 1px solid #ffcc80; border-radius: 10px; font-size: 11px; padding: 1px 8px; margin-left: 6px; white-space: nowrap; max-width: 180px; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
-        .zalo-file-chip { display: inline-flex; align-items: center; gap: 6px; background: #eef4ff; border: 1px solid #b6d4fe; border-radius: 16px; padding: 4px 6px 4px 12px; font-size: 12.5px; color: #0a3d91; font-weight: bold; max-width: 100%; }
-        .zalo-file-chip .zfc-name { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .zalo-file-chip .zfc-count { background: #0052cc; color: #fff; border-radius: 10px; font-size: 11px; padding: 1px 7px; font-weight: bold; }
-        .zalo-file-chip .zfc-del { background: none; border: none; color: #d93025; cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 50%; line-height: 1; }
-        .zalo-file-chip .zfc-del:hover { background: #fdecea; }
+        .zalo-upload-badge { display: inline-block; background: #fff3e0; color: #e65100; border: 1px solid #ffcc80; border-radius: 10px; font-size: 11px; padding: 1px 8px; margin-left: 6px; white-space: nowrap; }
         .zalo-upload-table th { background: #ff9800 !important; }
         #zaloUploadListWrap { margin-top: 10px; border-color: #ffcc80; display: none; }
         .zalo-upload-label { background: #ff9800; color: #fff; border: none; border-radius: 6px; padding: 9px 14px; cursor: pointer; font-weight: bold; font-size: 13px; white-space: nowrap; display: inline-flex; align-items: center; }
@@ -1005,8 +1047,15 @@
                 </h2>
                 <div class="pro-header-actions">
                     <div class="pro-search-box">
-                        <input type="text" id="searchInput" placeholder="Tìm kiếm trong bảng giá..." />
+                        <input type="text" id="searchInput" placeholder="🔍 Tìm tên thuốc, hoạt chất, mã SP..." />
                     </div>
+                    <select id="groupFilter" title="Lọc theo nhóm điều trị"
+                        style="padding:8px 10px; border:1px solid #c5d8ff; border-radius:8px; background:#fff; font-size:13px; color:#1a3d7c; font-weight:600; max-width:220px; cursor:pointer;">
+                        <option value="">📂 Tất cả nhóm</option>
+                    </select>
+                    <style>#groupFilter:disabled{opacity:.55; cursor:not-allowed; background:#f3f5f9;}</style>
+                    <span id="rowCountBadge" title="Số sản phẩm hiển thị"
+                        style="display:none; align-items:center; background:#e8f5e9; color:#2e7d32; border:1px solid #a5d6a7; border-radius:16px; font-size:12px; font-weight:700; padding:5px 12px; white-space:nowrap;">0 SP</span>
                     <button class="pro-menu-btn" id="toolsMenuBtn" title="Mở menu công cụ">
                         <span>☰ Công cụ</span>
                         <span class="chevron">▾</span>
@@ -1036,6 +1085,15 @@
                                 <label for="excelFileInput" class="file-input-label" style="font-size:12px; padding:6px 12px;">➕ Thêm file Excel phụ</label>
                                 <input type="file" id="excelFileInput" class="file-input" accept=".xlsx, .xls" multiple />
                                 <span class="file-name" id="fileNameDisplay">Chưa chọn file</span>
+                            </div>
+                            <div style="margin-top:8px; padding-top:8px; border-top:1px dashed #d0d7e2;">
+                                <button id="downloadTemplateBtn" title="Tải file Excel mẫu chuẩn (đã có sẵn dropdown chọn nhóm điều trị) để nhập sản phẩm mới"
+                                    style="width:100%; background:#1D6F42; color:#fff; border:none; border-radius:6px; padding:8px 12px; font-size:12px; font-weight:700; cursor:pointer;">
+                                    ⬇️ Tải file Excel MẪU (có sẵn dropdown chọn nhóm)
+                                </button>
+                                <div style="font-size:10.5px; color:#667085; margin-top:5px; line-height:1.4;">
+                                    Nhập sản phẩm mới theo file mẫu này → cột <b>Nhóm điều trị</b> chọn từ danh sách chuẩn → upload sẽ dò đúng nhóm 100%.
+                                </div>
                             </div>
                         </div>
                         <div class="files-list" id="filesList"></div>
@@ -1287,12 +1345,11 @@
                     </div>
                     <button class="zalo-add-btn" id="zaloAddCustBtn">📥 Load vào danh sách &amp; lưu công ty</button>
                     <div style="margin-top:12px;padding-top:10px;border-top:1px dashed #b6d4fe;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-                        <span style="font-weight:bold;color:#0052cc;font-size:14px">📁 Hoặc upload file Excel DSKH mới — <u>upload được NHIỀU file nối tiếp</u>, tất cả <u>lưu chung Firebase, mọi máy đều thấy</u> cùng tên NV đã gửi; xóa từng file hoặc xóa hết đều cần mật khẩu. KHÔNG thêm vào danh sách công ty đã lưu:</span>
+                        <span style="font-weight:bold;color:#0052cc;font-size:14px">📁 Hoặc upload file Excel DSKH mới (hiển thị riêng bên dưới, chỉ lưu trên máy này — KHÔNG thêm vào danh sách công ty đã lưu):</span>
                         <label for="zaloUploadInput" class="zalo-upload-label" title="Upload file Excel danh sách khách hàng (dùng tạm cho phiên này, không ghi đè dữ liệu đã lưu)">📁 Upload Excel DSKH</label>
                         <input type="file" id="zaloUploadInput" accept=".xlsx, .xls" style="display:none" />
-                        <button class="zalo-clear-upload-btn" id="zaloClearUploadBtn" title="Xóa TẤT CẢ file KH upload trên MỌI MÁY (kèm ghi nhận Tên NV) — yêu cầu mật khẩu">🗑 Xóa hết DS upload</button>
+                        <button class="zalo-clear-upload-btn" id="zaloClearUploadBtn" title="Xóa danh sách KH vừa upload để upload lại file khác">🗑 Xóa DS upload</button>
                     </div>
-                    <div id="zaloUploadFileChips" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"></div>
                     <div class="zalo-cust-table-wrap" id="zaloUploadListWrap">
                         <table class="zalo-cust-table zalo-upload-table">
                             <thead><tr><th style="width:80px">Chọn KH</th><th style="width:24%">Tên khách hàng</th><th style="width:14%">Người liên hệ</th><th style="width:13%">Điện thoại</th><th>Địa chỉ</th><th style="width:230px">Gửi Zalo / Tên NV</th></tr></thead>
@@ -1325,12 +1382,16 @@
     let uploadedFiles = [];
     let currentData = [];           
     let fileIndexToRemove = null;
-    const CORRECT_PASSWORD = "ideco#2026";
+    const CORRECT_PASSWORD = "minhtriet@2026";
     let customerDatabase = []; 
     // Các biến phục vụ ẩn/hiện cột
     let hiddenColumns = new Set(); 
     let headersCache = [];         
     let columnWidths = {};         
+    // ===== Bấm-chọn cột đưa vào báo giá (lưu theo TÊN cột). Rỗng = báo giá dùng tất cả cột đang hiện =====
+    let pickedQuoteCols = new Set();
+    // ===== Chiết khấu nhập tay: { rowIdx: { 6: percent, 12: percent } } =====
+    let ckDiscount = {};
     // Hàng được chọn
     const selectedRowIdx = new Set(); 
     let showingOnlySelected = false;  
@@ -1357,6 +1418,9 @@
     const fileNameDisplay = document.getElementById("fileNameDisplay");
     const filesList = document.getElementById("filesList");
     const searchInput = document.getElementById("searchInput");
+    const groupFilter = document.getElementById("groupFilter");
+    const rowCountBadge = document.getElementById("rowCountBadge");
+    if(groupFilter){ groupFilter.addEventListener("change", ()=>{ showingOnlySelected=false; applyFilters(); }); }
     const tableContainer = document.getElementById("tableContainer");
     const loadingIndicator = document.getElementById("loadingIndicator");
     const passwordDialog = document.getElementById("passwordDialog");
@@ -1460,6 +1524,24 @@
     // ĐÃ XÓA: popup không tự đóng khi click ra ngoài, chỉ đóng khi bấm nút X
     // popupOverlay.addEventListener("click", (e) => { if (e.target === popupOverlay) popupOverlay.style.display = "none"; });
     excelFileInput.addEventListener("change", handleFileSelect);
+    // ===== TẢI FILE EXCEL MẪU (nhúng sẵn base64, không cần server) =====
+    const TEMPLATE_B64 = "UEsDBBQAAAAIAIhM81xGx01IlQAAAM0AAAAQAAAAZG9jUHJvcHMvYXBwLnhtbE3PTQvCMAwG4L9SdreZih6kDkQ9ip68zy51hbYpbYT67+0EP255ecgboi6JIia2mEXxLuRtMzLHDUDWI/o+y8qhiqHke64x3YGMsRoPpB8eA8OibdeAhTEMOMzit7Dp1C5GZ3XPlkJ3sjpRJsPiWDQ6sScfq9wcChDneiU+ixNLOZcrBf+LU8sVU57mym/8ZAW/B7oXUEsDBBQAAAAIAIhM81wyOV1L7wAAACsCAAARAAAAZG9jUHJvcHMvY29yZS54bWzNkttKxDAQhl9Fct9OD1DZ0O2N4pWC4ILiXUhmd4PNgWSk3bc3jbtdRB/Ay8z8+eYbmF56Ll3A5+A8BtIYb2Yz2sil37IjkecAUR7RiFimhE3NvQtGUHqGA3ghP8QBoamqDgySUIIELMDCr0Q29EpyGVCQC2e8kivef4Yxw5QEHNGgpQh1WQMblon+NI89XAELjDCY+F1AtRJz9U9s7gA7J+eo19Q0TeXU5lzaoYa3p8eXvG6hbSRhJaZfUXM6edyyy+TX9u5+98CGpmq6orot6s2u2vC243X3vrj+8LsKG6f0Xv9j44vg0MOvuxi+AFBLAwQUAAAACACITPNcmVycIxAGAACcJwAAEwAAAHhsL3RoZW1lL3RoZW1lMS54bWztWltz2jgUfu+v0Hhn9m0LxjaBtrQTc2l227SZhO1OH4URWI1seWSRhH+/RzYQy5YN7ZJNups8BCzp+85FR+foOHnz7i5i6IaIlPJ4YNkv29a7ty/e4FcyJBFBMBmnr/DACqVMXrVaaQDDOH3JExLD3IKLCEt4FMvWXOBbGi8j1uq0291WhGlsoRhHZGB9XixoQNBUUVpvXyC05R8z+BXLVI1lowETV0EmuYi08vlsxfza3j5lz+k6HTKBbjAbWCB/zm+n5E5aiOFUwsTAamc/VmvH0dJIgILJfZQFukn2o9MVCDINOzqdWM52fPbE7Z+Mytp0NG0a4OPxeDi2y9KLcBwE4FG7nsKd9Gy/pEEJtKNp0GTY9tqukaaqjVNP0/d93+ubaJwKjVtP02t33dOOicat0HgNvvFPh8Ouicar0HTraSYn/a5rpOkWaEJG4+t6EhW15UDTIABYcHbWzNIDll4p+nWUGtkdu91BXPBY7jmJEf7GxQTWadIZljRGcp2QBQ4AN8TRTFB8r0G2iuDCktJckNbPKbVQGgiayIH1R4Ihxdyv/fWXu8mkM3qdfTrOa5R/aasBp+27m8+T/HPo5J+nk9dNQs5wvCwJ8fsjW2GHJ247E3I6HGdCfM/29pGlJTLP7/kK6048Zx9WlrBdz8/knoxyI7vd9lh99k9HbiPXqcCzIteURiRFn8gtuuQROLVJDTITPwidhphqUBwCpAkxlqGG+LTGrBHgE323vgjI342I96tvmj1XoVhJ2oT4EEYa4pxz5nPRbPsHpUbR9lW83KOXWBUBlxjfNKo1LMXWeJXA8a2cPB0TEs2UCwZBhpckJhKpOX5NSBP+K6Xa/pzTQPCULyT6SpGPabMjp3QmzegzGsFGrxt1h2jSPHr+BfmcNQockRsdAmcbs0YhhGm78B6vJI6arcIRK0I+Yhk2GnK1FoG2camEYFoSxtF4TtK0EfxZrDWTPmDI7M2Rdc7WkQ4Rkl43Qj5izouQEb8ehjhKmu2icVgE/Z5ew0nB6ILLZv24fobVM2wsjvdH1BdK5A8mpz/pMjQHo5pZCb2EVmqfqoc0PqgeMgoF8bkePuV6eAo3lsa8UK6CewH/0do3wqv4gsA5fy59z6XvufQ9odK3NyN9Z8HTi1veRm5bxPuuMdrXNC4oY1dyzcjHVK+TKdg5n8Ds/Wg+nvHt+tkkhK+aWS0jFpBLgbNBJLj8i8rwKsQJ6GRbJQnLVNNlN4oSnkIbbulT9UqV1+WvuSi4PFvk6a+hdD4sz/k8X+e0zQszQ7dyS+q2lL61JjhK9LHMcE4eyww7ZzySHbZ3oB01+/ZdduQjpTBTl0O4GkK+A226ndw6OJ6YkbkK01KQb8P56cV4GuI52QS5fZhXbefY0dH758FRsKPvPJYdx4jyoiHuoYaYz8NDh3l7X5hnlcZQNBRtbKwkLEa3YLjX8SwU4GRgLaAHg69RAvJSVWAxW8YDK5CifEyMRehw55dcX+PRkuPbpmW1bq8pdxltIlI5wmmYE2eryt5lscFVHc9VW/Kwvmo9tBVOz/5ZrcifDBFOFgsSSGOUF6ZKovMZU77nK0nEVTi/RTO2EpcYvOPmx3FOU7gSdrYPAjK5uzmpemUxZ6by3y0MCSxbiFkS4k1d7dXnm5yueiJ2+pd3wWDy/XDJRw/lO+df9F1Drn723eP6bpM7SEycecURAXRFAiOVHAYWFzLkUO6SkAYTAc2UyUTwAoJkphyAmPoLvfIMuSkVzq0+OX9FLIOGTl7SJRIUirAMBSEXcuPv75Nqd4zX+iyBbYRUMmTVF8pDicE9M3JD2FQl867aJguF2+JUzbsaviZgS8N6bp0tJ//bXtQ9tBc9RvOjmeAes4dzm3q4wkWs/1jWHvky3zlw2zreA17mEyxDpH7BfYqKgBGrYr66r0/5JZw7tHvxgSCb/NbbpPbd4Ax81KtapWQrET9LB3wfkgZjjFv0NF+PFGKtprGtxtoxDHmAWPMMoWY434dFmhoz1YusOY0Kb0HVQOU/29QNaPYNNByRBV4xmbY2o+ROCjzc/u8NsMLEjuHti78BUEsDBBQAAAAIAIhM81xosJyeP00AABNiAwAYAAAAeGwvd29ya3NoZWV0cy9zaGVldDEueG1snN1tk9zHeeXpr9JBxSrsiFkR9dRVJUiKsPI57czUjmTtvJuAKUhEmAQ4JGjZE/vhtxtAorL+vM9P2n1hq9lXn+q7+1Q1wRMS+1d/fff9v//w9evX7x/+89tv3v7w6y++fv/+u19++eUPX339+ttXP/zi3Xev3z7Jn999/+2r909/+f1fvvzhu+9fv/rTh9C333y5f/Hi8ctvX715+8VvfvXhfb/7/je/evfj+2/evH39u+8ffvjx229fff9fv339zbu//vqL3RfzHf/9zV++fv/8ji9/86vvXv3l9e9fv//X7373/dNfffn5Uf705tvXb3948+7tw/ev//zrL/5p98txevHiOfHhQ/745vVff1jefnj+Wv7t3bt/f/6L8qdff/Hii+fHfvv64b9+/903b54+2+GLh/fvvvuX139+715/883TIx6/eHj11fs3//H6d08f9usv/u3d+/fvvn32pzvfv3r/9K4/f//uf79+++Fzvv7m9dPHPl3z3U8++OODfHrQ5y/yf326+IvPX9DzUevb8/L44Tv79J36t1c/vHbvvvm/3/zp/de//uLyxcOfXv/51Y/fvP/v7/6aX3/6bp2eH++rd9/88OH/P/z148c+fvHw1Y8/PB3zKft0wLdv3n78z1f/+embvHz8/oUI7D8F9tuA+gyHT4HDJrC7iMDxU+C4DexF4PQpcNqepD7D46fA49/7RZ8/Bc7bk44icPkUuPy9X8P1U+D6936G3YvZ3IttZKcin8vetr07q8ise7ftW3+WWfju7258NyvfbTvfyy9/lv7x+f7lxyf8h1eLf/X+1W9+9f27vz58/+Hjn18Vx8/f98+vk6cX/lfPH/HhtfjhA5/e++bt88+k37///knfPD3g+9/8/Ge7/WX/4vDyIZZ/CQ/t5z87X04vXv7rQ88f3ty//N3D75/fOu5f9offfXjn8fKyPfz8Z5f9bv/yofjgxsPD//Pw9J79ef/yzfNHnA8v3z68f3rruju9fPjTkzzF3/7l4fjw/vvn9z5/vv/88fkjL9en9//iwT2/fT2/fP/wRf/6+cMPL7/98ICHzw/448fs5XJ4+cXDbz8cd3z5h4ff/uuH6ONL9/DV1x/8dPe5X739+uGHp0fan15+9fXDP/zbhy/g9PTo//H8zuPLd8+f5nh8+fxB58vj9eXD1x8/49NhD9/+/GeHx93LN8+Ptz8cn95z+xz/+IuHf376djx/E3p6+OrD456fPuL+6rcPv//DHz5/s77+9MgP77/+/MV/vHW/e/kp+fHWj1d/+JCHf//6zcOP333z7tWffvGrL98/PRueq/vyq6f/e3oWfH4q7D8+FQ4v9FNh/+GpsJdPhevlcnn6/I+nF4enT/vxe3x66uTffvxUz1e/fH6G7Pfnp2/Xd0/37p7KePjD/N68/3pW+tW0j8+Jn//suHv+1vzlzccvburfUfUvHh7cp0J2T5f8+9ef+vvx4R/cP//jw9sPf306vPzu+Vn2JLvn7+jn79z7G3/3/Ln2jy/f/vLhxS/2D79+2L/4P54f/NNTY3mSfvEPf/T/+NzY4cXTM+2bj0+T56fC0yPtnj7x0wv064f5NHj1udv//Pi1vJpfy4ev4Xh4/uqfvnfP35PnHj98mo+1z9veU6uHT60edauHD60eRKtPT7/7h/8Q+i2HbiUbWcdZ6+lgPIrnR8nvPtX5/tNL7qnz98bDhL/xMB/b+/a5xk9dXF88PRX/YjxU5IdyH39OPDX3pw+P8qHE59v2h6cH/Np4wMQP+H/9+F/PPzY+/mQy4pnj/ff/wwgVDv2PH+f38vn5+vQj8vDSeJDKDyJe1P/wx/5R/tF4yH/+G9/cf35+HV1ePD3M48fX1tNPG+vJ9y/8OGke8+2Pr25/E1gekq9sf++Vuz1e2f//XLk+Jp85/sYz42//WIWfOMfPP1iOHz7L8Sef5fZTRH3Ep58E+X/+obT2Ty7/zxcvdtZPEs4//xx++MPyN5X3b779+HP46efC09/Mbz+S/8n6AcMP3t989e77V2//9OYb66cKZ3cvHr41f4Jw7GPt549/rvj0Rfw33dEnefXj/FvF86v27V8+/WnB+pma+PPnz8+uw/Offp4+ycc/dHx48r14+I83n35yWz+L+JH/6e1TTxAvHP/j/BPX+4f+6lvrB9LH/OlD/vkfs//jN7unfw5+8eJXX/7H+kPm44c9Lh/29Pf6+4/5F+Oh9j99qGY+1OP9B3XjsXa7nzzW+Bsvk/tn9f/5kH/8r89/4Pn4g+I7eL2ePr9eT3/z9ao+4vPrNf1Tb//0B/Vy5fhPXq5/efXpmf78h5zl1fpb69XKj/37N9/817evvn9jPbkCR3dH9Wrl3Ic//j79FH338bXy4U/tn2p5+Lf5zw5PX+J/+/RT++lF9Okfbp7+4PThzyzPf3f96uHt08eePvxh4emDrRctn3F70Z7+P79o+ZF9Tg+/+/rV99++sl6xnP3br9jTT14a19NPX7An41W2O21esT99qMuL82n7grUear958fefPtT5uPvJ65W/9rQ+reGF+fj5hfn44fHOnz/r7QUpxUnxUoKUKCVJyVKKlPpRLj+Vf/4o15/Kv8hMk5kuM8O67a6W8+dazrIWKU6KlxKkRClJSpZSpNSzrOUsa5GZJjNdZoZ1210tl8+1XGQtUpwULyVIiVKSlCylSKkXWctF1iIzTWa6zAzrtrtarp9rucpapDgpXkqQEqUkKVlKkVKvsparrEVmmsx0mRnWbXe17F7c9t0XshhNTpPXFDRFTUlT1lQ01U9kNfSJrIp0qulU16lhXnhf0zLD73RNkpwmryloipqSpqypaKqfyKxpp2uSqaZTXaeGeeF9TftbTXtdkySnyWsKmqKmpClrKprqJzJr2uuaZKrpVNepYV54X9PhVtNB1yTJafKagqaoKWnKmoqm+onMmg66JplqOtV1apgX3td0WxB3R12TJKfJawqaoqakKWsqmuonMms66ppkqulU16lhXnhf02042p10TZKcJq8paIqakqasqWiqn8is6aRrkqmmU12nhnnhfU23GWGndwRNTpPXFDRFTUlT1lQ01Z0eFHZ6UdCpplNdp4Z54X1Nt1lhp3cFTU6T1xQ0RU1JU9ZUNNWdHhh2emHQqaZTXaeGeeF9TbeZYad3Bk1Ok9cUNEVNSVPWVDTVnR4cdnpx0KmmU12nhnnhfU232WGndwdNTpPXFDRFTUlT1lQ01Z0eIHZ6gdCpplNdp4Z54f1/5ei2Quz1CqHJafKagqaoKWnKmoqmutcrxF6vEDrVdKrr1DAvvK9p+W+A6RVCk9PkNQVNUVPSlDUVTXWvV4i9XiF0qulU16lhXnhf022F2OsVQpPT5DUFTVFT0pQ1FU11r1eIvV4hdKrpVNepYV54X9NthdjrFUKT0+Q1BU1RU9KUNRVNda9XiL1eIXSq6VTXqWFeeF/TbYXY6xVCk9PkNQVNUVPSlDUVTXWvV4i9XiF0qulU16lhXnhf022F2OsVQpPT5DUFTVFT0pQ1FU11r1eIvV4hdKrpVNepYV54X9NthdjrFUKT0+Q1BU1RU9KUNRVNda9XiL1eIXSq6VTXqWFeeF/TbYXY6xVCk9PkNQVNUVPSlDUVTXWvV4i9XiF0qulU16lhXnhf022F2OsVQpPT5DUFTVFT0pQ1FU11r1eIvV4hdKrpVNepYV54X9NthdjrFUKT0+Q1BU1RU9KUNRVNda9XiL1eIXSq6VTXqWFeeP8/kbmtEAe9QmhymrymoClqSpqypqKpHvQKcdArhE41neo6NcwL72ta/hdLeoXQ5DR5TUFT1JQ0ZU1FUz3oFeKgVwidajrVdWqYF97XdFshDnqF0OQ0eU1BU9SUNGVNRVM96BXioFcInWo61XVqmBfe13RbIQ56hdDkNHlNQVPUlDRlTUVTPegV4qBXCJ1qOtV1apgX3td0WyEOeoXQ5DR5TUFT1JQ0ZU1FUz3oFeKgVwidajrVdWqYF97XdFshDnqF0OQ0eU1BU9SUNGVNRVM96BXioFcInWo61XVqmBfe13RbIQ56hdDkNHlNQVPUlDRlTUVTPegV4qBXCJ1qOtV1apgX3td0WyEOeoXQ5DR5TUFT1JQ0ZU1FUz3oFeKgVwidajrVdWqYF97XdFshDnqF0OQ0eU1BU9SUNGVNRVM96BXioFcInWo61XVqmBfe13RbIQ56hdDkNHlNQVPUlDRlTUVTPegV4qBXCJ1qOtV1apgX3v/P5m8rxFGvEJqcJq8paIqakqasqWiqR71CHPUKoVNNp7pODfPC+5puK8RRrxCanCavKWiKmpKmrKloqke9Qhz1CqFTTae6Tg3zwvuabivEUa8QmpwmryloipqSpqypaKpHvUIc9QqhU02nuk4N88L7mm4rxFGvEJqcJq8paIqakqasqWiqR71CHPUKoVNNp7pODfPC+5qWf6eLXiE0OU1eU9AUNSVNWVPRVI96hTjqFUKnmk51nRrmhfc13VaIo14hNDlNXlPQFDUlTVlT0VSPeoU46hVCp5pOdZ0a5oX3Nd1WiKNeITQ5TV5T0BQ1JU1ZU9FUj3qFOOoVQqeaTnWdGuaF9zXdVoijXiE0OU1eU9AUNSVNWVPRVI96hTjqFUKnmk51nRrmhfc13VaIo14hNDlNXlPQFDUlTVlT0VSPeoU46hVCp5pOdZ0a5oX3Nd1WiKNeITQ5TV5T0BQ1JU1ZU9FUj3qFOOoVQqeaTnWdGuaF9/8ysNsKcdIrhCanyWsKmqKmpClrKprqSa8QJ71C6FTTqa5Tw7zwvqbbCnHSK4Qmp8lrCpqipqQpayqa6kmvECe9QuhU06muU8O88L6m2wpx0iuEJqfJawqaoqakKWsqmupJrxAnvULoVNOprlPDvPC+ptsKcdIrhCanyWsKmqKmpClrKprqSa8QJ71C6FTTqa5Tw7zwvqbbCnHSK4Qmp8lrCpqipqQpayqa6kmvECe9QuhU06muU8O88L6m5V8oqlcITU6T1xQ0RU1JU9ZUNNWTXiFOeoXQqaZTXaeGeeF9TbcV4qRXCE1Ok9cUNEVNSVPWVDTVk14hTnqF0KmmU12nhnnhfU23FeKkVwhNTpPXFDRFTUlT1lQ01ZNeIU56hdCpplNdp4Z54X1NtxXipFcITU6T1xQ0RU1JU9ZUNNWTXiFOeoXQqaZTXaeGeeF9TbcV4qRXCE1Ok9cUNEVNSVPWVDTVk14hTnqF0KmmU12nhnnh/b/5+LZCPOoVQpPT5DUFTVFT0pQ1FU31Ua8Qj3qF0KmmU12nhnnhfU23FeJRrxCanCavKWiKmpKmrKloqo96hXjUK4RONZ3qOjXMC+9ruq0Qj3qF0OQ0eU1BU9SUNGVNRVN91CvEo14hdKrpVNepYV54X9NthXjUK4Qmp8lrCpqipqQpayqa6qNeIR71CqFTTae6Tg3zwvuabivEo14hNDlNXlPQFDUlTVlT0VQf9QrxqFcInWo61XVqmBfe13RbIR71CqHJafKagqaoKWnKmoqm+qhXiEe9QuhU06muU8O88L6m5ZdcwG+5gF9zAb/nAn7RBfymC/hVF/C7LuCXXcBvu4BfdwG/7wJ+4QX8xgv4lRd/c4V4vK0Qj3qF0OQ0eU1BU9SUNGVNRVN91CvEo14hdKrpVNepYV54X9NthXjUK4Qmp8lrCpqipqQpayqa6qNeIR71CqFTTae6Tg3zwvuabivEo14hNDlNXlPQFDUlTVlT0VQf9QrxqFcInWo61XVqmBfe/6Kf2wpx1iuEJqfJawqaoqakKWsqmupZrxBnvULoVNOprlPDvPC+ptsKcdYrhCanyWsKmqKmpClrKprqWa8QZ71C6FTTqa5Tw7zwvqbbCnHWK4Qmp8lrCpqipqQpayqa6lmvEGe9QuhU06muU8O88L6m2wpx1iuEJqfJawqaoqakKWsqmupZrxBnvULoVNOprlPDvPC+ptsKcdYrhCanyWsKmqKmpClrKprqWa8QZ71C6FTTqa5Tw7zwvqbbCnHWK4Qmp8lrCpqipqQpayqa6lmvEGe9QuhU06muU8O88L6m2wpx1iuEJqfJawqaoqakKWsqmupZrxBnvULoVNOprlPDvPC+puVXb+oVQpPT5DUFTVFT0pQ1FU31rFeIs14hdKrpVNepYV54X9NthTjrFUKT0+Q1BU1RU9KUNRVN9axXiLNeIXSq6VTXqWFeeF/TbYU46xVCk9PkNQVNUVPSlDUVTfWsV4izXiF0qulU16lhXnj/e21vK8RFrxCanCavKWiKmpKmrKloqhe9Qlz0CqFTTae6Tg3zwvuabivERa8QmpwmryloipqSpqypaKoXvUJc9AqhU02nuk4N88L7mm4rxEWvEJqcJq8paIqakqasqWiqF71CXPQKoVNNp7pODfPC+5puK8RFrxCanCavKWiKmpKmrKloqhe9Qlz0CqFTTae6Tg3zwvuabivERa8QmpwmryloipqSpqypaKoXvUJc9AqhU02nuk4N88L7mm4rxEWvEJqcJq8paIqakqasqWiqF71CXPQKoVNNp7pODfPC+5puK8RFrxCanCavKWiKmpKmrKloqhe9Qlz0CqFTTae6Tg3zwvuabivERa8QmpwmryloipqSpqypaKoXvUJc9AqhU02nuk4N88L7mm4rxEWvEJqcJq8paIqakqasqWiqF71CXPQKoVNNp7pODfPC+5puK8RFrxCanCavKWiKmpKmrKloqhe9Qlz0CqFTTae6Tg3zwruarrcV4qpXCE1Ok9cUNEVNSVPWVDTVq14hrnqF0KmmU12nhnnhfU23FeKqVwhNTpPXFDRFTUlT1lQ01ateIa56hdCpplNdp4Z54X1NtxXiqlcITU6T1xQ0RU1JU9ZUNNWrXiGueoXQqaZTXaeGeeF9TbcV4qpXCE1Ok9cUNEVNSVPWVDTVq14hrnqF0KmmU12nhnnhfU23FeKqVwhNTpPXFDRFTUlT1lQ01ateIa56hdCpplNdp4Z54X1NtxXiqlcITU6T1xQ0RU1JU9ZUNNWrXiGueoXQqaZTXaeGeeF9TbcV4qpXCE1Ok9cUNEVNSVPWVDTVq14hrnqF0KmmU12nhnnhfU23FeKqVwhNTpPXFDRFTUlT1lQ01ateIa56hdCpplNdp4Z54X1NtxXiqlcITU6T1xQ0RU1JU9ZUNNWrXiGueoXQqaZTXaeGeeF9TbcV4qpXCE1Ok9cUNEVNSVPWVDTVq14hrnqF0KmmU12nhnnhXU27F7cZ4vltVRSYA/NgASyCJbAMVsDqNKuxaVZlkGuQ65Ab9p2b2nZLbXqXAHNgHiyARbAElsEKWJ1m16YXCsg1yHXIDfvOTW37pTa9U4A5MA8WwCJYAstgBaxOs2vTiwXkGuQ65IZ956a2w1Kb3i3AHJgHC2ARLIFlsAJWp9m16QUDcg1yHXLDvnNT23GpTe8YYA7MgwWwCJbAMlgBq9Ps2vSiAbkGuQ65Yd+5qe201KZ3DTAH5sECWARLYBmsgNVpdm164YBcg1yH3LDv3NT2uNSmdw4wB+bBAlgES2AZrIDVaXZtevGAXINch9yw79zUdl5q07sHmAPzYAEsgiWwDFbA6jS7Nr2AQK5BrkNu2HduarsstekdBMyBebAAFsESWAYrYHWaXZteRCDXINchN+w7N7Vdl9r0LgLmwDxYAItgCSyDFbA6za5NLySQa5DrkBv2nfe17ZaVZAcriTYH5sECWARLYBmsgNVpZm07WEl0rkGuQ27Yd25qW1aSHawk2hyYBwtgESyBZbACVqfZtcFKonMNch1yw75zU9uykuxgJdHmwDxYAItgCSyDFbA6za4NVhKda5DrkBv2nZvalpVkByuJNgfmwQJYBEtgGayA1Wl2bbCS6FyDXIfcsO/c1LasJDtYSbQ5MA8WwCJYAstgBaxOs2uDlUTnGuQ65IZ956a2ZSXZwUqizYF5sAAWwRJYBitgdZpdG6wkOtcg1yE37Ds3tS0ryQ5WEm0OzIMFsAiWwDJYAavT7NpgJdG5BrkOuWHfualtWUl2sJJoc2AeLIBFsASWwQpYnWbXBiuJzjXIdcgN+85NbctKsoOVRJsD82ABLIIlsAxWwOo0uzZYSXSuQa5Dbth3bmpbVpIdrCTaHJgHC2ARLIFlsAJWp9m1wUqicw1yHXLDvvO+tv2ykuxhJdHmwDxYAItgCSyDFbA6zaxtDyuJzjXIdcgN+85NbctKsoeVRJsD82ABLIIlsAxWwOo0uzZYSXSuQa5Dbth3bmpbVpI9rCTaHJgHC2ARLIFlsAJWp9m1wUqicw1yHXLDvnNT27KS7GEl0ebAPFgAi2AJLIMVsDrNrg1WEp1rkOuQG/adm9qWlWQPK4k2B+bBAlgES2AZrIDVaXZtsJLoXINch9yw79zUtqwke1hJtDkwDxbAIlgCy2AFrE6za4OVROca5Drkhn3nprZlJdnDSqLNgXmwABbBElgGK2B1ml0brCQ61yDXITfsOze1LSvJHlYSbQ7MgwWwCJbAMlgBq9Ps2mAl0bkGuQ65Yd+5qW1ZSfawkmhzYB4sgEWwBJbBClidZtcGK4nONch1yA37zk1ty0qyh5VEmwPzYAEsgiWwDFbA6jS7NlhJdK5BrkNu2Hfe13ZYVpIDrCTaHJgHC2ARLIFlsAJWp5m1HWAl0bkGuQ65Yd+5qW1ZSQ6wkmhzYB4sgEWwBJbBClidZtcGK4nONch1yA37zk1ty0pygJVEmwPzYAEsgiWwDFbA6jS7NlhJdK5BrkNu2HdualtWkgOsJNocmAcLYBEsgWWwAlan2bXBSqJzDXIdcsO+c1PbspIcYCXR5sA8WACLYAksgxWwOs2uDVYSnWuQ65Ab9p2b2paV5AAriTYH5sECWARLYBmsgNVpdm2wkuhcg1yH3LDv3NS2rCQHWEm0OTAPFsAiWALLYAWsTrNrg5VE5xrkOuSGfeemtmUlOcBKos2BebAAFsESWAYrYHWaXRusJDrXINchN+w7N7UtK8kBVhJtDsyDBbAIlsAyWAGr0+zaYCXRuQa5Drlh37mpbVlJDrCSaHNgHiyARbAElsEKWJ1m1wYric41yHXIDfvO+9qOy0pyhJVEmwPzYAEsgiWwDFbA6jSztiOsJDrXINchN+w7N7UtK8kRVhJtDsyDBbAIlsAyWAGr0+zaYCXRuQa5Drlh37mpbVlJjrCSaHNgHiyARbAElsEKWJ1m1wYric41yHXIDfvOTW3LSnKElUSbA/NgASyCJbAMVsDqNLs2WEl0rkGuQ27Yd25qW1aSI6wk2hyYBwtgESyBZbACVqfZtcFKonMNch1yw75zU9uykhxhJdHmwDxYAItgCSyDFbA6za4NVhKda5DrkBv2nZvalpXkCCuJNgfmwQJYBEtgGayA1Wl2bbCS6FyDXIfcsO/c1LasJEdYSbQ5MA8WwCJYAstgBaxOs2uDlUTnGuQ65IZ956a2ZSU5wkqizYF5sAAWwRJYBitgdZpdG6wkOtcg1yE37Ds3tS0ryRFWEm0OzIMFsAiWwDJYAavT7NpgJdG5BrkOuWHfeV/baVlJTrCSaHNgHiyARbAElsEKWJ1m1naClUTnGuQ65IZ956a2ZSU5wUqizYF5sAAWwRJYBitgdZpdG6wkOtcg1yE37Ds3tS0ryQlWEm0OzIMFsAiWwDJYAavT7NpgJdG5BrkOuWHfualtWUlOsJJoc2AeLIBFsASWwQpYnWbXBiuJzjXIdcgN+85NbctKcoKVRJsD82ABLIIlsAxWwOo0uzZYSXSuQa5Dbth3bmpbVpITrCTaHJgHC2ARLIFlsAJWp9m1wUqicw1yHXLDvnNT27KSnGAl0ebAPFgAi2AJLIMVsDrNrg1WEp1rkOuQG/adm9qWleQEK4k2B+bBAlgES2AZrIDVaXZtsJLoXINch9yw79zUtqwkJ1hJtDkwDxbAIlgCy2AFrE6za4OVROca5Drkhn3nprZlJTnBSqLNgXmwABbBElgGK2B1ml0brCQ61yDXITfsO+9re1xWkkdYSbQ5MA8WwCJYAstgBaxOM2t7hJVE5xrkOuSGfeemtmUleYSVRJsD82ABLIIlsAxWwOo0uzZYSXSuQa5Dbth3bmpbVpJHWEm0OTAPFsAiWALLYAWsTrNrg5VE5xrkOuSGfeemtmUleYSVRJsD82ABLIIlsAxWwOo0uzZYSXSuQa5Dbth3bmpbVpJHWEm0OTAPFsAiWALLYAWsTrNrg5VE5xrkOuSGfeemtmUleYSVRJsD82ABLIIlsAxWwOo0uzZYSXSuQa5Dbth3bmpbVpJHWEm0OTAPFsAiWALLYAWsTrNrg5VE5xrkOuSGfeemtmUleYSVRJsD82ABLIIlsAxWwOo0uzZYSXSuQa5Dbth3bmpbVpJHWEm0OTAPFsAiWALLYAWsTrNrg5VE5xrkOuSGfeemtmUleYSVRJsD82ABLIIlsAxWwOo0uzZYSXSuQa5Dbth33td2XlaSM6wk2hyYBwtgESyBZbACVqeZtZ1hJdG5BrkOuWHfualtWUnOsJJoc2AeLIBFsASWwQpYnWbXBiuJzjXIdcgN+85NbctKcoaVRJsD82ABLIIlsAxWwOo0uzZYSXSuQa5Dbth3bmpbVpIzrCTaHJgHC2ARLIFlsAJWp9m1wUqicw1yHXLDvnNT27KSnGEl0ebAPFgAi2AJLIMVsDrNrg1WEp1rkOuQG/adm9qWleQMK4k2B+bBAlgES2AZrIDVaXZtsJLoXINch9yw79zUtqwkZ1hJtDkwDxbAIlgCy2AFrE6za4OVROca5Drkhn3nprZlJTnDSqLNgXmwABbBElgGK2B1ml0brCQ61yDXITfsOze1LSvJGVYSbQ7MgwWwCJbAMlgBq9Ps2mAl0bkGuQ65Yd+5qW1ZSc6wkmhzYB4sgEWwBJbBClidZtcGK4nONch1yA37zvvaLstKcoGVRJsD82ABLIIlsAxWwOo0s7YLrCQ61yDXITfsOze1LSvJBVYSbQ7MgwWwCJbAMlgBq9Ps2mAl0bkGuQ65Yd+5qW1ZSS6wkmhzYB4sgEWwBJbBClidZtcGK4nONch1yA37zk1ty0pygZVEmwPzYAEsgiWwDFbA6jS7NlhJdK5BrkNu2HdualtWkgusJNocmAcLYBEsgWWwAlan2bXBSqJzDXIdcsO+c1PbspJcYCXR5sA8WACLYAksgxWwOs2uDVYSnWuQ65Ab9p2b2paV5AIriTYH5sECWARLYBmsgNVpdm2wkuhcg1yH3LDv3NS2rCQXWEm0OTAPFsAiWALLYAWsTrNrg5VE5xrkOuSGfeemtmUlucBKos2BebAAFsESWAYrYHWaXRusJDrXINchN+w7N7UtK8kFVhJtDsyDBbAIlsAyWAGr0+zaYCXRuQa5Drlh33lf23VZSa6wkmhzYB4sgEWwBJbBClidZtZ2hZVE5xrkOuSGfeemtmUlucJKos2BebAAFsESWAYrYHWaXRusJDrXINchN+w7N7UtK8kVVhJtDsyDBbAIlsAyWAGr0+zaYCXRuQa5Drlh37mpbVlJrrCSaHNgHiyARbAElsEKWJ1m1wYric41yHXIDfvOTW3LSnKFlUSbA/NgASyCJbAMVsDqNLs2WEl0rkGuQ27Yd25qW1aSK6wk2hyYBwtgESyBZbACVqfZtcFKonMNch1yw75zU9uyklxhJdHmwDxYAItgCSyDFbA6za4NVhKda5DrkBv2nZvalpXkCiuJNgfmwQJYBEtgGayA1Wl2bbCS6FyDXIfcsO/c1LasJFdYSbQ5MA8WwCJYAstgBaxOs2uDlUTnGuQ65IZ956a2ZSW5wkqizYF5sAAWwRJYBitgdZpdG6wkOtcg1yE37Dvvatu/uK0kz2+r2sAcmAcLYBEsgWWwAlanWbVNs2qDXINch9yw79zUtltq0ysJmAPzYAEsgiWwDFbA6jS7Nr2SQK5BrkNu2HduatsvtemVBMyBebAAFsESWAYrYHWaXZteSSDXINchN+w7N7Udltr0SgLmwDxYAItgCSyDFbA6za5NrySQa5DrkBv2nZvajktteiUBc2AeLIBFsASWwQpYnWbXplcSyDXIdcgN+85NbaelNr2SgDkwDxbAIlgCy2AFrE6za9MrCeQa5Drkhn3nprbHpTa9koA5MA8WwCJYAstgBaxOs2vTKwnkGuQ65IZ956a281KbXknAHJgHC2ARLIFlsAJWp9m16ZUEcg1yHXLDvnNT22WpTa8kYA7MgwWwCJbAMlgBq9Ps2vRKArkGuQ65Yd+5qe261KZXEjAH5sECWARLYBmsgNVpdm16JYFcg1yH3LDvvK9tt6wkO1hJtDkwDxbAIlgCy2AFrE4za9vBSqJzDXIdcsO+c1PbspLsYCXR5sA8WACLYAksgxWwOs2uDVYSnWuQ65Ab9p2b2paVZAcriTYH5sECWARLYBmsgNVpdm2wkuhcg1yH3LDv3NS2rCQ7WEm0OTAPFsAiWALLYAWsTrNrg5VE5xrkOuSGfeemtmUl2cFKos2BebAAFsESWAYrYHWaXRusJDrXINchN+w7N7UtK8kOVhJtDsyDBbAIlsAyWAGr0+zaYCXRuQa5Drlh37mpbVlJdrCSaHNgHiyARbAElsEKWJ1m1wYric41yHXIDfvOTW3LSrKDlUSbA/NgASyCJbAMVsDqNLs2WEl0rkGuQ27Yd25qW1aSHawk2hyYBwtgESyBZbACVqfZtcFKonMNch1yw75zU9uykuxgJdHmwDxYAItgCSyDFbA6za4NVhKda5DrkBv2nfe17ZeVZA8riTYH5sECWARLYBmsgNVpZm17WEl0rkGuQ27Yd25qW1aSPawk2hyYBwtgESyBZbACVqfZtcFKonMNch1yw75zU9uykuxhJdHmwDxYAItgCSyDFbA6za4NVhKda5DrkBv2nZvalpVkDyuJNgfmwQJYBEtgGayA1Wl2bbCS6FyDXIfcsO/c1LasJHtYSbQ5MA8WwCJYAstgBaxOs2uDlUTnGuQ65IZ956a2ZSXZw0qizYF5sAAWwRJYBitgdZpdG6wkOtcg1yE37Ds3tS0ryR5WEm0OzIMFsAiWwDJYAavT7NpgJdG5BrkOuWHfualtWUn2sJJoc2AeLIBFsASWwQpYnWbXBiuJzjXIdcgN+85NbctKsoeVRJsD82ABLIIlsAxWwOo0uzZYSXSuQa5Dbth3bmpbVpI9rCTaHJgHC2ARLIFlsAJWp9m1wUqicw1yHXLDvvO+tsOykhxgJdHmwDxYAItgCSyDFbA6zaztACuJzjXIdcgN+85NbctKcoCVRJsD82ABLIIlsAxWwOo0uzZYSXSuQa5Dbth3bmpbVpIDrCTaHJgHC2ARLIFlsAJWp9m1wUqicw1yHXLDvnNT27KSHGAl0ebAPFgAi2AJLIMVsDrNrg1WEp1rkOuQG/adm9qWleQAK4k2B+bBAlgES2AZrIDVaXZtsJLoXINch9yw79zUtqwkB1hJtDkwDxbAIlgCy2AFrE6za4OVROca5Drkhn3nprZlJTnASqLNgXmwABbBElgGK2B1ml0brCQ61yDXITfsOze1LSvJAVYSbQ7MgwWwCJbAMlgBq9Ps2mAl0bkGuQ65Yd+5qW1ZSQ6wkmhzYB4sgEWwBJbBClidZtcGK4nONch1yA37zk1ty0pygJVEmwPzYAEsgiWwDFbA6jS7NlhJdK5BrkNu2Hfe13ZcVpIjrCTaHJgHC2ARLIFlsAJWp5m1HWEl0bkGuQ65Yd+5qW1ZSY6wkmhzYB4sgEWwBJbBClidZtcGK4nONch1yA37zk1ty0pyhJVEmwPzYAEsgiWwDFbA6jS7NlhJdK5BrkNu2HdualtWkiOsJNocmAcLYBEsgWWwAlan2bXBSqJzDXIdcsO+c1PbspIcYSXR5sA8WACLYAksgxWwOs2uDVYSnWuQ65Ab9p2b2paV5AgriTYH5sECWARLYBmsgNVpdm2wkuhcg1yH3LDv3NS2rCRHWEm0OTAPFsAiWALLYAWsTrNrg5VE5xrkOuSGfeemtmUlOcJKos2BebAAFsESWAYrYHWaXRusJDrXINchN+w7N7UtK8kRVhJtDsyDBbAIlsAyWAGr0+zaYCXRuQa5Drlh37mpbVlJjrCSaHNgHiyARbAElsEKWJ1m1wYric41yHXIDfvO+9pOy0pygpVEmwPzYAEsgiWwDFbA6jSzthOsJDrXINchN+w7N7UtK8kJVhJtDsyDBbAIlsAyWAGr0+zaYCXRuQa5Drlh37mpbVlJTrCSaHNgHiyARbAElsEKWJ1m1wYric41yHXIDfvOTW3LSnKClUSbA/NgASyCJbAMVsDqNLs2WEl0rkGuQ27Yd25qW1aSE6wk2hyYBwtgESyBZbACVqfZtcFKonMNch1yw75zU9uykpxgJdHmwDxYAItgCSyDFbA6za4NVhKda5DrkBv2nZvalpXkBCuJNgfmwQJYBEtgGayA1Wl2bbCS6FyDXIfcsO/c1LasJCdYSbQ5MA8WwCJYAstgBaxOs2uDlUTnGuQ65IZ956a2ZSU5wUqizYF5sAAWwRJYBitgdZpdG6wkOtcg1yE37Ds3tS0ryQlWEm0OzIMFsAiWwDJYAavT7NpgJdG5BrkOuWHfeV/b47KSPMJKos2BebAAFsESWAYrYHWaWdsjrCQ61yDXITfsOze1LSvJI6wk2hyYBwtgESyBZbACVqfZtcFKonMNch1yw75zU9uykjzCSqLNgXmwABbBElgGK2B1ml0brCQ61yDXITfsOze1LSvJI6wk2hyYBwtgESyBZbACVqfZtcFKonMNch1yw75zU9uykjzCSqLNgXmwABbBElgGK2B1ml0brCQ61yDXITfsOze1LSvJI6wk2hyYBwtgESyBZbACVqfZtcFKonMNch1yw75zU9uykjzCSqLNgXmwABbBElgGK2B1ml0brCQ61yDXITfsOze1LSvJI6wk2hyYBwtgESyBZbACVqfZtcFKonMNch1yw75zU9uykjzCSqLNgXmwABbBElgGK2B1ml0brCQ61yDXITfsOze1LSvJI6wk2hyYBwtgESyBZbACVqfZtcFKonMNch1yw77zvrbzspKcYSXR5sA8WACLYAksgxWwOs2s7Qwric41yHXIDfvOTW3LSnKGlUSbA/NgASyCJbAMVsDqNLs2WEl0rkGuQ27Yd25qW1aSM6wk2hyYBwtgESyBZbACVqfZtcFKonMNch1yw75zU9uykpxhJdHmwDxYAItgCSyDFbA6za4NVhKda5DrkBv2nZvalpXkDCuJNgfmwQJYBEtgGayA1Wl2bbCS6FyDXIfcsO/c1LasJGdYSbQ5MA8WwCJYAstgBaxOs2uDlUTnGuQ65IZ956a2ZSU5w0qizYF5sAAWwRJYBitgdZpdG6wkOtcg1yE37Ds3tS0ryRlWEm0OzIMFsAiWwDJYAavT7NpgJdG5BrkOuWHfualtWUnOsJJoc2AeLIBFsASWwQpYnWbXBiuJzjXIdcgN+85NbctKcoaVRJsD82ABLIIlsAxWwOo0uzZYSXSuQa5Dbth33td2WVaSC6wk2hyYBwtgESyBZbACVqeZtV1gJdG5BrkOuWHfualtWUkusJJoc2AeLIBFsASWwQpYnWbXBiuJzjXIdcgN+85NbctKcoGVRJsD82ABLIIlsAxWwOo0uzZYSXSuQa5Dbth3bmpbVpILrCTaHJgHC2ARLIFlsAJWp9m1wUqicw1yHXLDvnNT27KSXGAl0ebAPFgAi2AJLIMVsDrNrg1WEp1rkOuQG/adm9qWleQCK4k2B+bBAlgES2AZrIDVaXZtsJLoXINch9yw79zUtqwkF1hJtDkwDxbAIlgCy2AFrE6za4OVROca5Drkhn3nprZlJbnASqLNgXmwABbBElgGK2B1ml0brCQ61yDXITfsOze1LSvJBVYSbQ7MgwWwCJbAMlgBq9Ps2mAl0bkGuQ65Yd+5qW1ZSS6wkmhzYB4sgEWwBJbBClidZtcGK4nONch1yA37zvvarstKcoWVRJsD82ABLIIlsAxWwOo0s7YrrCQ61yDXITfsOze1LSvJFVYSbQ7MgwWwCJbAMlgBq9Ps2mAl0bkGuQ65Yd+5qW1ZSa6wkmhzYB4sgEWwBJbBClidZtcGK4nONch1yA37zk1ty0pyhZVEmwPzYAEsgiWwDFbA6jS7NlhJdK5BrkNu2HdualtWkiusJNocmAcLYBEsgWWwAlan2bXBSqJzDXIdcsO+c1PbspJcYSXR5sA8WACLYAksgxWwOs2uDVYSnWuQ65Ab9p2b2paV5AoriTYH5sECWARLYBmsgNVpdm2wkuhcg1yH3LDv3NS2rCRXWEm0OTAPFsAiWALLYAWsTrNrg5VE5xrkOuSGfeemtmUlucJKos2BebAAFsESWAYrYHWaXRusJDrXINchN+w7N7UtK8kVVhJtDsyDBbAIlsAyWAGr0+zaYCXRuQa5Drlh33lX2+HFbSV5flvVBubAPFgAi2AJLIMVsDrNqm2aVRvkGuQ65IZ956a23VKbXknAHJgHC2ARLIFlsAJWp9m16ZUEcg1yHXLDvnNT236pTa8kYA7MgwWwCJbAMlgBq9Ps2vRKArkGuQ65Yd+5qe2w1KZXEjAH5sECWARLYBmsgNVpdm16JYFcg1yH3LDv3NR2XGrTKwmYA/NgASyCJbAMVsDqNLs2vZJArkGuQ27Yd25qOy216ZUEzIF5sAAWwRJYBitgdZpdm15JINcg1yE37Ds3tT0utemVBMyBebAAFsESWAYrYHWaXZteSSDXINchN+w7N7Wdl9r0SgLmwDxYAItgCSyDFbA6za5NrySQa5DrkBv2nZvaLktteiUBc2AeLIBFsASWwQpYnWbXplcSyDXIdcgN+85NbdelNr2SgDkwDxbAIlgCy2AFrE6za9MrCeQa5Drkhn3nfW27ZSXZwUqizYF5sAAWwRJYBitgdZpZ2w5WEp1rkOuQG/adm9qWlWQHK4k2B+bBAlgES2AZrIDVaXZtsJLoXINch9yw79zUtqwkO1hJtDkwDxbAIlgCy2AFrE6za4OVROca5Drkhn3nprZlJdnBSqLNgXmwABbBElgGK2B1ml0brCQ61yDXITfsOze1LSvJDlYSbQ7MgwWwCJbAMlgBq9Ps2mAl0bkGuQ65Yd+5qW1ZSXawkmhzYB4sgEWwBJbBClidZtcGK4nONch1yA37zk1ty0qyg5VEmwPzYAEsgiWwDFbA6jS7NlhJdK5BrkNu2HdualtWkh2sJNocmAcLYBEsgWWwAlan2bXBSqJzDXIdcsO+c1PbspLsYCXR5sA8WACLYAksgxWwOs2uDVYSnWuQ65Ab9p2b2paVZAcriTYH5sECWARLYBmsgNVpdm2wkuhcg1yH3LDvvK9tv6wke1hJtDkwDxbAIlgCy2AFrE4za9vDSqJzDXIdcsO+c1PbspLsYSXR5sA8WACLYAksgxWwOs2uDVYSnWuQ65Ab9p2b2paVZA8riTYH5sECWARLYBmsgNVpdm2wkuhcg1yH3LDv3NS2rCR7WEm0OTAPFsAiWALLYAWsTrNrg5VE5xrkOuSGfeemtmUl2cNKos2BebAAFsESWAYrYHWaXRusJDrXINchN+w7N7UtK8keVhJtDsyDBbAIlsAyWAGr0+zaYCXRuQa5Drlh37mpbVlJ9rCSaHNgHiyARbAElsEKWJ1m1wYric41yHXIDfvOTW3LSrKHlUSbA/NgASyCJbAMVsDqNLs2WEl0rkGuQ27Yd25qW1aSPawk2hyYBwtgESyBZbACVqfZtcFKonMNch1yw75zU9uykuxhJdHmwDxYAItgCSyDFbA6za4NVhKda5DrkBv2nfe1HZaV5AAriTYH5sECWARLYBmsgNVpZm0HWEl0rkGuQ27Yd25qW1aSA6wk2hyYBwtgESyBZbACVqfZtcFKonMNch1yw75zU9uykhxgJdHmwDxYAItgCSyDFbA6za4NVhKda5DrkBv2nZvalpXkACuJNgfmwQJYBEtgGayA1Wl2bbCS6FyDXIfcsO/c1LasJAdYSbQ5MA8WwCJYAstgBaxOs2uDlUTnGuQ65IZ956a2ZSU5wEqizYF5sAAWwRJYBitgdZpdG6wkOtcg1yE37Ds3tS0ryQFWEm0OzIMFsAiWwDJYAavT7NpgJdG5BrkOuWHfualtWUkOsJJoc2AeLIBFsASWwQpYnWbXBiuJzjXIdcgN+85NbctKcoCVRJsD82ABLIIlsAxWwOo0uzZYSXSuQa5Dbth3bmpbVpIDrCTaHJgHC2ARLIFlsAJWp9m1wUqicw1yHXLDvvO+tuOykhxhJdHmwDxYAItgCSyDFbA6zaztCCuJzjXIdcgN+85NbctKcoSVRJsD82ABLIIlsAxWwOo0uzZYSXSuQa5Dbth3bmpbVpIjrCTaHJgHC2ARLIFlsAJWp9m1wUqicw1yHXLDvnNT27KSHGEl0ebAPFgAi2AJLIMVsDrNrg1WEp1rkOuQG/adm9qWleQIK4k2B+bBAlgES2AZrIDVaXZtsJLoXINch9yw79zUtqwkR1hJtDkwDxbAIlgCy2AFrE6za4OVROca5Drkhn3nprZlJTnCSqLNgXmwABbBElgGK2B1ml0brCQ61yDXITfsOze1LSvJEVYSbQ7MgwWwCJbAMlgBq9Ps2mAl0bkGuQ65Yd+5qW1ZSY6wkmhzYB4sgEWwBJbBClidZtcGK4nONch1yA37zk1ty0pyhJVEmwPzYAEsgiWwDFbA6jS7NlhJdK5BrkNu2Hfe13ZaVpITrCTaHJgHC2ARLIFlsAJWp5m1nWAl0bkGuQ65Yd+5qW1ZSU6wkmhzYB4sgEWwBJbBClidZtcGK4nONch1yA37zk1ty0pygpVEmwPzYAEsgiWwDFbA6jS7NlhJdK5BrkNu2HdualtWkhOsJNocmAcLYBEsgWWwAlan2bXBSqJzDXIdcsO+c1PbspKcYCXR5sA8WACLYAksgxWwOs2uDVYSnWuQ65Ab9p2b2paV5AQriTYH5sECWARLYBmsgNVpdm2wkuhcg1yH3LDv3NS2rCQnWEm0OTAPFsAiWALLYAWsTrNrg5VE5xrkOuSGfeemtmUlOcFKos2BebAAFsESWAYrYHWaXRusJDrXINchN+w7N7UtK8kJVhJtDsyDBbAIlsAyWAGr0+zaYCXRuQa5Drlh37mpbVlJTrCSaHNgHiyARbAElsEKWJ1m1wYric41yHXIDfvO+9oel5XkEVYSbQ7MgwWwCJbAMlgBq9PM2h5hJdG5BrkOuWHfualtWUkeYSXR5sA8WACLYAksgxWwOs2uDVYSnWuQ65Ab9p2b2paV5BFWEm0OzIMFsAiWwDJYAavT7NpgJdG5BrkOuWHfualtWUkeYSXR5sA8WACLYAksgxWwOs2uDVYSnWuQ65Ab9p2b2paV5BFWEm0OzIMFsAiWwDJYAavT7NpgJdG5BrkOuWHfualtWUkeYSXR5sA8WACLYAksgxWwOs2uDVYSnWuQ65Ab9p2b2paV5BFWEm0OzIMFsAiWwDJYAavT7NpgJdG5BrkOuWHfualtWUkeYSXR5sA8WACLYAksgxWwOs2uDVYSnWuQ65Ab9p2b2paV5BFWEm0OzIMFsAiWwDJYAavT7NpgJdG5BrkOuWHfualtWUkeYSXR5sA8WACLYAksgxWwOs2uDVYSnWuQ65Ab9p33tZ2XleQMK4k2B+bBAlgES2AZrIDVaWZtZ1hJdK5BrkNu2HdualtWkjOsJNocmAcLYBEsgWWwAlan2bXBSqJzDXIdcsO+c1PbspKcYSXR5sA8WACLYAksgxWwOs2uDVYSnWuQ65Ab9p2b2paV5AwriTYH5sECWARLYBmsgNVpdm2wkuhcg1yH3LDv3NS2rCRnWEm0OTAPFsAiWALLYAWsTrNrg5VE5xrkOuSGfeemtmUlOcNKos2BebAAFsESWAYrYHWaXRusJDrXINchN+w7N7UtK8kZVhJtDsyDBbAIlsAyWAGr0+zaYCXRuQa5Drlh37mpbVlJzrCSaHNgHiyARbAElsEKWJ1m1wYric41yHXIDfvOTW3LSnKGlUSbA/NgASyCJbAMVsDqNLs2WEl0rkGuQ27Yd25qW1aSM6wk2hyYBwtgESyBZbACVqfZtcFKonMNch1yw77zvrbLspJcYCXR5sA8WACLYAksgxWwOs2s7QIric41yHXIDfvOTW3LSnKBlUSbA/NgASyCJbAMVsDqNLs2WEl0rkGuQ27Yd25qW1aSC6wk2hyYBwtgESyBZbACVqfZtcFKonMNch1yw75zU9uyklxgJdHmwDxYAItgCSyDFbA6za4NVhKda5DrkBv2nZvalpXkAiuJNgfmwQJYBEtgGayA1Wl2bbCS6FyDXIfcsO/c1LasJBdYSbQ5MA8WwCJYAstgBaxOs2uDlUTnGuQ65IZ956a2ZSW5wEqizYF5sAAWwRJYBitgdZpdG6wkOtcg1yE37Ds3tS0ryQVWEm0OzIMFsAiWwDJYAavT7NpgJdG5BrkOuWHfualtWUkusJJoc2AeLIBFsASWwQpYnWbXBiuJzjXIdcgN+85NbctKcoGVRJsD82ABLIIlsAxWwOo0uzZYSXSuQa5Dbth33td2XVaSK6wk2hyYBwtgESyBZbACVqeZtV1hJdG5BrkOuWHfualtWUmusJJoc2AeLIBFsASWwQpYnWbXBiuJzjXIdcgN+85NbctKcoWVRJsD82ABLIIlsAxWwOo0uzZYSXSuQa5Dbth3bmpbVpIrrCTaHJgHC2ARLIFlsAJWp9m1wUqicw1yHXLDvnNT27KSXGEl0ebAPFgAi2AJLIMVsDrNrg1WEp1rkOuQG/adm9qWleQKK4k2B+bBAlgES2AZrIDVaXZtsJLoXINch9yw79zUtqwkV1hJtDkwDxbAIlgCy2AFrE6za4OVROca5Drkhn3nprZlJbnCSqLNgXmwABbBElgGK2B1ml0brCQ61yDXITfsOze1LSvJFVYSbQ7MgwWwCJbAMlgBq9Ps2mAl0bkGuQ65Yd+5qW1ZSa6wkmhzYB4sgEWwBJbBClidZtcGK4nONch1yA37zrvaji9uK8nz26o2MAfmwQJYBEtgGayA1WlWbdOs2iDXINchN+w7N7Xtltr0SgLmwDxYAItgCSyDFbA6za5NrySQa5DrkBv2nZva9ktteiUBc2AeLIBFsASWwQpYnWbXplcSyDXIdcgN+85NbYelNr2SgDkwDxbAIlgCy2AFrE6za9MrCeQa5Drkhn3nprbjUpteScAcmAcLYBEsgWWwAlan2bXplQRyDXIdcsO+c1PbaalNryRgDsyDBbAIlsAyWAGr0+za9EoCuQa5Drlh37mp7XGpTa8kYA7MgwWwCJbAMlgBq9Ps2vRKArkGuQ65Yd+5qe281KZXEjAH5sECWARLYBmsgNVpdm16JYFcg1yH3LDv3NR2WWrTKwmYA/NgASyCJbAMVsDqNLs2vZJArkGuQ27Yd25quy616ZUEzIF5sAAWwRJYBitgdZpdm15JINcg1yE37Dvva9stK8kOVhJtDsyDBbAIlsAyWAGr08zadrCS6FyDXIfcsO/c1LasJDtYSbQ5MA8WwCJYAstgBaxOs2uDlUTnGuQ65IZ956a2ZSXZwUqizYF5sAAWwRJYBitgdZpdG6wkOtcg1yE37Ds3tS0ryQ5WEm0OzIMFsAiWwDJYAavT7NpgJdG5BrkOuWHfualtWUl2sJJoc2AeLIBFsASWwQpYnWbXBiuJzjXIdcgN+85NbctKsoOVRJsD82ABLIIlsAxWwOo0uzZYSXSuQa5Dbth3bmpbVpIdrCTaHJgHC2ARLIFlsAJWp9m1wUqicw1yHXLDvnNT27KS7GAl0ebAPFgAi2AJLIMVsDrNrg1WEp1rkOuQG/adm9qWlWQHK4k2B+bBAlgES2AZrIDVaXZtsJLoXINch9yw79zUtqwkO1hJtDkwDxbAIlgCy2AFrE6za4OVROca5Drkhn3nfW37ZSXZw0qizYF5sAAWwRJYBitgdZpZ2x5WEp1rkOuQG/adm9qWlWQPK4k2B+bBAlgES2AZrIDVaXZtsJLoXINch9yw79zUtqwke1hJtDkwDxbAIlgCy2AFrE6za4OVROca5Drkhn3nprZlJdnDSqLNgXmwABbBElgGK2B1ml0brCQ61yDXITfsOze1LSvJHlYSbQ7MgwWwCJbAMlgBq9Ps2mAl0bkGuQ65Yd+5qW1ZSfawkmhzYB4sgEWwBJbBClidZtcGK4nONch1yA37zk1ty0qyh5VEmwPzYAEsgiWwDFbA6jS7NlhJdK5BrkNu2HdualtWkj2sJNocmAcLYBEsgWWwAlan2bXBSqJzDXIdcsO+c1PbspLsYSXR5sA8WACLYAksgxWwOs2uDVYSnWuQ65Ab9p2b2paVZA8riTYH5sECWARLYBmsgNVpdm2wkuhcg1yH3LDvvK/tsKwkB1hJtDkwDxbAIlgCy2AFrE4zazvASqJzDXIdcsO+c1PbspIcYCXR5sA8WACLYAksgxWwOs2uDVYSnWuQ65Ab9p2b2paV5AAriTYH5sECWARLYBmsgNVpdm2wkuhcg1yH3LDv3NS2rCQHWEm0OTAPFsAiWALLYAWsTrNrg5VE5xrkOuSGfeemtmUlOcBKos2BebAAFsESWAYrYHWaXRusJDrXINchN+w7N7UtK8kBVhJtDsyDBbAIlsAyWAGr0+zaYCXRuQa5Drlh37mpbVlJDrCSaHNgHiyARbAElsEKWJ1m1wYric41yHXIDfvOTW3LSnKAlUSbA/NgASyCJbAMVsDqNLs2WEl0rkGuQ27Yd25qW1aSA6wk2hyYBwtgESyBZbACVqfZtcFKonMNch1yw75zU9uykhxgJdHmwDxYAItgCSyDFbA6za4NVhKda5DrkBv2nfe1HZeV5AgriTYH5sECWARLYBmsgNVpZm1HWEl0rkGuQ27Yd25qW1aSI6wk2hyYBwtgESyBZbACVqfZtcFKonMNch1yw75zU9uykhxhJdHmwDxYAItgCSyDFbA6za4NVhKda5DrkBv2nZvalpXkCCuJNgfmwQJYBEtgGayA1Wl2bbCS6FyDXIfcsO/c1LasJEdYSbQ5MA8WwCJYAstgBaxOs2uDlUTnGuQ65IZ956a2ZSU5wkqizYF5sAAWwRJYBitgdZpdG6wkOtcg1yE37Ds3tS0ryRFWEm0OzIMFsAiWwDJYAavT7NpgJdG5BrkOuWHfualtWUmOsJJoc2AeLIBFsASWwQpYnWbXBiuJzjXIdcgN+85NbctKcoSVRJsD82ABLIIlsAxWwOo0uzZYSXSuQa5Dbth3bmpbVpIjrCTaHJgHC2ARLIFlsAJWp9m1wUqicw1yHXLDvvO+ttOykpxgJdHmwDxYAItgCSyDFbA6zaztBCuJzjXIdcgN+85NbctKcoKVRJsD82ABLIIlsAxWwOo0uzZYSXSuQa5Dbth3bmpbVpITrCTaHJgHC2ARLIFlsAJWp9m1wUqicw1yHXLDvnNT27KSnGAl0ebAPFgAi2AJLIMVsDrNrg1WEp1rkOuQG/adm9qWleQEK4k2B+bBAlgES2AZrIDVaXZtsJLoXINch9yw79zUtqwkJ1hJtDkwDxbAIlgCy2AFrE6za4OVROca5Drkhn3nprZlJTnBSqLNgXmwABbBElgGK2B1ml0brCQ61yDXITfsOze1LSvJCVYSbQ7MgwWwCJbAMlgBq9Ps2mAl0bkGuQ65Yd+5qW1ZSU6wkmhzYB4sgEWwBJbBClidZtcGK4nONch1yA37zk1ty0pygpVEmwPzYAEsgiWwDFbA6jS7NlhJdK5BrkNu2Hfe1/a4rCSPsJJoc2AeLIBFsASWwQpYnWbW9ggric41yHXIDfvOTW3LSvIIK4k2B+bBAlgES2AZrIDVaXZtsJLoXINch9yw79zUtqwkj7CSaHNgHiyARbAElsEKWJ1m1wYric41yHXIDfvOTW3LSvIIK4k2B+bBAlgES2AZrIDVaXZtsJLoXINch9yw79zUtqwkj7CSaHNgHiyARbAElsEKWJ1m1wYric41yHXIDfvOTW3LSvIIK4k2B+bBAlgES2AZrIDVaXZtsJLoXINch9yw79zUtqwkj7CSaHNgHiyARbAElsEKWJ1m1wYric41yHXIDfvOTW3LSvIIK4k2B+bBAlgES2AZrIDVaXZtsJLoXINch9yw79zUtqwkj7CSaHNgHiyARbAElsEKWJ1m1wYric41yHXIDfvOTW3LSvIIK4k2B+bBAlgES2AZrIDVaXZtsJLoXINch9yw77yv7bysJGdYSbQ5MA8WwCJYAstgBaxOM2s7w0qicw1yHXLDvnNT27KSnGEl0ebAPFgAi2AJLIMVsDrNrg1WEp1rkOuQG/adm9qWleQMK4k2B+bBAlgES2AZrIDVaXZtsJLoXINch9yw79zUtqwkZ1hJtDkwDxbAIlgCy2AFrE6za4OVROca5Drkhn3nprZlJTnDSqLNgXmwABbBElgGK2B1ml0brCQ61yDXITfsOze1LSvJGVYSbQ7MgwWwCJbAMlgBq9Ps2mAl0bkGuQ65Yd+5qW1ZSc6wkmhzYB4sgEWwBJbBClidZtcGK4nONch1yA37zk1ty0pyhpVEmwPzYAEsgiWwDFbA6jS7NlhJdK5BrkNu2HdualtWkjOsJNocmAcLYBEsgWWwAlan2bXBSqJzDXIdcsO+c1PbspKcYSXR5sA8WACLYAksgxWwOs2uDVYSnWuQ65Ab9p33tV2WleQCK4k2B+bBAlgES2AZrIDVaWZtF1hJdK5BrkNu2HdualtWkgusJNocmAcLYBEsgWWwAlan2bXBSqJzDXIdcsO+c1PbspJcYCXR5sA8WACLYAksgxWwOs2uDVYSnWuQ65Ab9p2b2paV5AIriTYH5sECWARLYBmsgNVpdm2wkuhcg1yH3LDv3NS2rCQXWEm0OTAPFsAiWALLYAWsTrNrg5VE5xrkOuSGfeemtmUlucBKos2BebAAFsESWAYrYHWaXRusJDrXINchN+w7N7UtK8kFVhJtDsyDBbAIlsAyWAGr0+zaYCXRuQa5Drlh37mpbVlJLrCSaHNgHiyARbAElsEKWJ1m1wYric41yHXIDfvOTW3LSnKBlUSbA/NgASyCJbAMVsDqNLs2WEl0rkGuQ27Yd25qW1aSC6wk2hyYBwtgESyBZbACVqfZtcFKonMNch1yw77zvrbrspJcYSXR5sA8WACLYAksgxWwOs2s7Qoric41yHXIDfvOTW3LSnKFlUSbA/NgASyCJbAMVsDqNLs2WEl0rkGuQ27Yd25qW1aSK6wk2hyYBwtgESyBZbACVqfZtcFKonMNch1yw75zU9uyklxhJdHmwDxYAItgCSyDFbA6za4NVhKda5DrkBv2nZvalpXkCiuJNgfmwQJYBEtgGayA1Wl2bbCS6FyDXIfcsO/c1LasJFdYSbQ5MA8WwCJYAstgBaxOs2uDlUTnGuQ65IZ956a2ZSW5wkqizYF5sAAWwRJYBitgdZpdG6wkOtcg1yE37Ds3tS0ryRVWEm0OzIMFsAiWwDJYAavT7NpgJdG5BrkOuWHfualtWUmusJJoc2AeLIBFsASWwQpYnWbXBiuJzjXIdcgN+85NbctKcoWVRJsD82ABLIIlsAxWwOo0uzZYSXSuQa5Dbth33tV2enFbSZ7fVrWBOTAPFsAiWALLYAWsTrNqm2bVBrkGuQ65Yd/5sbYvf/j69ev3/tX7V7/51bevv//La/f6m29+ePjq3Y9vnz72+Z/BP7/34fvXf35qdffLsfviy5++f//LsX9+/5e3h/nNr/709MB/fPXNm6f/fPPu7efHfZ5k7unhh//14WHG8Zef7v363V/99+++8+/++vbXX3x6R3n73Y/v2+sffnj1l9ef3xm+//7d9+s7X33zzbu//vabV2///fkzPbx+9j+8ef/Nk/avf/6z/fHw8tuHf//w1vHl2788PL11vr44v/zu4Zunty7n68tPoV9/8ccf3zy/c3/cP3/gV88febmcXr59+H/bNIPchGEgil7FLQh2gGPSKpgiIbrIBjY9Qdok2CLBlpkIcft+O2CBYGPFk+c/fzTjnY9RiPxpnkpWFkfFTggnqfxTgDtPzzPQCH4KGcQBqmsWRr1e5rXLPktEk3TmwzHP5J1ZZ1pL10o2L7zcENyvkDqFvXY0EB9cau8zEfMnMy9r6hEdGCE7Ri5AQt5XBUd0sbDS6BOhobVxbdcUfPU1/l7vcvYzGvBMyE3OdjkEOZfb8dtwPUwWWARfTuOB5fRxGJ4CmCSL7m4Lt9eYoqaqUeNs4p9tO71XcUPGhpb/GiLThk9VFWXlPID/tTF02/hRPRt3CBdg9Q9QSwMEFAAAAAgAiEzzXGxylcUwBQAAFhMAABgAAAB4bC93b3Jrc2hlZXRzL3NoZWV0Mi54bWyFmNFuozgUhl/FolK1ezGT2EAIQxpp2mono5lWVZvO7i0lTkAFzIJp2nn6PbYJpJtjetFgjPH/2xx/x/ViL+rnJuVcktciL5sLJ5Wy+jKZNEnKi7j5LCpewpOtqItYwm29mzRVzeONfqnIJ2w6nU2KOCud5ULX3dXLhWhlnpX8riZNWxRx/XbJc7G/cKhzqLjPdqlUFZPloop3/IHLx+quhrtJ38smK3jZZKIkNd9eOF/pl0tXv6Bb/Mr4vjkqEzWUJyGe1c33zYUzdVTXJSdvD1WeaTEiRfWTb+UVz3PokDkkTmT2wu+g2YXzJKQUhXoONmUsoWpbi9+81Jo859AWzFQnjU0nXadqjP92hp1+PMrUcfng/C89sTBRT3HDr0T+d7aR6YUzd8iGb+M2l/div+LdZPmqv0Tkjf4le9PWmzokaRtw070MDoqsNNf4tZvkoxdmlvasa8+0baOjTV7HMl4uarEntW6tzLC+l94ezHeiWugpgHvwBdVZqULhQdbwOIMe5fL66+2KPJyf0dCNrlbEnZLb1fkZozS6IXANWPT9/CyYw/WRrO9Vcc4icrV6VEVvHt2SPxJRvem2bgS//jQqd0RCyfWisq+HLvyIbODWg/eTVD0PojIlr1BifpT8uZhIGKlyNUngD0bYD5P1o2F6NIFlMOusIIU2RqMkJZ/Iqn3T0jSSxOhU72V0r5emV0p1t2rxvCzpYvKCOHF7J+6okxuQDacw4sLItspM54zkWZVtMB/uqQ+G+/B6H94HM9JNfdt/Cc9lkXZH4UNhLrxTFy7uwu9d+KMubpWJMIgyIrPD98CU/VNlD1ee9cqz8fGnetIh0shzVqaY6OxU1MdFg140GBdte9FUqO+vFkKpCkEkIBAu9XS4UV+H2QpObc1wW/Pe1nzU1jc9954bFV0sxO+istGLO4SV8on8SE3Ywkp+ycxSLjCT81OTAW4y7E2Goyb/OQSoRwMl/6w/YBhGFdj6ZviCxk54amWOW6HTAY7TD2dMfaCSJMYQJtz18U45tCgfYZmOKyvhWfR2ACkqTBFsTS3KA0LpOEMV/T0vImbhWIBJMWJakEkHZtJxaF6lXQjCd9/oIqwRhSrqqqp3YbnKYFcAmRJ1h3CUWkBKB5LSD1AaZwSw7s4ocEyvmrlvbN2rsNSuC4O30EJWiqCVWthKB7jScbqqXDP3fXxZUISp1AJVOlCVfoDVDgqtChMGSIlRbQSt1MJWOsCVjtP1W1yaJO+7liEj6KQWdtIBnnScnuv6EJESSiy0wAAhIrUgkQ5MpONQ/Knz9VH+NBuKdZ9MSXkIvBZ1hcCRWujIBjqycToercbGklsZwkZqgSMb4MjG4fguO9VtgyojcGQWOLKj/eU4HI+Uy46PaF5kCB+ZhY9s4CMb5+MPxRkIQDXbJgq90BBorc2EkC92WYsykWF7SwsT2cBENs7EBzMdEtJ021nA1RHwMQv42AA+Ng6+6xi20jruAzzuGQI/ZoEfG+DHxuF3l+rlGEYwaoGCjyHgYxbwsQF8bBx8t3FhV0SYxyzMYwPz2Djzjv99SruMl6DyCPaYBXtswB4bx96vTKd4nfhFv/CSw84EhT9DUMcsqHMH1LkfbwS7rXNidmZomLsI7pgFd+6AO3ccd+t04PzTIQnpnaGuRI0g9HP/T7/J0XlCweudPjRpSCLasjtB6GuHQx9zjDI0NydGN3G9y8qG5HwLr04/B7DwanMSYW6kqPRphTmpMQcXPN7wWjWA51sh5OFGCfRHYcv/AFBLAwQUAAAACACITPNcMk/VUGgDAAA4EwAADQAAAHhsL3N0eWxlcy54bWzdWG1v2jAQ/itRfsDyBimZAKlNizRpmyqtH/bVEAcsOXHmmA766+ezQxJorqNvUjdQFdvn57nHdxfbdFqrPac/NpQqZ1fwsp65G6Wqz55Xrza0IPUnUdFSW3IhC6J0V669upKUZDWACu6Fvh97BWGlO5+W22JRqNpZiW2pZq7vevNpLspuJHbtgJ5KCurcEz5zU8LZUjIzlxSM7+1wCAMrwYV0lJZCZ24AI/WDNQe2ByobnoKVQsKgZz2c+rmUjHCwLxuGzoFcL7Vaf2E+R178cwgZRng1Gkd+0idMXsUXxxf+ZPx8gc+b/ReX/SWYR625GOdtkseuHZhPK6IUleVCdwzGDD4yOU37bl/pLK8l2Qfh2D0bUAvOMnC5TvvCg8vo+iI1ND3oK0l1eSQ3/huTjsLJeDFCSc1Dx3gpZEZlG+XQPQzNp5zmSsMlW2/gqUQFZS6UEoVuZIysRUlMCg6IPtIxm8DMVRvzEh+lP726Ht+YQvRgauPjTISZa+ScCdAzD7rPRNjJvYU1DR2vFeX8B5D8zNugBZpqlzt2n/qSwRblQAkfmjrSTdPS2A446rNZ7j5t+CJep2L3Ql1t9RJK0/+1FYreSpqznenv8lYAxh507OEJO6kqvr/kbF0W1C7+bIfzKTngnI2Q7EF7g3cfasB17qlUbAX9lZ5Apev8lqS6ozvVbFreLscVh53i6N9Q3IvxqK84eBfFB4Wv0xwhVfd2ml+gL/rg+pIPrq+X3xGu76W7SvSu7Mm7sp+3I74B+xjfzd9vLzgUg9ecO73D7ehoa0cduNbN3O9wa+edG2e5ZVyxsultWJbR8tEJp+kVWeqfBUf8en5Gc7Ll6q41ztyu/Y1mbFsk7axbWHozq2t/hStBELfXTO2LlRnd0SxtuvqMP7od2Q8ATi3ddf2xBcNY27AFbJgfTAGGsSjMz/+0ngm6HmvDtE0GLRMUM0ExFjVkSc0X8zOMSfRneKVJEkVxjEU0TQcVpFjc4hj+htkwbYDA/ICn58UazzZeIU/XAZbTpyoEWyleidhK8ViDZThugEiS4WxjfgCBZQGrHfA/7AdqahgTRZBVTBv2BuOWJMEsUIvDNRrHSHRi+A7nB3tLoihJhi1gG1YQRZgF3kbcgikADZglisw5eHIeeYdzyuv+Vzb/A1BLAwQUAAAACACITPNcl4q7HMAAAAATAgAACwAAAF9yZWxzLy5yZWxznZK5bsMwDEB/xdCeMAfQIYgzZfEWBPkBVqIP2BIFikWdv6/apXGQCxl5PTwS3B5pQO04pLaLqRj9EFJpWtW4AUi2JY9pzpFCrtQsHjWH0kBE22NDsFosPkAuGWa3vWQWp3OkV4hc152lPdsvT0FvgK86THFCaUhLMw7wzdJ/MvfzDDVF5UojlVsaeNPl/nbgSdGhIlgWmkXJ06IdpX8dx/aQ0+mvYyK0elvo+XFoVAqO3GMljHFitP41gskP7H4AUEsDBBQAAAAIAIhM81wVLCkTZgEAAMQCAAAPAAAAeGwvd29ya2Jvb2sueG1stZJfSsNAEMavEvYAJg1asDQFadEUbC1WfN8kk2bo/gm7m1b75hm8go+eQB97kt7ESUIwIIgvPm3mm2X2932T8V6bbaL11nuSQtmIFc6VI9+3aQGS2zNdgqJOro3kjkqz8W1pgGe2AHBS+GEQDH3JUbHJuJu1Mn6/0A5Sh1qRWAuPCHv73a9Lb4cWExToniPWfAtgnkSFEg+QRSxgni30PtYGD1o5Ltap0UJEbNA2HsE4TH/I6xrygSe2URxP7jmBRGwY0MAcjXXNjWY+J8Yd0OW2qpy+RuHAzLiDG6OrEtWmHkMu/J6NJofubEMcmb/EqPMcU5jptJKgXJujAVEDKltgaZmnuISIza6Wsbc4fb5NvWV8+nhf1d7osXnW+nQE2EvNjJAaZp41qP+MtT6+TGPCOr4uelThL1RhE2CXWgY5KsiWNNGSThtMV8arj8ZdeH4xuKRNVUJMSbtTt5pn3RK6H2jyBVBLAwQUAAAACACITPNcjfcsWrQAAACJAgAAGgAAAHhsL19yZWxzL3dvcmtib29rLnhtbC5yZWxzxZJNCoMwEEavEnKAjtrSRVFX3bgtXiDo+IPRhMyU6u1rdaGBLrqRrsI3Ie97MIkfqBW3ZqCmtSTGXg+UyIbZ3gCoaLBXdDIWh/mmMq5XPEdXg1VFp2qEKAiu4PYMmcZ7psgni78QTVW1Bd5N8exx4C9geBnXUYPIUuTK1ciJhFFvY4LlCE8zWYqsTKTLylDCv4UiTyg6UIh40kibzZq9+vOB9Ty/xa19ievQ38nl4wDez0vfUEsDBBQAAAAIAIhM81xupyS8HgEAAFcEAAATAAAAW0NvbnRlbnRfVHlwZXNdLnhtbMWUz07DMAzGX6XKdWoyduCA1l2AK+zAC4TWXaPmn2JvdG+P226TQKNiKhKXRo3t7+f4i7J+O0bArHPWYyEaovigFJYNOI0yRPAcqUNymvg37VTUZat3oFbL5b0qgyfwlFOvITbrJ6j13lL23PE2muALkcCiyB7HxJ5VCB2jNaUmjquDr75R8hNBcuWQg42JuOAEoa4S+sjPgFPd6wFSMhVkW53oRTvOUp1VSEcLKKclrvQY6tqUUIVy77hEYkygK2wAyFk5ii6mycQThvF7N5s/yEwBOXObQkR2LMHtuLMlfXUeWQgSmekjXogsPft80LtdQfVLNo/3I6R28APVsMyf8VePL/o39rH6xz7eQ2j/+qr3q3Ta+DNfDe/J5hNQSwECFAMUAAAACACITPNcRsdNSJUAAADNAAAAEAAAAAAAAAAAAAAAgAEAAAAAZG9jUHJvcHMvYXBwLnhtbFBLAQIUAxQAAAAIAIhM81wyOV1L7wAAACsCAAARAAAAAAAAAAAAAACAAcMAAABkb2NQcm9wcy9jb3JlLnhtbFBLAQIUAxQAAAAIAIhM81yZXJwjEAYAAJwnAAATAAAAAAAAAAAAAACAAeEBAAB4bC90aGVtZS90aGVtZTEueG1sUEsBAhQDFAAAAAgAiEzzXGiwnJ4/TQAAE2IDABgAAAAAAAAAAAAAAICBIggAAHhsL3dvcmtzaGVldHMvc2hlZXQxLnhtbFBLAQIUAxQAAAAIAIhM81xscpXFMAUAABYTAAAYAAAAAAAAAAAAAACAgZdVAAB4bC93b3Jrc2hlZXRzL3NoZWV0Mi54bWxQSwECFAMUAAAACACITPNcMk/VUGgDAAA4EwAADQAAAAAAAAAAAAAAgAH9WgAAeGwvc3R5bGVzLnhtbFBLAQIUAxQAAAAIAIhM81yXirscwAAAABMCAAALAAAAAAAAAAAAAACAAZBeAABfcmVscy8ucmVsc1BLAQIUAxQAAAAIAIhM81wVLCkTZgEAAMQCAAAPAAAAAAAAAAAAAACAAXlfAAB4bC93b3JrYm9vay54bWxQSwECFAMUAAAACACITPNcjfcsWrQAAACJAgAAGgAAAAAAAAAAAAAAgAEMYQAAeGwvX3JlbHMvd29ya2Jvb2sueG1sLnJlbHNQSwECFAMUAAAACACITPNcbqckvB4BAABXBAAAEwAAAAAAAAAAAAAAgAH4YQAAW0NvbnRlbnRfVHlwZXNdLnhtbFBLBQYAAAAACgAKAIQCAABHYwAAAAA=";
+    const downloadTemplateBtn = document.getElementById("downloadTemplateBtn");
+    if(downloadTemplateBtn){
+        downloadTemplateBtn.addEventListener("click", function(){
+            try{
+                const bin = atob(TEMPLATE_B64);
+                const bytes = new Uint8Array(bin.length);
+                for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+                const blob = new Blob([bytes], {type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url; a.download = "MAU_NHAP_SAN_PHAM_IDECO.xlsx";
+                document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                setTimeout(()=>URL.revokeObjectURL(url), 1500);
+            }catch(e){ alert("Không tải được file mẫu: "+e.message); }
+        });
+    }
     
     // ========== CẬP NHẬT BẢNG GIÁ CHÍNH TỪ FILE MỚI ==========
     const updateGiabanInput = document.getElementById("updateGiabanInput");
@@ -1507,7 +1589,7 @@
     });
     searchInput.addEventListener("input", ()=>{ 
         showingOnlySelected=false; 
-        performSearch(); 
+        applyFilters(); 
     });
     passwordDialogCancel.addEventListener("click", () => { passwordDialog.style.display = "none"; passwordInput.value = ""; fileIndexToRemove = null; });
     passwordDialogConfirm.addEventListener("click", () => {
@@ -2001,9 +2083,189 @@
             }
         });
         selectedRowIdx.clear(); showingOnlySelected=false; searchInput.value='';
+        mergeByGroupAndRenumber();      // Trộn SP file phụ vào đúng nhóm + đánh lại STT liền mạch
+        populateGroupFilter();          // Nạp danh sách nhóm điều trị vào dropdown
+        if(groupFilter) groupFilter.value = '';
         createTable(currentData); 
         updateActionButtonsState();
         updateFilteredSection(); // Cập nhật phần chọn tất cả danh sách đã lọc
+    }
+
+    // ===== TRỘN SẢN PHẨM THEO NHÓM + ĐÁNH LẠI STT LIỀN MẠCH =====
+    // Nhận diện 1 hàng có phải tiêu đề nhóm không (VD "◆ NHÓM: TIM MẠCH...")
+    function isGroupHeaderRow(row){
+        if(!row) return false;
+        const nonEmpty = row.filter(c => String(c).trim().length>0);
+        const firstTxt = String(row.find(c => String(c).trim().length>0) || '');
+        return nonEmpty.length === 1 && (firstTxt.includes('NHÓM') || /^[◆▲■]/.test(firstTxt.trim()));
+    }
+    // Lấy tên nhóm rút gọn từ 1 hàng tiêu đề nhóm (để so khớp với cột "Nhóm điều trị")
+    function extractGroupName(headerText){
+        // "◆ NHÓM: TIM MẠCH - HUYẾT ÁP  (128 sản phẩm)" -> "TIM MẠCH - HUYẾT ÁP"
+        let s = String(headerText).replace(/^[◆▲■►]\s*/, '').replace(/nhóm\s*:?/i, '');
+        s = s.replace(/\(.*?\)/g, '');           // bỏ "(128 sản phẩm)"
+        return s.trim();
+    }
+    function normGroup(s){
+        return String(s||'').normalize('NFC').toLowerCase().replace(/\s+/g,' ').trim();
+    }
+    // Chỉ trộn khi có nhiều hơn 1 file (tức có file phụ). 1 file thì giữ nguyên thứ tự gốc.
+    function mergeByGroupAndRenumber(){
+        if(currentData.length < 2) return;
+        const header = currentData[0];
+        const gIdx = getGroupColIdx();            // index cột "Nhóm điều trị"
+        const sttIdx = findSttColIdx(header);
+
+        // Nếu bảng không có cột nhóm -> chỉ đánh lại STT liền mạch, không trộn
+        const hasMultipleFiles = uploadedFiles.filter(f => f.data && f.data.length > 1).length > 1;
+        if(gIdx === -1 || !hasMultipleFiles){
+            renumberStt(sttIdx);
+            return;
+        }
+
+        // 1) Đi qua dữ liệu, dựng danh sách nhóm theo THỨ TỰ xuất hiện + gom sản phẩm vào nhóm
+        const groupOrder = [];                    // giữ thứ tự nhóm như bảng gốc
+        const groupMap = new Map();               // normName -> { headerRow, name, items:[] }
+        const looseItems = [];                    // SP chưa có nhóm rõ ràng (hiếm)
+        let curKey = null;
+
+        for(let i=1;i<currentData.length;i++){
+            const row = currentData[i];
+            if(isGroupHeaderRow(row)){
+                const name = extractGroupName(row.find(c=>String(c).trim().length>0));
+                const key = normGroup(name);
+                if(!groupMap.has(key)){
+                    groupMap.set(key, { headerRow: row, name, items: [] });
+                    groupOrder.push(key);
+                }
+                curKey = key;
+                continue;
+            }
+            // Hàng sản phẩm: ưu tiên phân nhóm theo GIÁ TRỊ cột "Nhóm điều trị"
+            const gVal = String((row[gIdx]||'')).trim();
+            let key = gVal ? normGroup(gVal) : curKey;
+            if(key){
+                if(!groupMap.has(key)){
+                    // Nhóm mới (từ file phụ) chưa có tiêu đề -> tạo tiêu đề nhóm mới ở cuối
+                    const newHeader = new Array(header.length).fill('');
+                    newHeader[0] = '◆ NHÓM: ' + (gVal ? gVal.toUpperCase() : key.toUpperCase());
+                    groupMap.set(key, { headerRow: newHeader, name: gVal || key, items: [], isNew: true });
+                    groupOrder.push(key);
+                }
+                groupMap.get(key).items.push(row);
+            } else {
+                looseItems.push(row);
+            }
+        }
+
+        // 2) Dựng lại currentData theo thứ tự nhóm; nhóm mới (isNew) đẩy xuống cuối
+        const existingKeys = groupOrder.filter(k => !groupMap.get(k).isNew);
+        const newKeys = groupOrder.filter(k => groupMap.get(k).isNew);
+        const finalOrder = [...existingKeys, ...newKeys];
+
+        const rebuilt = [header];
+        finalOrder.forEach(key => {
+            const g = groupMap.get(key);
+            if(g.items.length === 0 && !g.isNew) { rebuilt.push(g.headerRow); return; } // giữ nhóm rỗng gốc
+            if(g.items.length === 0) return;                                            // bỏ nhóm mới rỗng
+            // Cập nhật số lượng trong tiêu đề nhóm nếu có dạng "(N sản phẩm)"
+            const hRow = g.headerRow.slice();
+            const hCellIdx = hRow.findIndex(c => String(c).trim().length>0);
+            if(hCellIdx !== -1){
+                hRow[hCellIdx] = String(hRow[hCellIdx]).replace(/\(\s*\d+\s*sản phẩm\s*\)/i, '').trim()
+                    + '  (' + g.items.length + ' sản phẩm)';
+            }
+            rebuilt.push(hRow);
+            g.items.forEach(it => rebuilt.push(it));
+        });
+        looseItems.forEach(it => rebuilt.push(it));
+
+        currentData = rebuilt;
+        // rowIndexMap không còn ánh xạ 1-1 sau khi trộn -> vô hiệu hóa để tránh sai lệch
+        rowIndexMap = [];
+        renumberStt(findSttColIdx(currentData[0]));
+    }
+    // Đánh lại STT liền mạch 1..n cho toàn bộ hàng sản phẩm (bỏ qua hàng tiêu đề nhóm)
+    function renumberStt(sttIdx){
+        if(sttIdx === -1 || currentData.length < 2) return;
+        let n = 0;
+        for(let i=1;i<currentData.length;i++){
+            const row = currentData[i];
+            if(!row || isGroupHeaderRow(row)) continue;
+            if(!row.some(c => String(c).trim().length>0)) continue;
+            n++;
+            row[sttIdx] = n;
+        }
+    }
+    // ===== LỌC THEO NHÓM ĐIỀU TRỊ =====
+    // Tìm index cột "Nhóm điều trị"
+    function getGroupColIdx(){
+        return headersCache.findIndex(h => {
+            const s = String(h||'').normalize('NFC').toLowerCase();
+            return s.includes('nhóm điều trị') || s.includes('nhóm bệnh') || s.trim() === 'nhóm';
+        });
+    }
+    // Nạp các nhóm duy nhất vào dropdown
+    function populateGroupFilter(){
+        if(!groupFilter) return;
+        const gIdx = getGroupColIdx();
+        const byKey = new Map();   // normKey -> tên hiển thị (ưu tiên tên từ cột nhóm)
+        // Nguồn 1: giá trị cột "Nhóm điều trị" của từng sản phẩm (ưu tiên, giữ nguyên cách viết)
+        if(gIdx !== -1){
+            for(let i=1;i<currentData.length;i++){
+                const v = String((currentData[i]||[])[gIdx]||'').trim();
+                if(v){ const k=normGroup(v); if(!byKey.has(k)) byKey.set(k, v); }
+            }
+        }
+        // Nguồn 2 (dự phòng): tên nhóm từ các dòng tiêu đề "◆ NHÓM: ..." — chỉ thêm nếu chưa có
+        for(let i=1;i<currentData.length;i++){
+            const row = currentData[i];
+            if(isGroupHeaderRow(row)){
+                const name = extractGroupName(row.find(c=>String(c).trim().length>0));
+                if(name){ const k=normGroup(name); if(!byKey.has(k)) byKey.set(k, name); }
+            }
+        }
+        const names = Array.from(byKey.values());
+        const cur = groupFilter.value;
+        groupFilter.innerHTML = '<option value="">📂 Tất cả nhóm</option>' +
+            names.sort((a,b)=>a.localeCompare(b,'vi')).map(g=>`<option value="${g.replace(/"/g,'&quot;')}">${g}</option>`).join('');
+        // LUÔN hiển thị dropdown; chỉ disable khi thật sự không có nhóm nào.
+        groupFilter.style.display = '';
+        groupFilter.disabled = (names.length === 0);
+        groupFilter.title = names.length ? ('Lọc theo nhóm điều trị ('+names.length+' nhóm)') : 'Chưa có dữ liệu nhóm — tải bảng giá để lọc';
+        if(cur && byKey.has(normGroup(cur))) groupFilter.value = cur;
+    }
+    // Áp dụng đồng thời: từ khóa tìm kiếm + nhóm điều trị đã chọn
+    function applyFilters(){
+        const term = (searchInput.value||'').trim().toLowerCase();
+        const grp = groupFilter ? groupFilter.value : '';
+        const gIdx = getGroupColIdx();
+        if(!term && !grp){ createTable(currentData); return; }
+        const grpNorm = normGroup(grp);
+        const filtered = [currentData[0]];
+        const sourceIdx = [];
+        let curSectionGroup = '';   // nhóm theo dòng tiêu đề gần nhất
+        for(let i=1;i<currentData.length;i++){
+            const row = currentData[i] || [];
+            if(isGroupHeaderRow(row)){
+                curSectionGroup = extractGroupName(row.find(c=>String(c).trim().length>0)) || '';
+                if(!grp && !term){ filtered.push(row); sourceIdx.push(i); } // giữ tiêu đề khi không lọc
+                continue;
+            }
+            let ok = true;
+            if(grp){
+                // Khớp theo cột "Nhóm điều trị" HOẶC theo nhóm của mục tiêu đề đang đứng dưới
+                const byCol = gIdx !== -1 && normGroup(row[gIdx]) === grpNorm;
+                const bySection = normGroup(curSectionGroup) === grpNorm;
+                ok = byCol || bySection;
+            }
+            if(ok && term){
+                ok = row.some(c => String(c).toLowerCase().includes(term));
+            }
+            if(ok){ filtered.push(row); sourceIdx.push(i); }
+        }
+        createTable(filtered, sourceIdx);
+        if(term) highlightSearchResults(term);
     }
     // HÀM LỌC CỘT HIỂN THỊ (QUAN TRỌNG CHO ẨN CỘT)
     function visibleColumnIndexes(){
@@ -2021,6 +2283,108 @@
             return s === 'mã sp' || s === 'masp' || s === 'mã sp' || s.replace(/\s+/g,'') === 'mãsp';
         });
     }
+    // ====== NHẬN DIỆN CÁC CỘT GIÁ / CHIẾT KHẤU THEO TÊN TIÊU ĐỀ ======
+    function getColIdxByHeader(predicate){
+        return headersCache.findIndex(h => h && predicate(String(h).normalize('NFC').toLowerCase().trim()));
+    }
+    // Cột "Đơn giá" (giá gốc dùng làm cơ sở tính chiết khấu)
+    function getDonGiaColIdx(){
+        return getColIdxByHeader(s =>
+            (s.includes('đơn giá') || s === 'don gia' || s.replace(/\s+/g,'') === 'đơngiá')
+            && !s.includes('6 hộp') && !s.includes('12 hộp')
+        );
+    }
+    // Cột chiết khấu theo mốc số hộp (n = 6 hoặc 12)
+    function getCkColIdx(n){
+        const tag6 = ['6 hộp','6hộp']; const tag12 = ['12 hộp','12hộp'];
+        const tags = n === 6 ? tag6 : tag12;
+        const other = n === 6 ? tag12 : tag6;
+        return getColIdxByHeader(s => {
+            const isCk = s.includes('chiết khấu') || /\bck\b/.test(s) || s.startsWith('ck');
+            return isCk && tags.some(t => s.includes(t)) && !other.some(t => s.includes(t));
+        });
+    }
+    // Cột "Giá mua từ n hộp" (cột đích được tính tự động)
+    function getGiaMuaColIdx(n){
+        const tag6 = ['6 hộp','6hộp']; const tag12 = ['12 hộp','12hộp'];
+        const tags = n === 6 ? tag6 : tag12;
+        const other = n === 6 ? tag12 : tag6;
+        return getColIdxByHeader(s => {
+            const isGia = s.includes('giá mua') || s.includes('gia mua');
+            return isGia && tags.some(t => s.includes(t)) && !other.some(t => s.includes(t));
+        });
+    }
+    // Chuyển chuỗi giá "1.200.000 đ" → số nguyên VNĐ
+    function parsePriceNumber(v){
+        if (v === null || v === undefined) return NaN;
+        const s = String(v).replace(/[^\d.,-]/g,'').trim();
+        if (!s) return NaN;
+        const n = parseInt(s.replace(/[.,]/g,''), 10);
+        return isNaN(n) ? NaN : n;
+    }
+    // Định dạng số → "1.200.000"
+    function formatPriceVN(n){ return isNaN(n) ? '' : Math.round(n).toLocaleString('vi-VN'); }
+    // Đọc % chiết khấu đã nhập
+    function readCkPercent(rowIdx, n){
+        if (ckDiscount[rowIdx] && ckDiscount[rowIdx][n] !== undefined && ckDiscount[rowIdx][n] !== '') {
+            const p = parseFloat(String(ckDiscount[rowIdx][n]).replace(',','.'));
+            return isNaN(p) ? null : p;
+        }
+        return null;
+    }
+    // Tính lại "Giá mua từ n hộp" cho 1 hàng dựa trên đơn giá & % chiết khấu đã nhập
+    function recomputeGiaMuaForRow(tr, rowData, rowIdx, idxs){
+        const donGia = parsePriceNumber(idxs.donGiaIdx !== -1 ? rowData[idxs.donGiaIdx] : NaN);
+        [[6, idxs.giaMua6Idx],[12, idxs.giaMua12Idx]].forEach(([mark, gmIdx])=>{
+            if (gmIdx === -1) return;
+            const td = tr.querySelector('td.gia-mua-auto[data-giamua="'+mark+'"]');
+            if (!td) return;
+            const pct = readCkPercent(rowIdx, mark);
+            if (pct !== null && !isNaN(donGia)) {
+                td.textContent = formatPriceVN(donGia * (1 - pct/100));
+                td.dataset.computed = '1';
+            } else if (td.dataset.computed === '1') {
+                td.textContent = rowData[gmIdx] || '';
+                td.dataset.computed = '';
+            }
+        });
+    }
+    // Bấm-chọn / bỏ chọn 1 cột (theo tên) cho báo giá — cập nhật tại chỗ để giữ % đã nhập
+    function toggleQuoteColumn(headerName){
+        if (!headerName) return;
+        if (pickedQuoteCols.has(headerName)) pickedQuoteCols.delete(headerName);
+        else pickedQuoteCols.add(headerName);
+        const table = document.querySelector('.price-table');
+        if (table){
+            table.querySelectorAll('thead th.col-pick').forEach(th=>{
+                const nm = headersCache[parseInt(th.dataset.colidx)] || '';
+                th.classList.toggle('col-picked', pickedQuoteCols.has(nm));
+            });
+            const visIdx = visibleColumnIndexes();
+            table.querySelectorAll('tbody tr:not(.group-row)').forEach(tr=>{
+                const tds = tr.querySelectorAll('td');
+                visIdx.forEach((colIdx, pos)=>{
+                    if (tds[pos]) tds[pos].classList.toggle('col-picked-cell', pickedQuoteCols.has(headersCache[colIdx]));
+                });
+            });
+        }
+        renderColPickBar();
+    }
+    // Thanh trạng thái cột đã chọn cho báo giá
+    function renderColPickBar(){
+        let bar = document.getElementById('colPickBar');
+        if (!bar){
+            bar = document.createElement('div'); bar.id = 'colPickBar'; bar.className = 'colpick-bar';
+            if (tableContainer && tableContainer.parentNode) tableContainer.parentNode.insertBefore(bar, tableContainer);
+        }
+        if (pickedQuoteCols.size === 0){ bar.style.display = 'none'; return; }
+        bar.style.display = 'flex';
+        bar.innerHTML = '<span>📋 Báo giá sẽ chỉ lấy các cột đã chọn:</span>' +
+            Array.from(pickedQuoteCols).map(n=>'<span class="cp-tag">'+n+'</span>').join('') +
+            '<button class="cp-clear" id="cpClearBtn">✕ Bỏ chọn tất cả</button>';
+        const clr = document.getElementById('cpClearBtn');
+        if (clr) clr.onclick = ()=>{ pickedQuoteCols.clear(); redrawWithFilters(); renderColPickBar(); };
+    }
 
     function createTable(data, sourceIndexes=null){
         if(!data.length){ tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị.</p>'; columnToolbar.style.display='none'; return; }
@@ -2030,14 +2394,36 @@
         
         // Tìm index cột Mã sp 1 lần cho toàn bảng
         const maSpColIdx = getMaSpColIdx();
+        // Phân loại kiểu cột theo tên tiêu đề (để căn phải giá, tô màu %, STT) — tra cứu 1 lần
+        const colKind = headersCache.map(h => {
+            const s = String(h||'').normalize('NFC').toLowerCase();
+            if(s.includes('đơn giá') || s.includes('giá mua') || s.includes('giá bán') || (s.includes('giá') && s.includes('vnđ'))) return 'price';
+            if(s.startsWith('ck') || s.includes('chiết khấu') || s.includes('%')) return 'pct';
+            const sc = s.replace(/\s+/g,'').replace(/\./g,'');
+            if(sc === 'stt' || sc === 'sothutu' || sc === 'số thứ tự'.replace(/\s+/g,'')) return 'num';
+            return '';
+        });
         
+        // Chỉ số các cột CK / Giá mua / Đơn giá để render đặc biệt
+        const ck6Idx = getCkColIdx(6), ck12Idx = getCkColIdx(12);
+        const giaMua6Idx = getGiaMuaColIdx(6), giaMua12Idx = getGiaMuaColIdx(12);
+        const donGiaIdx = getDonGiaColIdx();
+        const gmIdxs = {donGiaIdx, giaMua6Idx, giaMua12Idx};
+
         const table = document.createElement("table"); table.className = "price-table";
         const thead = document.createElement("thead"); const headerRow = document.createElement("tr");
         visibleIdx.forEach((colIdx)=>{ 
-            const th = document.createElement("th"); th.className = 'th-resizable'; 
+            const th = document.createElement("th"); th.className = 'th-resizable col-pick'; 
             const hName = headersCache[colIdx] || "";
             th.textContent = hName; 
+            th.dataset.colidx = colIdx;
+            th.title = 'Bấm để chọn/bỏ chọn cột này cho báo giá';
+            if (pickedQuoteCols.has(hName)) th.classList.add('col-picked');
             if(columnWidths[colIdx]){ th.style.width = columnWidths[colIdx] + 'px'; }
+            th.addEventListener('click', (e)=>{
+                if (e.target.classList.contains('col-resizer')) return; // đừng kích hoạt khi kéo giãn cột
+                toggleQuoteColumn(hName);
+            });
             headerRow.appendChild(th); 
         });
         const thChoose = document.createElement('th'); thChoose.textContent = 'Chọn'; thChoose.className='th-resizable'; headerRow.appendChild(thChoose);
@@ -2048,11 +2434,64 @@
             const tr = document.createElement("tr");
             const rowIdx = sourceIndexes ? sourceIndexes[i-1] : i;
             tr.dataset.rowIndex = rowIdx;
+
+            // Nhận diện HÀNG TIÊU ĐỀ NHÓM (ví dụ "◆ NHÓM: TIM MẠCH..."): chỉ có 1 ô đầu có nội dung
+            const nonEmpty = rowData.filter(c => String(c).trim().length>0);
+            const firstTxt = String(rowData.find(c => String(c).trim().length>0) || '');
+            const isGroupRow = nonEmpty.length === 1 && (firstTxt.includes('NHÓM') || firstTxt.trim().startsWith('◆') || firstTxt.trim().startsWith('▲') || firstTxt.trim().startsWith('■'));
+
+            if(isGroupRow){
+                tr.className = 'group-row';
+                const td = document.createElement('td');
+                td.colSpan = visibleIdx.length + 1; // trải hết bảng (gồm cả cột Chọn)
+                td.textContent = firstTxt.replace(/^[◆▲■]\s*/, '► ');
+                tr.appendChild(td);
+                tbody.appendChild(tr);
+                continue; // Hàng nhóm không có checkbox chọn
+            }
+
             visibleIdx.forEach((colIdx, visPos)=>{
                 const td = document.createElement("td"); const cell = rowData[colIdx];
-                td.textContent = (typeof cell === 'string' && cell.includes('%')) ? cell : (cell || '');
                 if(columnWidths[colIdx]){ td.style.width = columnWidths[colIdx] + 'px'; }
                 if(maSpColIdx !== -1 && colIdx === maSpColIdx) td.dataset.col = 'masp';
+                if (pickedQuoteCols.has(headersCache[colIdx])) td.classList.add('col-picked-cell');
+
+                // ===== Ô CHIẾT KHẤU (CK ≥ 6 hộp / CK ≥ 12 hộp): cho nhập % =====
+                if (colIdx === ck6Idx || colIdx === ck12Idx) {
+                    const mark = (colIdx === ck6Idx) ? 6 : 12;
+                    const inp = document.createElement('input');
+                    inp.type = 'text'; inp.inputMode = 'decimal'; inp.className = 'ck-input'; inp.placeholder = '% CK';
+                    const saved = (ckDiscount[rowIdx] && ckDiscount[rowIdx][mark] !== undefined) ? ckDiscount[rowIdx][mark] : '';
+                    if (saved === '' && cell !== undefined && cell !== null && String(cell).trim() !== '') {
+                        const pre = parseFloat(String(cell).replace('%','').replace(',','.'));
+                        if (!isNaN(pre)) { inp.value = pre; if(!ckDiscount[rowIdx]) ckDiscount[rowIdx]={}; ckDiscount[rowIdx][mark]=String(pre); }
+                    } else { inp.value = saved; }
+                    inp.addEventListener('input', ()=>{
+                        if (!ckDiscount[rowIdx]) ckDiscount[rowIdx] = {};
+                        ckDiscount[rowIdx][mark] = inp.value.replace('%','').trim();
+                        recomputeGiaMuaForRow(tr, rowData, rowIdx, gmIdxs);
+                    });
+                    // Không cho click ô nhập lan sang chọn hàng
+                    inp.addEventListener('click', e=> e.stopPropagation());
+                    td.appendChild(inp); tr.appendChild(td);
+                    return;
+                }
+
+                // ===== Ô GIÁ MUA TỪ n HỘP: tính tự động = đơn giá * (1 - %CK) =====
+                if (colIdx === giaMua6Idx || colIdx === giaMua12Idx) {
+                    td.classList.add('gia-mua-auto');
+                    td.dataset.giamua = (colIdx === giaMua6Idx) ? '6' : '12';
+                    td.textContent = (cell || '');
+                    tr.appendChild(td);
+                    return;
+                }
+
+                td.textContent = (typeof cell === 'string' && cell.includes('%')) ? cell : (cell || '');
+                // Gán class căn chỉnh theo kiểu cột
+                const kind = colKind[colIdx];
+                if(kind === 'price' && String(cell).trim()!=='') td.className += ' cell-price';
+                else if(kind === 'pct' && String(cell).trim()!=='') td.className += ' cell-pct';
+                else if(kind === 'num') td.className += ' cell-num';
                 tr.appendChild(td);
             });
             const tdChoose = document.createElement('td');
@@ -2068,13 +2507,20 @@
                 updateFilteredSection(); // Cập nhật phần chọn tất cả danh sách đã lọc
             });
             tdChoose.style.textAlign='center'; tdChoose.appendChild(cb); tr.appendChild(tdChoose);
+            recomputeGiaMuaForRow(tr, rowData, rowIdx, gmIdxs);
             tbody.appendChild(tr);
         }
         table.appendChild(tbody);
         tableContainer.innerHTML = ""; (tbody.rows.length>0 || headersCache.length>0) ? tableContainer.appendChild(table) : (tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị sau khi lọc.</p>');
         enableColumnResize(table, visibleIdx);
+        renderColPickBar();
         
-        const visibleRowCount = tbody.querySelectorAll('tr').length;
+        const productRowCount = tbody.querySelectorAll('tr:not(.group-row)').length;
+        if(rowCountBadge){
+            if(currentData.length > 1){ rowCountBadge.style.display='inline-flex'; rowCountBadge.textContent = productRowCount + ' SP'; }
+            else rowCountBadge.style.display='none';
+        }
+        const visibleRowCount = productRowCount;
         fromRowInput.max = visibleRowCount;
         toRowInput.max = visibleRowCount;
         toRowInput.value = visibleRowCount;
@@ -2201,7 +2647,7 @@
     }
     function redrawWithFilters(){
         if(showingOnlySelected){ renderSelectedOnly(); return; }
-        const term = searchInput.value.trim(); if(term){ performSearch(); } else { createTable(currentData); }
+        applyFilters();
     }
     // ========== LƯU/TẢI FIREBASE ==========
     async function saveDataToFirebase(){
@@ -2328,10 +2774,32 @@
     function createQuoteTable() {
         const indices = Array.from(selectedRowIdx).sort((a,b)=>a-b);
         const aoa = [currentData[0]];
-        indices.forEach(idx=>{ if(currentData[idx]) aoa.push(currentData[idx]); });
+        // Chỉ số cột giá/chiết khấu để ghi giá trị đã tính vào báo giá
+        const _donGiaIdx = getDonGiaColIdx();
+        const _ck6Idx = getCkColIdx(6), _ck12Idx = getCkColIdx(12);
+        const _gm6Idx = getGiaMuaColIdx(6), _gm12Idx = getGiaMuaColIdx(12);
+        indices.forEach(idx=>{
+            if(!currentData[idx]) return;
+            const row = currentData[idx].slice();
+            const donGia = parsePriceNumber(_donGiaIdx !== -1 ? row[_donGiaIdx] : NaN);
+            [[6,_ck6Idx,_gm6Idx],[12,_ck12Idx,_gm12Idx]].forEach(([mark, ckIdx, gmIdx])=>{
+                const pct = readCkPercent(idx, mark);
+                if (pct !== null){
+                    if (ckIdx !== -1) row[ckIdx] = pct + '%';
+                    if (gmIdx !== -1 && !isNaN(donGia)) row[gmIdx] = formatPriceVN(donGia*(1-pct/100));
+                }
+            });
+            aoa.push(row);
+        });
         
         // Lọc cột theo trạng thái ẩn/hiện hiện tại
-        const visibleIdx = visibleColumnIndexes();
+        let visibleIdx = visibleColumnIndexes();
+
+        // ====== ƯU TIÊN: nếu user đã BẤM-CHỌN cột từ bảng xem giá → chỉ lấy đúng các cột đó ======
+        if (pickedQuoteCols.size > 0) {
+            const pickedIdx = visibleIdx.filter(colIdx => pickedQuoteCols.has(headersCache[colIdx]));
+            if (pickedIdx.length > 0) visibleIdx = pickedIdx;
+        }
         
         // ============ LỌC THÊM CỘT KHI BÁO GIÁ LONG CHÂU / PHARMACITY ============
         // Ẩn các cột: "CK ≥ 6 hộp", "Giá mua từ 6 hộp (VNĐ)", "Loại điều trị"
@@ -2544,19 +3012,8 @@
         data.forEach(c => html += `<tr><td>${c.tenKhachHang}</td><td>${c.nguoiPhuTrach}</td><td>${c.dienThoai}</td><td>${c.diaChi}</td></tr>`);
         customerTableContainer.innerHTML = html + '</tbody></table>';
     }
-    function loadCustomerDataFromFirebase() {
-        // Lắng nghe REALTIME: upload DSKH mới ở menu Cơ sở dữ liệu (máy này hoặc máy khác)
-        // → khung GỬI BÁO GIÁ QUA ZALO và bảng CSDL tự cập nhật ngay, không cần tải lại trang
-        database.ref('customerData').on('value', snap => {
-            const v = snap.val();
-            customerDatabase = Array.isArray(v) ? v : (v ? Object.values(v) : []);
-            try { renderCustomerTable(customerDatabase); } catch(e) {}
-            try {
-                if (typeof renderZaloCustomerList === 'function') {
-                    renderZaloCustomerList((typeof zaloCustSearch !== 'undefined' && zaloCustSearch) ? zaloCustSearch.value : '');
-                }
-            } catch(e) {}
-        }, err => console.warn('customerData listener:', err));
+    async function loadCustomerDataFromFirebase() {
+        try { const snap = await database.ref('customerData').once('value'); if(snap.val()) customerDatabase = snap.val(); } catch(e){}
     }
     function showCustomerSuggestions(event) {
         const val = event.target.value.toLowerCase(); customerSuggestions.innerHTML = ''; if(val.length<1) return;
@@ -2923,84 +3380,18 @@
     const zaloAddCustBtn = document.getElementById('zaloAddCustBtn');
     let zaloLastAddedPhone = null;
     let zaloSelectedPhone = null;          // SĐT (chuẩn hoá) của KH đang được load lên báo giá
-    let zaloUploadedCustomers = [];        // DSKH upload từ Excel — LƯU CHUNG Firebase (zaloUploadList), mọi máy đều thấy
+    let zaloUploadedCustomers = [];        // DSKH upload từ Excel — hiển thị RIÊNG ở khung thêm mới, chỉ lưu localStorage
     let zaloUploadRenderedList = [];       // Danh sách upload đang hiển thị (tra theo data-ridx)
-    const ZALO_UPLOAD_DEL_PASS = 'minhtriet1973'; // mật khẩu xóa danh sách upload
-    const zaloUploadFilesRef = database.ref('zaloUploadFiles'); // MỖI FILE 1 bản ghi → upload nhiều file nối tiếp, xóa từng file
-    let zaloUploadFilesMap = {};           // { fileKey: {fileName, uploadedAt, customers:[...]} }
-    // Chuyển dữ liệu cũ (node zaloUploadList — 1 danh sách duy nhất) sang cấu trúc nhiều file, chạy 1 lần
-    database.ref('zaloUploadList').once('value').then(snap => {
-        const old = snap.val();
-        if (old && Array.isArray(old.customers) && old.customers.length) {
-            return zaloUploadFilesRef.push({
-                fileName: old.fileName || 'Danh sách cũ',
-                uploadedAt: old.uploadedAt || Date.now(),
-                customers: old.customers
-            }).then(() => database.ref('zaloUploadList').remove());
-        }
-        if (old) return database.ref('zaloUploadList').remove();
-    }).catch(e => console.warn('migrate zaloUploadList:', e));
-    // Đồng bộ realtime: máy nào upload/xóa file thì mọi máy khác thấy ngay
-    zaloUploadFilesRef.on('value', snap => {
-        zaloUploadFilesMap = snap.val() || {};
-        zaloUploadedCustomers = [];
-        Object.keys(zaloUploadFilesMap)
-            .sort((a, b) => (zaloUploadFilesMap[a].uploadedAt || 0) - (zaloUploadFilesMap[b].uploadedAt || 0))
-            .forEach(fk => {
-                const f = zaloUploadFilesMap[fk] || {};
-                (Array.isArray(f.customers) ? f.customers : []).forEach(c => {
-                    zaloUploadedCustomers.push(Object.assign({}, c, { _fileKey: fk, _fileName: f.fileName || '' }));
-                });
-            });
-        renderZaloUploadFileChips();
-        renderZaloUploadList(zaloCustSearch ? zaloCustSearch.value : '');
-    }, err => console.warn('zaloUploadFiles listener:', err));
-
-    // Chip danh sách file đã upload + nút xóa từng file
-    function renderZaloUploadFileChips() {
-        const box = document.getElementById('zaloUploadFileChips');
-        if (!box) return;
-        const keys = Object.keys(zaloUploadFilesMap)
-            .sort((a, b) => (zaloUploadFilesMap[a].uploadedAt || 0) - (zaloUploadFilesMap[b].uploadedAt || 0));
-        box.innerHTML = keys.map(fk => {
-            const f = zaloUploadFilesMap[fk] || {};
-            const n = Array.isArray(f.customers) ? f.customers.length : 0;
-            const when = f.uploadedAt ? new Date(f.uploadedAt).toLocaleString('vi-VN') : '';
-            return '<span class="zalo-file-chip" title="Upload lúc ' + zaloEsc(when) + '">' +
-                '<span class="zfc-name">📄 ' + zaloEsc(f.fileName || '(không tên)') + '</span>' +
-                '<span class="zfc-count">' + n + ' KH</span>' +
-                '<button class="zfc-del" data-fkey="' + zaloEsc(fk) + '" title="Xóa file này trên MỌI MÁY (cần mật khẩu) để upload lại">✕</button>' +
-                '</span>';
-        }).join('');
+    const ZALO_UPLOAD_LS_KEY = 'zaloUploadedCustomers_v1';
+    function saveUploadedCustomersToLocal() {
+        try { localStorage.setItem(ZALO_UPLOAD_LS_KEY, JSON.stringify(zaloUploadedCustomers)); } catch(e) { console.warn('LS save:', e); }
     }
-    // Xóa TỪNG file (mật khẩu) — dọn luôn ghi nhận Tên NV của các KH chỉ thuộc file đó
-    document.getElementById('zaloUploadFileChips')?.addEventListener('click', e => {
-        const del = e.target.closest('.zfc-del');
-        if (!del) return;
-        const fk = del.getAttribute('data-fkey');
-        const f = zaloUploadFilesMap[fk];
-        if (!f) return;
-        const pass = prompt('⚠️ Xóa file "' + (f.fileName || '') + '" (' + (Array.isArray(f.customers) ? f.customers.length : 0) + ' KH) sẽ áp dụng cho TẤT CẢ các máy và không hoàn tác được.\n\nNhập mật khẩu để xác nhận xóa:');
-        if (pass === null) return;
-        if (pass !== ZALO_UPLOAD_DEL_PASS) { alert('❌ Sai mật khẩu — không xóa.'); return; }
-        // Tên NV của KH chỉ có trong file này → xóa theo; KH trùng SĐT ở file khác → giữ ghi nhận
-        const keysInOthers = new Set();
-        Object.keys(zaloUploadFilesMap).forEach(k => {
-            if (k === fk) return;
-            (zaloUploadFilesMap[k].customers || []).forEach(c => { const ck = zaloClaimKeyFor(c); if (ck) keysInOthers.add(ck); });
-        });
-        const claimUpdates = {};
-        (f.customers || []).forEach(c => {
-            const ck = zaloClaimKeyFor(c);
-            if (ck && !keysInOthers.has(ck)) claimUpdates[ck] = null;
-        });
-        Promise.all([
-            zaloUploadFilesRef.child(fk).remove(),
-            Object.keys(claimUpdates).length ? database.ref('zaloUploadClaims').update(claimUpdates) : Promise.resolve()
-        ]).then(() => {
-            zaloToast('🗑 Đã xóa file <b>' + zaloEsc(f.fileName || '') + '</b> trên <b>mọi máy</b> (kèm ghi nhận Tên NV của các KH thuộc riêng file này). Có thể upload lại file mới.', 6500);
-        }).catch(err => alert('Lỗi xóa trên Firebase: ' + (err && err.message || err)));
-    });
+    function loadUploadedCustomersFromLocal() {
+        try {
+            const raw = localStorage.getItem(ZALO_UPLOAD_LS_KEY);
+            if (raw) { const arr = JSON.parse(raw); if (Array.isArray(arr)) zaloUploadedCustomers = arr; }
+        } catch(e) { console.warn('LS load:', e); }
+    }
     let zaloRenderedList = [];             // Danh sách đang hiển thị trong bảng (để tra theo data-ridx)
     const zaloUploadInput = document.getElementById('zaloUploadInput');
     const zaloClearUploadBtn = document.getElementById('zaloClearUploadBtn');
@@ -3034,16 +3425,8 @@
     // Nếu file KHÔNG đúng form (ví dụ chỉ có Tên KH | Điện thoại | Địa chỉ) vẫn load được, cột thiếu (Người liên hệ...) để trống
     function parseCustomerAoa(aoa) {
         if (!aoa || !aoa.length) return [];
-        // Chuẩn hóa Unicode: file Excel có thể lưu tiếng Việt dạng tổ hợp (NFD) — "Điện thoại" nhìn giống
-        // nhưng khác mã ký tự → phải normalize NFC + bản không dấu để so khớp chắc chắn
-        const zNfc = x => String(x || '').normalize ? String(x || '').normalize('NFC').toLowerCase() : String(x || '').toLowerCase();
-        const zFold = x => zNfc(x).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
-        const header = (aoa[0] || []).map(zNfc);
-        const headerPlain = (aoa[0] || []).map(zFold);
-        const findCol = (kws) => {
-            const kwsPlain = kws.map(zFold);
-            return header.findIndex((h, i) => kws.some(k => h.includes(k)) || kwsPlain.some(k => headerPlain[i].includes(k)));
-        };
+        const header = (aoa[0] || []).map(x => String(x || '').toLowerCase());
+        const findCol = (kws) => header.findIndex(h => kws.some(k => h.includes(k)));
         let iName = findCol(['tên khách', 'ten khach', 'khách hàng', 'khach hang', 'tên kh', 'ten kh', 'công ty', 'cong ty', 'tên công', 'ten cong']);
         let iContact = findCol(['người', 'nguoi', 'liên hệ', 'lien he', 'phụ trách', 'phu trach']);
         let iPhone = findCol(['điện thoại', 'dien thoai', 'sđt', 'sdt', 'phone', 'di động', 'di dong']);
@@ -3111,17 +3494,11 @@
             if (!parsed.length) {
                 alert('File không có dữ liệu khách hàng hợp lệ.\n\nForm chuẩn: Tên khách hàng | Người liên hệ | Điện thoại | Địa chỉ.\nFile chỉ có Tên KH | Điện thoại | Địa chỉ vẫn load được (cột Người liên hệ để trống) — miễn có cột tên và cột số điện thoại.');
             } else {
-                // Thêm file mới NỐI TIẾP (không thay thế file trước) — mọi máy thấy ngay
-                zaloUploadFilesRef.push({
-                    fileName: file.name || '',
-                    uploadedAt: firebase.database.ServerValue.TIMESTAMP,
-                    customers: parsed
-                }).then(() => {
-                    zaloCustSearch.value = '';
-                    zaloToast('📁 Đã thêm file <b>' + zaloEsc(file.name) + '</b> (<b>' + parsed.length + '</b> KH) vào danh sách chung — <b>nối tiếp</b> các file trước, mọi máy đều thấy cùng tên NV đã gửi.<br>Muốn thay file: bấm ✕ trên thẻ file để xóa (cần mật khẩu) rồi upload lại.', 10000);
-                }).catch(err => {
-                    alert('Lỗi lưu file lên Firebase: ' + (err && err.message || err) + '\nKiểm tra mạng rồi upload lại.');
-                });
+                zaloUploadedCustomers = parsed;
+                saveUploadedCustomersToLocal();
+                zaloCustSearch.value = '';
+                renderZaloUploadList('');
+                zaloToast('📁 Đã load <b>' + parsed.length + '</b> KH từ file <b>' + zaloEsc(file.name) + '</b> vào bảng riêng bên dưới (chỉ lưu trên máy này — KHÔNG thêm vào DSKH công ty đã lưu).<br>Bấm <b>📋 Chọn</b> KH để load lên báo giá.', 9000);
             }
         } catch (err) {
             alert('Lỗi đọc file Excel: ' + (err && err.message || err));
@@ -3129,21 +3506,13 @@
         zaloUploadInput.value = '';
     });
 
-    // Xóa TẤT CẢ file KH đã upload (áp dụng cho MỌI MÁY) — yêu cầu mật khẩu
+    // Xóa DSKH đã upload để upload lại file khác
     if (zaloClearUploadBtn) zaloClearUploadBtn.addEventListener('click', () => {
-        const nFiles = Object.keys(zaloUploadFilesMap).length;
-        if (!nFiles) { zaloToast('Danh sách upload đang trống.', 3500); return; }
-        const pass = prompt('⚠️ Xóa TẤT CẢ ' + nFiles + ' file KH upload sẽ áp dụng cho TẤT CẢ các máy (kèm toàn bộ ghi nhận Tên NV đã gửi) và không hoàn tác được.\n\nNhập mật khẩu để xác nhận xóa:');
-        if (pass === null) return; // bấm Hủy
-        if (pass !== ZALO_UPLOAD_DEL_PASS) { alert('❌ Sai mật khẩu — không xóa.'); return; }
-        Promise.all([
-            zaloUploadFilesRef.remove(),
-            database.ref('zaloUploadClaims').remove()
-        ]).then(() => {
-            zaloToast('🗑 Đã xóa toàn bộ file KH upload và ghi nhận Tên NV trên <b>mọi máy</b>. Có thể upload file mới.', 6000);
-        }).catch(err => {
-            alert('Lỗi xóa trên Firebase: ' + (err && err.message || err));
-        });
+        zaloUploadedCustomers = [];
+        try { localStorage.removeItem(ZALO_UPLOAD_LS_KEY); } catch(e) {}
+        // Nếu KH đang chọn thuộc DS upload thì bỏ chọn để tránh gửi nhầm
+        renderZaloUploadList('');
+        zaloToast('🗑 Đã xóa danh sách KH upload (cả bản lưu trên máy). Có thể upload lại file khác.', 5000);
     });
 
     zaloPanelHeader.addEventListener('click', () => {
@@ -3488,7 +3857,7 @@
             const claim = zaloClaimOf(c);
             html += '<tr class="' + (isSelected ? 'zalo-row-selected' : '') + (claim ? ' zalo-row-claimed' : '') + '" data-ridx="' + ridx + '" title="Bấm để load thông tin KH này lên báo giá — bấm lại lần nữa để BỎ CHỌN">' +
                 '<td style="white-space:nowrap"><button class="zalo-pick-btn' + (isSelected ? ' picked' : '') + '" data-ridx="' + ridx + '">' + (isSelected ? '✓ Đã chọn' : '📋 Chọn') + '</button></td>' +
-                '<td><b>' + zaloEsc(c.tenKhachHang) + '</b><span class="zalo-upload-badge" title="Thuộc file: ' + zaloEsc(c._fileName || '') + '">📁 ' + zaloEsc(c._fileName ? (c._fileName.length > 22 ? c._fileName.slice(0, 20) + '…' : c._fileName) : 'upload') + '</span>' + (sent ? '<span class="zalo-sent-badge">✓ đã gửi hôm nay</span>' : '') + (claim ? '<span class="zalo-claim-badge" title="Nhân viên đã ghi nhận gửi cho KH này' + (claim.at ? ' — ' + new Date(claim.at).toLocaleString('vi-VN') : '') + '">👤 NV ' + zaloEsc(claim.staff) + ' đã gửi</span>' : '') + '</td>' +
+                '<td><b>' + zaloEsc(c.tenKhachHang) + '</b><span class="zalo-upload-badge">📁 upload</span>' + (sent ? '<span class="zalo-sent-badge">✓ đã gửi hôm nay</span>' : '') + (claim ? '<span class="zalo-claim-badge" title="Nhân viên đã ghi nhận gửi cho KH này' + (claim.at ? ' — ' + new Date(claim.at).toLocaleString('vi-VN') : '') + '">👤 NV ' + zaloEsc(claim.staff) + ' đã gửi</span>' : '') + '</td>' +
                 '<td>' + (c.nguoiPhuTrach ? zaloEsc(c.nguoiPhuTrach) : '<span style="color:#bbb">—</span>') + '</td>' +
                 '<td>' + (c.dienThoai ? '<span class="zalo-phone-link" data-ridx="' + ridx + '" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Bấm để gửi báo giá qua Zalo (tự load thông tin KH này lên báo giá trước khi gửi)">' + zaloEsc(c.dienThoai) + '</span>' : '<span style="color:#aaa">—</span>') + '</td>' +
                 '<td>' + zaloEsc(c.diaChi) + '</td>' +
@@ -3583,7 +3952,7 @@
         loadDataFromFirebase(); 
         loadProductImages(); 
         loadCustomerDataFromFirebase(); 
-        // DSKH upload giờ tự đồng bộ realtime từ Firebase (zaloUploadList) — không cần load từ máy
+        loadUploadedCustomersFromLocal();   // khôi phục DSKH upload đã lưu trên máy
         renderZaloUploadList('');
     });
 </script>
