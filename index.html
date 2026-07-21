@@ -430,6 +430,13 @@
         #zaloUploadListWrap { margin-top: 10px; border-color: #ffcc80; display: none; }
         .zalo-upload-label { background: #ff9800; color: #fff; border: none; border-radius: 6px; padding: 9px 14px; cursor: pointer; font-weight: bold; font-size: 13px; white-space: nowrap; display: inline-flex; align-items: center; }
         .zalo-upload-label:hover { background: #f57c00; }
+        /* Danh sách file DSKH đã upload (mỗi file 1 chip, có nút xóa) */
+        #zaloUploadFilesBar { display:flex; flex-wrap:wrap; gap:8px; }
+        .zalo-file-chip { display:inline-flex; align-items:center; gap:8px; background:#fff3e0; border:1px solid #ffcc80; border-radius:999px; padding:5px 6px 5px 12px; font-size:13px; color:#e65100; max-width:100%; }
+        .zalo-file-chip .zf-name { font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:220px; }
+        .zalo-file-chip .zf-count { background:#ffe0b2; color:#bf360c; border-radius:999px; padding:1px 8px; font-size:11px; font-weight:700; }
+        .zalo-file-chip .zf-del { background:#e53935; color:#fff; border:none; border-radius:50%; width:22px; height:22px; line-height:1; cursor:pointer; font-size:13px; font-weight:bold; }
+        .zalo-file-chip .zf-del:hover { background:#c62828; }
         .zalo-clear-upload-btn { background: #f44336; color: #fff; border: none; border-radius: 6px; padding: 9px 14px; cursor: pointer; font-weight: bold; font-size: 13px; white-space: nowrap; display: none; }
         .zalo-clear-upload-btn:hover { background: #d32f2f; }
         #quoteCustomerName:empty::before { content: '(chưa chọn — bấm chọn khách hàng trong danh sách 📱 GỬI BÁO GIÁ QUA ZALO bên dưới)'; color: #c62828; font-style: italic; font-weight: normal; font-size: 13px; }
@@ -1345,11 +1352,12 @@
                     </div>
                     <button class="zalo-add-btn" id="zaloAddCustBtn">📥 Load vào danh sách &amp; lưu công ty</button>
                     <div style="margin-top:12px;padding-top:10px;border-top:1px dashed #b6d4fe;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-                        <span style="font-weight:bold;color:#0052cc;font-size:14px">📁 Hoặc upload file Excel DSKH mới (hiển thị riêng bên dưới, chỉ lưu trên máy này — KHÔNG thêm vào danh sách công ty đã lưu):</span>
-                        <label for="zaloUploadInput" class="zalo-upload-label" title="Upload file Excel danh sách khách hàng (dùng tạm cho phiên này, không ghi đè dữ liệu đã lưu)">📁 Upload Excel DSKH</label>
-                        <input type="file" id="zaloUploadInput" accept=".xlsx, .xls" style="display:none" />
-                        <button class="zalo-clear-upload-btn" id="zaloClearUploadBtn" title="Xóa danh sách KH vừa upload để upload lại file khác">🗑 Xóa DS upload</button>
+                        <span style="font-weight:bold;color:#0052cc;font-size:14px">📁 Upload nhiều file Excel DSKH (các file được <b>nối tiếp</b> vào danh sách gửi Zalo; đồng bộ real-time mọi máy):</span>
+                        <label for="zaloUploadInput" class="zalo-upload-label" title="Upload thêm file Excel danh sách khách hàng — nối tiếp vào danh sách, đồng bộ Firebase cho mọi máy">📁 Upload thêm file DSKH</label>
+                        <input type="file" id="zaloUploadInput" accept=".xlsx, .xls" multiple style="display:none" />
+                        <button class="zalo-clear-upload-btn" id="zaloClearUploadBtn" title="Xóa TẤT CẢ file DSKH đã upload (cần mật khẩu)">🗑 Xóa tất cả</button>
                     </div>
+                    <div id="zaloUploadFilesBar" style="display:none;margin-top:10px;"></div>
                     <div class="zalo-cust-table-wrap" id="zaloUploadListWrap">
                         <table class="zalo-cust-table zalo-upload-table">
                             <thead><tr><th style="width:80px">Chọn KH</th><th style="width:24%">Tên khách hàng</th><th style="width:14%">Người liên hệ</th><th style="width:13%">Điện thoại</th><th>Địa chỉ</th><th style="width:230px">Gửi Zalo / Tên NV</th></tr></thead>
@@ -3380,18 +3388,31 @@
     const zaloAddCustBtn = document.getElementById('zaloAddCustBtn');
     let zaloLastAddedPhone = null;
     let zaloSelectedPhone = null;          // SĐT (chuẩn hoá) của KH đang được load lên báo giá
-    let zaloUploadedCustomers = [];        // DSKH upload từ Excel — hiển thị RIÊNG ở khung thêm mới, chỉ lưu localStorage
+    // ===== DSKH upload: NHIỀU FILE, nối tiếp, đồng bộ Firebase real-time =====
+    // Cấu trúc mỗi file: { id, name, at, customers: [{tenKhachHang,nguoiPhuTrach,dienThoai,diaChi}, ...] }
+    let zaloUploadedFiles = [];            // danh sách file đã upload (đồng bộ Firebase)
+    let zaloUploadedCustomers = [];        // danh sách KH phẳng (nối tiếp tất cả file) để render
     let zaloUploadRenderedList = [];       // Danh sách upload đang hiển thị (tra theo data-ridx)
-    const ZALO_UPLOAD_LS_KEY = 'zaloUploadedCustomers_v1';
-    function saveUploadedCustomersToLocal() {
-        try { localStorage.setItem(ZALO_UPLOAD_LS_KEY, JSON.stringify(zaloUploadedCustomers)); } catch(e) { console.warn('LS save:', e); }
+    const DSKH_DELETE_PASSWORD = 'minhtriet1973';
+    // Gộp customers của tất cả file thành 1 danh sách phẳng
+    function rebuildUploadedCustomers() {
+        const flat = [];
+        (zaloUploadedFiles || []).forEach(f => {
+            (f.customers || []).forEach(c => flat.push(c));
+        });
+        zaloUploadedCustomers = flat;
     }
-    function loadUploadedCustomersFromLocal() {
-        try {
-            const raw = localStorage.getItem(ZALO_UPLOAD_LS_KEY);
-            if (raw) { const arr = JSON.parse(raw); if (Array.isArray(arr)) zaloUploadedCustomers = arr; }
-        } catch(e) { console.warn('LS load:', e); }
-    }
+    // Lắng nghe Firebase real-time: mọi máy thấy cùng danh sách file DSKH
+    try {
+        database.ref('zaloUploadedDSKH').on('value', snap => {
+            const val = snap.val();
+            // Firebase lưu dạng object {id: file} → chuyển về mảng, sắp theo thời gian upload
+            zaloUploadedFiles = val ? Object.keys(val).map(k => val[k]).sort((a,b)=>(a.at||0)-(b.at||0)) : [];
+            rebuildUploadedCustomers();
+            renderUploadedFilesBar();
+            renderZaloUploadList(zaloCustSearch ? zaloCustSearch.value : '');
+        });
+    } catch(e) { console.warn('zaloUploadedDSKH listener:', e); }
     let zaloRenderedList = [];             // Danh sách đang hiển thị trong bảng (để tra theo data-ridx)
     const zaloUploadInput = document.getElementById('zaloUploadInput');
     const zaloClearUploadBtn = document.getElementById('zaloClearUploadBtn');
@@ -3484,36 +3505,81 @@
         })).filter(c => c.tenKhachHang);
     }
 
-    // Upload Excel DSKH → load vào danh sách gửi Zalo (dùng tạm, KHÔNG ghi đè Firebase)
+    // Upload nhiều Excel DSKH → NỐI TIẾP vào Firebase (mọi máy đều thấy)
     if (zaloUploadInput) zaloUploadInput.addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        try {
-            const aoa = await readExcelFile(file);
-            const parsed = parseCustomerAoa(aoa);
-            if (!parsed.length) {
-                alert('File không có dữ liệu khách hàng hợp lệ.\n\nForm chuẩn: Tên khách hàng | Người liên hệ | Điện thoại | Địa chỉ.\nFile chỉ có Tên KH | Điện thoại | Địa chỉ vẫn load được (cột Người liên hệ để trống) — miễn có cột tên và cột số điện thoại.');
-            } else {
-                zaloUploadedCustomers = parsed;
-                saveUploadedCustomersToLocal();
-                zaloCustSearch.value = '';
-                renderZaloUploadList('');
-                zaloToast('📁 Đã load <b>' + parsed.length + '</b> KH từ file <b>' + zaloEsc(file.name) + '</b> vào bảng riêng bên dưới (chỉ lưu trên máy này — KHÔNG thêm vào DSKH công ty đã lưu).<br>Bấm <b>📋 Chọn</b> KH để load lên báo giá.', 9000);
+        const files = Array.from(e.target.files || []);
+        if (!files.length) return;
+        let totalCust = 0, okFiles = 0, failNames = [];
+        for (const file of files) {
+            try {
+                const aoa = await readExcelFile(file);
+                const parsed = parseCustomerAoa(aoa);
+                if (!parsed.length) { failNames.push(file.name); continue; }
+                const id = 'f' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+                const entry = { id: id, name: file.name, at: Date.now(), customers: parsed };
+                await database.ref('zaloUploadedDSKH/' + id).set(entry);
+                totalCust += parsed.length; okFiles++;
+            } catch (err) {
+                failNames.push(file.name + ' (' + (err && err.message || err) + ')');
             }
-        } catch (err) {
-            alert('Lỗi đọc file Excel: ' + (err && err.message || err));
         }
         zaloUploadInput.value = '';
+        if (okFiles) {
+            zaloCustSearch.value = '';
+            zaloToast('📁 Đã upload <b>' + okFiles + '</b> file, thêm <b>' + totalCust + '</b> KH — nối tiếp vào danh sách và <b>đồng bộ mọi máy</b>.' +
+                (failNames.length ? '<br>⚠️ Bỏ qua: ' + zaloEsc(failNames.join(', ')) : ''), 9000);
+        } else {
+            alert('Không file nào có dữ liệu KH hợp lệ.\n\nForm chuẩn: Tên khách hàng | Người liên hệ | Điện thoại | Địa chỉ (chỉ cần có cột tên và cột số điện thoại).' +
+                (failNames.length ? '\n\nFile lỗi: ' + failNames.join(', ') : ''));
+        }
     });
 
-    // Xóa DSKH đã upload để upload lại file khác
-    if (zaloClearUploadBtn) zaloClearUploadBtn.addEventListener('click', () => {
-        zaloUploadedCustomers = [];
-        try { localStorage.removeItem(ZALO_UPLOAD_LS_KEY); } catch(e) {}
-        // Nếu KH đang chọn thuộc DS upload thì bỏ chọn để tránh gửi nhầm
-        renderZaloUploadList('');
-        zaloToast('🗑 Đã xóa danh sách KH upload (cả bản lưu trên máy). Có thể upload lại file khác.', 5000);
+    // Xóa 1 file DSKH đã upload (cần mật khẩu) — đồng bộ Firebase cho mọi máy
+    async function deleteUploadedFile(fileId) {
+        const f = (zaloUploadedFiles || []).find(x => x.id === fileId);
+        if (!f) return;
+        const pass = prompt('Nhập mật khẩu để XÓA file "' + (f.name || '') + '" (' + ((f.customers||[]).length) + ' KH):');
+        if (pass === null) return; // hủy
+        if (pass !== DSKH_DELETE_PASSWORD) { alert('❌ Sai mật khẩu. Không xóa.'); return; }
+        try {
+            await database.ref('zaloUploadedDSKH/' + fileId).remove();
+            zaloToast('🗑 Đã xóa file <b>' + zaloEsc(f.name || '') + '</b> khỏi danh sách (đồng bộ mọi máy). Có thể upload lại file khác.', 6000);
+        } catch (err) {
+            alert('Lỗi xóa trên Firebase: ' + (err && err.message || err));
+        }
+    }
+
+    // Xóa TẤT CẢ file DSKH đã upload (cần mật khẩu)
+    if (zaloClearUploadBtn) zaloClearUploadBtn.addEventListener('click', async () => {
+        if (!zaloUploadedFiles.length) return;
+        const pass = prompt('Nhập mật khẩu để XÓA TẤT CẢ ' + zaloUploadedFiles.length + ' file DSKH đã upload:');
+        if (pass === null) return;
+        if (pass !== DSKH_DELETE_PASSWORD) { alert('❌ Sai mật khẩu. Không xóa.'); return; }
+        try {
+            await database.ref('zaloUploadedDSKH').remove();
+            zaloToast('🗑 Đã xóa toàn bộ danh sách KH upload (đồng bộ mọi máy). Có thể upload lại file khác.', 5000);
+        } catch (err) {
+            alert('Lỗi xóa trên Firebase: ' + (err && err.message || err));
+        }
     });
+
+    // Hiển thị mỗi file upload dưới dạng 1 chip có nút xóa
+    function renderUploadedFilesBar() {
+        const bar = document.getElementById('zaloUploadFilesBar');
+        if (!bar) return;
+        if (!zaloUploadedFiles.length) { bar.style.display = 'none'; bar.innerHTML = ''; return; }
+        bar.style.display = 'flex';
+        bar.innerHTML = zaloUploadedFiles.map(f =>
+            '<span class="zalo-file-chip">' +
+                '<span class="zf-name" title="' + zaloEsc(f.name || '') + '">📄 ' + zaloEsc(f.name || 'File') + '</span>' +
+                '<span class="zf-count">' + ((f.customers || []).length) + ' KH</span>' +
+                '<button class="zf-del" data-fileid="' + zaloEsc(f.id) + '" title="Xóa file này (cần mật khẩu)">✕</button>' +
+            '</span>'
+        ).join('');
+        bar.querySelectorAll('.zf-del').forEach(btn => {
+            btn.addEventListener('click', () => deleteUploadedFile(btn.dataset.fileid));
+        });
+    }
 
     zaloPanelHeader.addEventListener('click', () => {
         zaloPanelBody.classList.toggle('collapsed');
@@ -3536,16 +3602,46 @@
         const n = new Date();
         return 'zaloQuoteSent_' + n.getFullYear() + '-' + String(n.getMonth()+1).padStart(2,'0') + '-' + String(n.getDate()).padStart(2,'0');
     }
-    function zaloWasSentToday(phone) {
-        try { const s = JSON.parse(localStorage.getItem(zaloSentStoreKey()) || '{}'); return !!s[zaloNormalizePhone(phone)]; } catch(e) { return false; }
+    // Khóa ngày (YYYY-MM-DD) dùng cho nhánh Firebase zaloSentLog
+    function zaloSentDateKey() {
+        const n = new Date();
+        return n.getFullYear() + '-' + String(n.getMonth()+1).padStart(2,'0') + '-' + String(n.getDate()).padStart(2,'0');
     }
-    function zaloMarkSent(phone) {
+    // Bản đồ "đã gửi hôm nay" đồng bộ real-time từ Firebase: { normphone: {name, at, staff} }
+    let zaloSentToday = {};
+    try {
+        database.ref('zaloSentLog/' + zaloSentDateKey()).on('value', snap => {
+            zaloSentToday = snap.val() || {};
+            // Cập nhật lại 2 bảng để badge "đã gửi hôm nay" hiện trên mọi máy
+            if (typeof renderZaloCustomerList === 'function' && zaloCustSearch) renderZaloCustomerList(zaloCustSearch.value);
+            if (typeof renderZaloUploadList === 'function' && zaloCustSearch) renderZaloUploadList(zaloCustSearch.value);
+        });
+    } catch(e) { console.warn('zaloSentLog listener:', e); }
+    function zaloWasSentToday(phone) {
+        const n = zaloNormalizePhone(phone);
+        if (n && zaloSentToday && zaloSentToday[n]) return true;
+        // fallback localStorage (khi mất mạng)
+        try { const s = JSON.parse(localStorage.getItem(zaloSentStoreKey()) || '{}'); return !!s[n]; } catch(e) { return false; }
+    }
+    function zaloMarkSent(phone, name) {
+        const n = zaloNormalizePhone(phone);
+        if (!n) return;
+        // localStorage (dự phòng offline)
         try {
             const k = zaloSentStoreKey();
             const s = JSON.parse(localStorage.getItem(k) || '{}');
-            s[zaloNormalizePhone(phone)] = Date.now();
+            s[n] = Date.now();
             localStorage.setItem(k, JSON.stringify(s));
         } catch(e) {}
+        // Firebase real-time để mọi máy biết NV đã gửi Zalo cho KH này hôm nay
+        try {
+            const staff = (localStorage.getItem(ZC_STAFF_LS_KEY) || '').trim();
+            database.ref('zaloSentLog/' + zaloSentDateKey() + '/' + n).set({
+                name: name || '',
+                staff: staff,
+                at: firebase.database.ServerValue.TIMESTAMP
+            });
+        } catch(e) { console.warn('zaloMarkSent firebase:', e); }
     }
     // ===== Ghi nhận Tên NV đã gửi cho KH upload (đồng bộ Firebase cho mọi máy) =====
     let zaloClaims = {};                      // { key: { staff, at } }
@@ -3733,7 +3829,7 @@
             if (done) return; done = true;
             document.getElementById('quotePage').classList.remove('zalo-capturing');
             if (btnEl) { btnEl.disabled = false; btnEl.textContent = '🖼 Ảnh'; }
-            zaloMarkSent(phone);
+            zaloMarkSent(phone, name);
             if (copied) {
                 zaloToast('✅ <b>Đã copy ảnh báo giá!</b><br>Đang mở Zalo của <b>' + zaloEsc(name || phone) + '</b> — trong khung chat bấm <b>Ctrl+V</b> để dán rồi <b>Enter</b> để gửi.', 9000);
             } else {
@@ -3767,7 +3863,7 @@
                 setTimeout(() => URL.revokeObjectURL(url), 30000);
 
                 if (btnEl) { btnEl.disabled = false; btnEl.textContent = '📄 PDF'; }
-                zaloMarkSent(phone);
+                zaloMarkSent(phone, name);
                 zaloToast('✅ <b>Đã tải file ' + zaloEsc(fileName) + '</b> về thư mục <b>Downloads</b>.<br>Đang mở Zalo của <b>' + zaloEsc(name || phone) + '</b> — <b>kéo file PDF</b> từ Downloads thả vào khung chat (hoặc bấm nút 📎 đính kèm) rồi <b>Enter</b> để gửi.', 12000);
                 openZaloChat(intl);
                 renderZaloCustomerList(zaloCustSearch.value);
@@ -3826,15 +3922,14 @@
         const wrap = document.getElementById('zaloUploadListWrap');
         const body = document.getElementById('zaloUploadListBody');
         if (!wrap || !body) return;
+        if (zaloClearUploadBtn) zaloClearUploadBtn.style.display = (zaloUploadedFiles && zaloUploadedFiles.length) ? 'inline-block' : 'none';
         if (!zaloUploadedCustomers || !zaloUploadedCustomers.length) {
             wrap.style.display = 'none';
-            zaloClearUploadBtn.style.display = 'none';
             zaloUploadRenderedList = [];
             body.innerHTML = '';
             return;
         }
         wrap.style.display = 'block';
-        zaloClearUploadBtn.style.display = 'inline-block';
         const kw = String(filter || '').toLowerCase().trim();
         let list = zaloUploadedCustomers.slice(0);
         if (kw) {
@@ -3952,8 +4047,7 @@
         loadDataFromFirebase(); 
         loadProductImages(); 
         loadCustomerDataFromFirebase(); 
-        loadUploadedCustomersFromLocal();   // khôi phục DSKH upload đã lưu trên máy
-        renderZaloUploadList('');
+        // DSKH upload giờ đồng bộ real-time qua Firebase (listener zaloUploadedDSKH ở trên) — không cần load local
     });
 </script>
 <div id="zaloToast"></div>
