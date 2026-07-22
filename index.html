@@ -12,12 +12,13 @@
     
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f5f5f5; }
-        .view-price-btn,.database-btn,.home-erp-btn,.notification-btn,.create-quote-btn,.report-btn{ position:fixed; right:20px; color:#fff; border:none; border-radius:8px; width:120px; height:50px; font-size:16px; font-weight:bold; cursor:pointer; box-shadow:0 4px 8px rgba(0,0,0,.2); display:flex; justify-content:center; align-items:center; text-align:center; transition:all .3s; z-index:1000; }
+        .view-price-btn,.database-btn,.home-erp-btn,.notification-btn,.create-quote-btn,.report-btn,.exceldskh-btn{ position:fixed; right:20px; color:#fff; border:none; border-radius:8px; width:120px; height:50px; font-size:16px; font-weight:bold; cursor:pointer; box-shadow:0 4px 8px rgba(0,0,0,.2); display:flex; justify-content:center; align-items:center; text-align:center; transition:all .3s; z-index:1000; }
         .view-price-btn{ bottom:130px; background:#4285f4; } .view-price-btn:hover{ background:#3367d6; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,.3)}
         .database-btn{ bottom:70px; background:#8e24aa; } .database-btn:hover{ background:#7b1fa2; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,.3)}
         .home-erp-btn{ bottom:190px; background:#34a853; text-decoration:none } .home-erp-btn:hover{ background:#2d8e47; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,.3)}
         .notification-btn{ bottom:250px; background:#f44336 } .notification-btn:hover{ background:#d32f2f; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,.3)}
         .report-btn{ bottom:370px; background:#00897b } .report-btn:hover{ background:#00695c; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,.3)}
+        .exceldskh-btn{ bottom:430px; background:#ff9800 } .exceldskh-btn:hover{ background:#f57c00; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,.3)}
         /* --- CODE GIAO DIỆN THÔNG BÁO MỚI (PROFESSIONAL STYLE) --- */
 
 /* Hộp thoại nhập liệu - Canh giữa và đẹp hơn */
@@ -383,13 +384,14 @@
         @media(max-width:768px){ 
             .popup-content{ width:95%; padding:15px } 
             .price-table{ font-size:14px } 
-            .view-price-btn,.database-btn,.home-erp-btn,.notification-btn,.create-quote-btn,.report-btn{ width:60px; height:60px; font-size:12px } 
+            .view-price-btn,.database-btn,.home-erp-btn,.notification-btn,.create-quote-btn,.report-btn,.exceldskh-btn{ width:60px; height:60px; font-size:12px } 
             .database-btn { bottom: 70px }
             .view-price-btn { bottom: 130px }
             .home-erp-btn{ bottom:190px } 
             .notification-btn{ bottom:250px } 
             .create-quote-btn{ bottom:310px }
             .report-btn{ bottom:370px }
+            .exceldskh-btn{ bottom:430px }
             .notification-dialog-content,.quote-dialog-content{ width:90% } 
             .notification-display{ top:10px; max-width:95%; font-size:14px; padding:10px } 
             .customer-info-row { flex-direction: column; }
@@ -458,6 +460,20 @@
         #zaloUploadListWrap { margin-top: 10px; border-color: #ffcc80; display: none; }
         .zalo-upload-label { background: #ff9800; color: #fff; border: none; border-radius: 6px; padding: 9px 14px; cursor: pointer; font-weight: bold; font-size: 13px; white-space: nowrap; display: inline-flex; align-items: center; }
         .zalo-upload-label:hover { background: #f57c00; }
+        /* ===== Menu quản lý Excel DSKH ===== */
+        #dskhOverlay{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:1003; justify-content:center; align-items:center; padding:16px; }
+        #dskhBox{ background:#fff; border-radius:14px; box-shadow:0 12px 40px rgba(0,0,0,.35); width:100%; max-width:760px; max-height:92vh; display:flex; flex-direction:column; overflow:hidden; }
+        #dskhBox .dskh-head{ background:linear-gradient(135deg,#ff9800,#f57c00); color:#fff; padding:16px 20px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+        #dskhBox .dskh-head h3{ margin:0; font-size:19px; font-weight:800; letter-spacing:.3px; }
+        #dskhBox .dskh-sub{ background:rgba(255,255,255,.2); border-radius:999px; padding:4px 12px; font-size:12.5px; font-weight:600; }
+        #dskhBox .dskh-close{ margin-left:auto; background:rgba(255,255,255,.18); border:none; color:#fff; width:34px; height:34px; border-radius:50%; font-size:20px; cursor:pointer; }
+        #dskhBox .dskh-close:hover{ background:rgba(255,255,255,.32); }
+        #dskhBox .dskh-body{ overflow:auto; padding:18px 20px 22px; }
+        #dskhBox .dskh-actions{ display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+        #dskhBox .dskh-note{ font-size:13px; color:#8a6100; background:#fff8e1; border:1px solid #ffe0a3; border-radius:8px; padding:10px 12px; margin:12px 0 6px; line-height:1.5; }
+        #dskhBox .dskh-filesbar-title{ font-weight:700; color:#e65100; font-size:14px; margin:14px 0 8px; }
+        #dskhBox #zaloUploadFilesBar{ display:flex; flex-wrap:wrap; gap:8px; }
+        #dskhBox .dskh-empty{ text-align:center; color:#999; padding:26px 10px; font-size:14px; }
         /* Danh sách file DSKH đã upload (mỗi file 1 chip, có nút xóa) */
         #zaloUploadFilesBar { display:flex; flex-wrap:wrap; gap:8px; }
         .zalo-file-chip { display:inline-flex; align-items:center; gap:8px; background:#fff3e0; border:1px solid #ffcc80; border-radius:999px; padding:5px 6px 5px 12px; font-size:13px; color:#e65100; max-width:100%; }
@@ -482,6 +498,7 @@
             .notification-btn, 
             .create-quote-btn,
             .report-btn,
+            .exceldskh-btn,
             .quote-actions,
             .zalo-send-panel,
             #zaloToast,
@@ -840,7 +857,7 @@
         .quote-menu-dropdown button.pharmacity .icon { background: #e8f5e9; color: #2e7d32; }
         
         /* Floating buttons - thêm hiệu ứng đẹp */
-        .view-price-btn,.database-btn,.home-erp-btn,.notification-btn,.create-quote-btn,.report-btn {
+        .view-price-btn,.database-btn,.home-erp-btn,.notification-btn,.create-quote-btn,.report-btn,.exceldskh-btn {
             font-family: 'Segoe UI', Arial, sans-serif;
             letter-spacing: 0.3px;
         }
@@ -1026,6 +1043,7 @@
     <button class="view-price-btn" id="viewPriceBtn">Xem Giá</button>
     <button class="report-btn" id="reportBtn" title="Báo cáo tuần: nhân viên đã gửi báo giá cho khách hàng nào, bao nhiêu lần (Thứ 2 → Chủ nhật)">Báo Cáo Tuần</button>
     <button class="database-btn" id="databaseBtn">Cơ sở dữ liệu</button>
+    <button class="exceldskh-btn" id="excelDskhBtn" title="Quản lý file Excel danh sách khách hàng (DSKH) gửi Zalo — upload / xóa file tập trung tại đây">Excel DSKH</button>
     <div class="quote-menu-container">
         <button class="create-quote-btn" id="createQuoteBtn">Tạo Báo Giá ▾</button>
         <div class="quote-menu-dropdown" id="quoteMenuDropdown">
@@ -1381,13 +1399,9 @@
                         <input type="text" id="zaloNewAddress" placeholder="Địa chỉ" />
                     </div>
                     <button class="zalo-add-btn" id="zaloAddCustBtn">📥 Load vào danh sách &amp; lưu công ty</button>
-                    <div style="margin-top:12px;padding-top:10px;border-top:1px dashed #b6d4fe;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-                        <span style="font-weight:bold;color:#0052cc;font-size:14px">📁 Upload nhiều file Excel DSKH (các file được <b>nối tiếp</b> vào danh sách gửi Zalo; đồng bộ real-time mọi máy):</span>
-                        <label for="zaloUploadInput" class="zalo-upload-label" title="Upload thêm file Excel danh sách khách hàng — nối tiếp vào danh sách, đồng bộ Firebase cho mọi máy">📁 Upload thêm file DSKH</label>
-                        <input type="file" id="zaloUploadInput" accept=".xlsx, .xls" multiple style="display:none" />
-                        <button class="zalo-clear-upload-btn" id="zaloClearUploadBtn" title="Xóa TẤT CẢ file DSKH đã upload (cần mật khẩu)">🗑 Xóa tất cả</button>
+                    <div id="zaloUploadListHint" style="display:none;margin-top:12px;padding-top:10px;border-top:1px dashed #ffcc80;font-size:13px;color:#e65100;">
+                        📁 <b>Danh sách KH từ Excel DSKH</b> đã upload (quản lý file ở menu <b>Excel DSKH</b> ngoài giao diện chính). Tự cập nhật khi có file mới:
                     </div>
-                    <div id="zaloUploadFilesBar" style="display:none;margin-top:10px;"></div>
                     <div class="zalo-cust-table-wrap" id="zaloUploadListWrap">
                         <table class="zalo-cust-table zalo-upload-table">
                             <thead><tr><th style="width:80px">Chọn KH</th><th style="width:24%">Tên khách hàng</th><th style="width:14%">Người liên hệ</th><th style="width:13%">Điện thoại</th><th>Địa chỉ</th><th style="width:230px">Gửi Zalo / Tên NV</th></tr></thead>
@@ -1397,6 +1411,28 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- ===== Menu quản lý Excel DSKH (upload/xóa file tập trung) ===== -->
+    <div id="dskhOverlay">
+      <div id="dskhBox">
+        <div class="dskh-head">
+          <h3>📁 Quản lý Excel DSKH</h3>
+          <span class="dskh-sub">Danh sách khách hàng gửi Zalo — tự load vào phần Tạo Báo Giá</span>
+          <button class="dskh-close" id="dskhCloseBtn" title="Đóng">×</button>
+        </div>
+        <div class="dskh-body">
+          <div class="dskh-actions">
+            <label for="zaloUploadInput" class="zalo-upload-label" title="Upload thêm file Excel DSKH — nối tiếp vào danh sách, đồng bộ Firebase cho mọi máy">📁 Upload thêm file DSKH</label>
+            <input type="file" id="zaloUploadInput" accept=".xlsx, .xls" multiple style="display:none" />
+            <button class="zalo-clear-upload-btn" id="zaloClearUploadBtn" title="Xóa TẤT CẢ file DSKH đã upload (cần mật khẩu)">🗑 Xóa tất cả</button>
+          </div>
+          <p class="dskh-note">Upload nhiều file Excel — các file được <b>nối tiếp</b> vào danh sách gửi Zalo và <b>đồng bộ real-time</b> cho mọi máy. Xóa mỗi file cần mật khẩu. Danh sách khách hàng sẽ <b>tự hiển thị</b> trong phần Tạo Báo Giá.</p>
+          <div class="dskh-filesbar-title" id="dskhFilesTitle" style="display:none">📄 Các file đã upload (bấm ✕ để xóa từng file):</div>
+          <div id="zaloUploadFilesBar" style="display:none;"></div>
+          <div class="dskh-empty" id="dskhEmpty">Chưa có file DSKH nào. Bấm <b>📁 Upload thêm file DSKH</b> để bắt đầu.</div>
+        </div>
+      </div>
     </div>
     
 <script>
@@ -3596,8 +3632,20 @@
     // Hiển thị mỗi file upload dưới dạng 1 chip có nút xóa
     function renderUploadedFilesBar() {
         const bar = document.getElementById('zaloUploadFilesBar');
+        const title = document.getElementById('dskhFilesTitle');
+        const empty = document.getElementById('dskhEmpty');
         if (!bar) return;
-        if (!zaloUploadedFiles.length) { bar.style.display = 'none'; bar.innerHTML = ''; return; }
+        // Nhãn nhắc trong bảng báo giá (hiện khi có file)
+        const hint = document.getElementById('zaloUploadListHint');
+        if (hint) hint.style.display = zaloUploadedFiles.length ? 'block' : 'none';
+        if (!zaloUploadedFiles.length) {
+            bar.style.display = 'none'; bar.innerHTML = '';
+            if (title) title.style.display = 'none';
+            if (empty) empty.style.display = 'block';
+            return;
+        }
+        if (title) title.style.display = 'block';
+        if (empty) empty.style.display = 'none';
         bar.style.display = 'flex';
         bar.innerHTML = zaloUploadedFiles.map(f =>
             '<span class="zalo-file-chip">' +
@@ -4233,6 +4281,15 @@
         const sInp = _rp('rpSearch'); if (sInp) sInp.addEventListener('input', () => renderReport(sInp.value));
         const pBtn = _rp('rpPrintBtn'); if (pBtn) pBtn.addEventListener('click', () => window.print());
         document.addEventListener('keydown', e => { const o=_rp('reportOverlay'); if (e.key === 'Escape' && o && o.style.display === 'flex') closeReport(); });
+        // ===== Menu Excel DSKH =====
+        const dBtn = document.getElementById('excelDskhBtn');
+        const dOv = document.getElementById('dskhOverlay');
+        const dClose = document.getElementById('dskhCloseBtn');
+        if (dBtn && dOv) dBtn.addEventListener('click', () => { renderUploadedFilesBar(); dOv.style.display = 'flex'; });
+        if (dClose && dOv) dClose.addEventListener('click', () => { dOv.style.display = 'none'; });
+        if (dOv) dOv.addEventListener('click', e => { if (e.target === dOv) dOv.style.display = 'none'; });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape' && dOv && dOv.style.display === 'flex') dOv.style.display = 'none'; });
+        renderUploadedFilesBar(); // đặt trạng thái rỗng/tiêu đề ban đầu
     });
 </script>
 <div id="zaloToast"></div>
