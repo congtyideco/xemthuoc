@@ -46,6 +46,12 @@
         #loginGate .lg-foot{ margin-top:16px; font-size:12.5px; color:#9aa7bd; }
         #loginGate .lg-foot b{ color:#00897b; letter-spacing:.5px; }
         #lgChangeBox{ position:absolute; inset:0; z-index:3; display:none; align-items:center; justify-content:center; padding:20px; }
+        #loginGate .lg-sect{ text-align:left; font-weight:800; color:#12305f; font-size:13.5px; margin:16px 0 8px; padding-top:12px; border-top:1px dashed #d4dff0; }
+        #loginGate .lg-sect-opt{ font-weight:500; color:#8a97ad; font-size:12px; }
+        #loginGate .lg-field-inline{ display:flex; align-items:center; gap:10px; }
+        #loginGate .lg-field-inline input{ width:110px; text-align:center; font-weight:700; }
+        #loginGate .lg-unit{ font-size:13px; color:#4a5a72; font-weight:600; }
+        #loginGate .lg-hint{ text-align:left; font-size:12px; color:#6b7a94; margin:2px 2px 4px; line-height:1.5; }
         /* ============ LANDING HERO (trang giao diện chính) ============ */
         .site-hero{ position:relative; overflow:hidden; color:#fff;
             background:
@@ -112,13 +118,14 @@
             .site-welcome{ padding:0 20px; } .site-hero .hero-inner{ padding-right:20px; }
         }
         @media (max-width:520px){ .feature-strip{ grid-template-columns:1fr; } .hero-title{ font-size:23px; } }
-        .view-price-btn,.database-btn,.home-erp-btn,.notification-btn,.create-quote-btn,.report-btn,.exceldskh-btn{ position:fixed; right:20px; color:#fff; border:none; border-radius:8px; width:120px; height:50px; font-size:16px; font-weight:bold; cursor:pointer; box-shadow:0 4px 8px rgba(0,0,0,.2); display:flex; justify-content:center; align-items:center; text-align:center; transition:all .3s; z-index:1000; }
+        .view-price-btn,.database-btn,.home-erp-btn,.notification-btn,.create-quote-btn,.report-btn,.exceldskh-btn,.settings-btn{ position:fixed; right:20px; color:#fff; border:none; border-radius:8px; width:120px; height:50px; font-size:16px; font-weight:bold; cursor:pointer; box-shadow:0 4px 8px rgba(0,0,0,.2); display:flex; justify-content:center; align-items:center; text-align:center; transition:all .3s; z-index:1000; }
         .view-price-btn{ bottom:130px; background:#4285f4; } .view-price-btn:hover{ background:#3367d6; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,.3)}
         .database-btn{ bottom:70px; background:#8e24aa; } .database-btn:hover{ background:#7b1fa2; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,.3)}
         .home-erp-btn{ bottom:190px; background:#34a853; text-decoration:none } .home-erp-btn:hover{ background:#2d8e47; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,.3)}
         .notification-btn{ bottom:250px; background:#f44336 } .notification-btn:hover{ background:#d32f2f; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,.3)}
         .report-btn{ bottom:370px; background:#00897b } .report-btn:hover{ background:#00695c; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,.3)}
         .exceldskh-btn{ bottom:430px; background:#ff9800 } .exceldskh-btn:hover{ background:#f57c00; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,.3)}
+        .settings-btn{ bottom:490px; background:#607d8b } .settings-btn:hover{ background:#455a64; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,.3)}
         /* --- CODE GIAO DIỆN THÔNG BÁO MỚI (PROFESSIONAL STYLE) --- */
 
 /* Hộp thoại nhập liệu - Canh giữa và đẹp hơn */
@@ -337,6 +344,22 @@
         .ck-input{ width:64px; max-width:92%; border:1px solid #4285f4; border-radius:6px; padding:4px 6px; font-size:13px;
             text-align:center; outline:none; font-weight:600; color:#c62828; }
         .ck-input:focus{ border-color:#1b9e54; box-shadow:0 0 0 2px rgba(27,158,84,.22); }
+        .ck-input.ck-capped{ border-color:#e53935; color:#c62828; background:#fff5f5; }
+        .ck-input.ck-flash{ animation:ckFlash .5s ease; }
+        @keyframes ckFlash{ 0%{ background:#ffcdd2; } 100%{ background:#fff5f5; } }
+        /* Thanh Lưu chiết khấu */
+        #ckSaveBar{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:0 0 12px; padding:10px 14px;
+            background:linear-gradient(90deg,#fff8e1,#fffdf5); border:1px solid #ffe0a3; border-left:5px solid #ff9800; border-radius:10px; }
+        #ckSaveBar .cksb-status{ font-weight:800; font-size:13.5px; }
+        #ckSaveBar.dirty .cksb-status{ color:#e65100; }
+        #ckSaveBar.saved .cksb-status{ color:#2e7d32; }
+        #ckSaveBar .cksb-save{ background:linear-gradient(135deg,#ff9800,#f57c00); color:#fff; border:none; border-radius:8px; padding:8px 16px; font-size:14px; font-weight:800; cursor:pointer; box-shadow:0 4px 12px rgba(245,124,0,.3); transition:transform .15s; }
+        #ckSaveBar .cksb-save:hover{ transform:translateY(-2px); }
+        #ckSaveBar .cksb-save:disabled{ opacity:.5; cursor:default; transform:none; box-shadow:none; }
+        #ckSaveBar .cksb-reset{ background:#fff; color:#e65100; border:1px solid #ffcc80; border-radius:8px; padding:8px 12px; font-size:13px; font-weight:700; cursor:pointer; }
+        #ckSaveBar .cksb-reset:hover{ background:#fff3e0; }
+        #ckSaveBar .cksb-reset:disabled{ opacity:.45; cursor:default; }
+        #ckSaveBar .cksb-note{ font-size:12px; color:#8a6100; font-style:italic; flex:1; min-width:220px; }
         /* Ô Giá mua được tính tự động */
         .price-table td.gia-mua-auto{ background:#fff8e1; color:#c47b00 !important; font-weight:700; text-align:right; white-space:nowrap; }
         
@@ -484,7 +507,7 @@
         @media(max-width:768px){ 
             .popup-content{ width:95%; padding:15px } 
             .price-table{ font-size:14px } 
-            .view-price-btn,.database-btn,.home-erp-btn,.notification-btn,.create-quote-btn,.report-btn,.exceldskh-btn{ width:60px; height:60px; font-size:12px } 
+            .view-price-btn,.database-btn,.home-erp-btn,.notification-btn,.create-quote-btn,.report-btn,.exceldskh-btn,.settings-btn{ width:60px; height:60px; font-size:12px } 
             .database-btn { bottom: 70px }
             .view-price-btn { bottom: 130px }
             .home-erp-btn{ bottom:190px } 
@@ -492,6 +515,7 @@
             .create-quote-btn{ bottom:310px }
             .report-btn{ bottom:370px }
             .exceldskh-btn{ bottom:430px }
+            .settings-btn{ bottom:490px }
             .notification-dialog-content,.quote-dialog-content{ width:90% } 
             .notification-display{ top:10px; max-width:95%; font-size:14px; padding:10px } 
             .customer-info-row { flex-direction: column; }
@@ -599,6 +623,7 @@
             .create-quote-btn,
             .report-btn,
             .exceldskh-btn,
+            .settings-btn,
             .quote-actions,
             .zalo-send-panel,
             #zaloToast,
@@ -957,7 +982,7 @@
         .quote-menu-dropdown button.pharmacity .icon { background: #e8f5e9; color: #2e7d32; }
         
         /* Floating buttons - thêm hiệu ứng đẹp */
-        .view-price-btn,.database-btn,.home-erp-btn,.notification-btn,.create-quote-btn,.report-btn,.exceldskh-btn {
+        .view-price-btn,.database-btn,.home-erp-btn,.notification-btn,.create-quote-btn,.report-btn,.exceldskh-btn,.settings-btn {
             font-family: 'Segoe UI', Arial, sans-serif;
             letter-spacing: 0.3px;
         }
@@ -1159,15 +1184,25 @@
         <div id="lgChangeBox">
             <div class="lg-card">
                 <div class="lg-logo">⚙️</div>
-                <h2 class="lg-title" style="font-size:20px">Đổi mật khẩu đăng nhập</h2>
-                <p class="lg-sub">Nhập mật khẩu quản trị, sau đó đặt mật khẩu mới</p>
-                <div class="lg-field"><input type="password" id="lgAdminPass" placeholder="Mật khẩu quản trị" autocomplete="off" /></div>
+                <h2 class="lg-title" style="font-size:20px">Cài đặt quản trị</h2>
+                <p class="lg-sub">Nhập mật khẩu quản trị để thay đổi cấu hình</p>
+                <div class="lg-field"><input type="password" id="lgAdminPass" placeholder="Mật khẩu quản trị *" autocomplete="off" /></div>
+
+                <div class="lg-sect">🔑 Đổi mật khẩu đăng nhập <span class="lg-sect-opt">(bỏ trống nếu không đổi)</span></div>
                 <div class="lg-field"><input type="password" id="lgNewPass" placeholder="Mật khẩu đăng nhập mới" autocomplete="new-password" /></div>
                 <div class="lg-field"><input type="password" id="lgNewPass2" placeholder="Nhập lại mật khẩu mới" autocomplete="new-password" /></div>
+
+                <div class="lg-sect">🔒 Khóa mức chiết khấu được thêm tối đa</div>
+                <div class="lg-field lg-field-inline">
+                    <input type="text" id="lgCkMax" inputmode="decimal" placeholder="VD: 4" />
+                    <span class="lg-unit">% (thêm so với mức gốc)</span>
+                </div>
+                <p class="lg-hint" id="lgCkHint">Người dùng chỉ được nhập tối đa = mức chiết khấu gốc + số % này. Để trống hoặc nhập <b>0</b> để bỏ giới hạn.</p>
+
                 <div class="lg-error" id="lgChangeError"></div>
                 <div class="lg-error" id="lgChangeOk" style="color:#00a884"></div>
-                <button class="lg-btn" id="lgChangeSubmit">Áp dụng mật khẩu mới</button>
-                <button class="lg-link" id="lgChangeCancel">← Quay lại đăng nhập</button>
+                <button class="lg-btn" id="lgChangeSubmit">Áp dụng cài đặt</button>
+                <button class="lg-link" id="lgChangeCancel">← Quay lại</button>
             </div>
         </div>
     </div>
@@ -1227,6 +1262,7 @@
     <button class="report-btn" id="reportBtn" title="Báo cáo tuần: nhân viên đã gửi báo giá cho khách hàng nào, bao nhiêu lần (Thứ 2 → Chủ nhật)">Báo Cáo Tuần</button>
     <button class="database-btn" id="databaseBtn">Cơ sở dữ liệu</button>
     <button class="exceldskh-btn" id="excelDskhBtn" title="Quản lý file Excel danh sách khách hàng (DSKH) gửi Zalo — upload / xóa file tập trung tại đây">Excel DSKH</button>
+    <button class="settings-btn" id="settingsBtn" title="Cài đặt quản trị: đổi mật khẩu đăng nhập, khóa mức chiết khấu tối đa (cần mật khẩu quản trị)">⚙ Cài đặt</button>
     <div class="quote-menu-container">
         <button class="create-quote-btn" id="createQuoteBtn">Tạo Báo Giá ▾</button>
         <div class="quote-menu-dropdown" id="quoteMenuDropdown">
@@ -1397,6 +1433,12 @@
                 <div class="loading" id="loadingIndicator">
                     <div class="spinner"></div>
                     <p>Đang tải dữ liệu...</p>
+                </div>
+                <div id="ckSaveBar" style="display:none;">
+                    <span class="cksb-status" id="ckSaveStatus"></span>
+                    <button id="ckSaveBtn" class="cksb-save">💾 Lưu chiết khấu</button>
+                    <button id="ckResetBtn" class="cksb-reset" title="Bỏ các chỉnh sửa chưa lưu, quay về chiết khấu đã lưu">↩ Hoàn tác chưa lưu</button>
+                    <span class="cksb-note">Chưa bấm Lưu thì chiết khấu chỉ dùng tạm cho báo giá; lần vào lại sẽ lấy mức đã lưu.</span>
                 </div>
                 <div class="table-container" id="tableContainer"></div>
             </div>
@@ -1635,6 +1677,39 @@
     }
     const database = firebase.database();
 
+    // ===== Khóa trần chiết khấu (đồng bộ mọi máy) =====
+    // Mức chiết khấu gốc (từ Excel) của mỗi ô: { rowIdx: { 6: base%, 12: base% } }
+    let ckBase = {};
+    // Trần "được thêm tối đa" (%). null = không giới hạn.
+    let ckMaxExtra = null;
+    try {
+        database.ref('appAccessConfig/ckMaxExtra').on('value', snap => {
+            const v = snap.val();
+            ckMaxExtra = (v === null || v === undefined || v === '' ) ? null : Number(v);
+            if (isNaN(ckMaxExtra)) ckMaxExtra = null;
+            // Vẽ lại bảng để áp trần mới (nếu đang mở)
+            if (typeof redrawWithFilters === 'function' && typeof currentData !== 'undefined' && currentData && currentData.length) {
+                try { redrawWithFilters(); } catch(e){}
+            }
+        });
+    } catch(e){ console.warn('ckMaxExtra listener:', e); }
+
+    // ===== Chiết khấu ĐÃ LƯU (đồng bộ mọi máy), khóa theo Mã sp: { maSpKey: {6: %, 12: %} } =====
+    let ckSaved = {};
+    let ckDirty = false; // có chỉnh chiết khấu chưa lưu hay không
+    function ckMaKey(v){ return String(v == null ? '' : v).trim().toLowerCase(); }
+    try {
+        database.ref('ckSavedDiscounts').on('value', snap => {
+            ckSaved = snap.val() || {};
+            // Nạp lại chiết khấu đã lưu vào bảng (bỏ các chỉnh tạm chưa lưu) và vẽ lại
+            if (typeof redrawWithFilters === 'function' && typeof currentData !== 'undefined' && currentData && currentData.length) {
+                if (typeof ckDiscount !== 'undefined') ckDiscount = {}; // xóa chỉnh tạm → lấy lại giá trị đã lưu/gốc
+                ckDirty = false;
+                if (typeof updateCkSaveBar === 'function') updateCkSaveBar();
+                try { redrawWithFilters(); } catch(e){}
+            }
+        });
+    } catch(e){ console.warn('ckSavedDiscounts listener:', e); }
     // ============ CỔNG ĐĂNG NHẬP BẢO MẬT ============
     (function initLoginGate(){
         const DEFAULT_LOGIN_PASS = 'ideco@2026';
@@ -1714,35 +1789,78 @@
         if (passInput) passInput.addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
         if (toggleBtn) toggleBtn.addEventListener('click', ()=>{ passInput.type = passInput.type === 'password' ? 'text' : 'password'; });
 
-        // ---- Đổi mật khẩu (cần mật khẩu quản trị) ----
+        // ---- Cài đặt quản trị (đổi mật khẩu + khóa trần chiết khấu) ----
+        const ckMaxInput = document.getElementById('lgCkMax');
         function showChange(show){
             if (!changeBox) return;
             changeBox.style.display = show ? 'flex' : 'none';
-            if (show){ changeErr.textContent=''; changeOk.textContent=''; adminInput.value=''; newInput.value=''; new2Input.value=''; setTimeout(()=>adminInput.focus(),100); }
+            if (show){
+                changeErr.textContent=''; changeOk.textContent='';
+                adminInput.value=''; newInput.value=''; new2Input.value='';
+                if (ckMaxInput) ckMaxInput.value = (ckMaxExtra === null || ckMaxExtra === undefined) ? '' : String(ckMaxExtra);
+                setTimeout(()=>adminInput.focus(),100);
+            }
         }
         if (changeLink) changeLink.addEventListener('click', ()=> showChange(true));
         if (changeCancel) changeCancel.addEventListener('click', ()=> showChange(false));
-        function applyNewPass(){
+        function applySettings(){
             changeErr.textContent=''; changeOk.textContent='';
             if (adminInput.value !== ADMIN_PASS){ changeErr.textContent='❌ Sai mật khẩu quản trị.'; adminInput.select(); return; }
             const np = (newInput.value || '').trim();
-            if (np.length < 4){ changeErr.textContent='Mật khẩu mới phải từ 4 ký tự trở lên.'; return; }
-            if (np !== new2Input.value){ changeErr.textContent='Hai ô mật khẩu mới không khớp.'; return; }
-            // Lưu Firebase (mọi máy) + local
-            try { localStorage.setItem(LS_PASS, np); } catch(e){}
-            currentPass = np;
-            database.ref('appAccessConfig/loginPass').set(np).then(()=>{
-                changeOk.textContent='✅ Đã đổi mật khẩu. Áp dụng cho mọi máy. Đăng nhập lại bằng mật khẩu mới.';
-                // buộc đăng nhập lại bằng mật khẩu mới
+            const wantChangePass = (np !== '' || (new2Input.value||'').trim() !== '');
+            const tasks = [];
+            let msgs = [];
+
+            // 1) Đổi mật khẩu (nếu có nhập)
+            if (wantChangePass){
+                if (np.length < 4){ changeErr.textContent='Mật khẩu mới phải từ 4 ký tự trở lên.'; return; }
+                if (np !== new2Input.value){ changeErr.textContent='Hai ô mật khẩu mới không khớp.'; return; }
+                try { localStorage.setItem(LS_PASS, np); } catch(e){}
+                currentPass = np;
                 try { localStorage.removeItem(LS_AUTH); } catch(e){}
-                setTimeout(()=>{ showChange(false); if(passInput){ passInput.value=''; passInput.focus(); } }, 1600);
-            }).catch(err=>{
-                changeOk.textContent='✅ Đã đổi mật khẩu trên máy này (chưa đồng bộ được Firebase: '+(err&&err.message||err)+').';
-                setTimeout(()=>{ showChange(false); if(passInput){ passInput.value=''; passInput.focus(); } }, 2000);
+                tasks.push(database.ref('appAccessConfig/loginPass').set(np));
+                msgs.push('đổi mật khẩu');
+            }
+
+            // 2) Khóa trần chiết khấu
+            if (ckMaxInput){
+                const raw = (ckMaxInput.value || '').replace('%','').replace(',','.').trim();
+                let ckVal;
+                if (raw === '' || parseFloat(raw) === 0){ ckVal = null; }
+                else {
+                    ckVal = parseFloat(raw);
+                    if (isNaN(ckVal) || ckVal < 0){ changeErr.textContent='Mức thêm tối đa không hợp lệ.'; return; }
+                }
+                ckMaxExtra = ckVal;
+                tasks.push(database.ref('appAccessConfig/ckMaxExtra').set(ckVal === null ? null : ckVal));
+                msgs.push(ckVal === null ? 'bỏ giới hạn chiết khấu' : ('khóa chiết khấu +' + ckVal + '%'));
+            }
+
+            if (!tasks.length){ changeErr.textContent='Không có thay đổi nào để áp dụng.'; return; }
+
+            Promise.all(tasks.map(p=>p.catch(e=>e))).then(()=>{
+                changeOk.textContent = '✅ Đã áp dụng (' + msgs.join(', ') + ') cho mọi máy.' + (wantChangePass ? ' Vui lòng đăng nhập lại.' : '');
+                // Áp trần mới vào bảng ngay nếu đang mở
+                if (typeof redrawWithFilters === 'function' && typeof currentData !== 'undefined' && currentData && currentData.length){ try{ redrawWithFilters(); }catch(e){} }
+                setTimeout(()=>{
+                    showChange(false);
+                    if (wantChangePass && gate && gate.style.display !== 'none' && passInput){ passInput.value=''; passInput.focus(); }
+                }, 1600);
             });
         }
-        if (changeSubmit) changeSubmit.addEventListener('click', applyNewPass);
-        [adminInput,newInput,new2Input].forEach(el=>{ if(el) el.addEventListener('keydown', e=>{ if(e.key==='Enter') applyNewPass(); }); });
+        if (changeSubmit) changeSubmit.addEventListener('click', applySettings);
+        [adminInput,newInput,new2Input,ckMaxInput].forEach(el=>{ if(el) el.addEventListener('keydown', e=>{ if(e.key==='Enter') applySettings(); }); });
+
+        // Mở cài đặt quản trị từ trong ứng dụng (nút ⚙ Cài đặt) — hiện gate + hộp cài đặt, không đăng xuất
+        window.openAdminSettings = function(){
+            if (gate){ gate.style.display = 'flex'; lockScroll(); }
+            showChange(true);
+        };
+        // Khi đóng hộp cài đặt: nếu đã đăng nhập trước đó (không phải phiên bị khóa) thì ẩn luôn gate
+        if (changeCancel) changeCancel.addEventListener('click', ()=>{
+            const remembered = (localStorage.getItem(LS_AUTH) === '1');
+            if (remembered) unlock();
+        });
     })();
 
     // ========== GLOBAL VARIABLES ==========
@@ -2699,6 +2817,79 @@
         }
         return null;
     }
+    // Trần chiết khấu cho 1 ô = mức gốc (Excel) + mức thêm tối đa. null nếu không giới hạn / không có gốc.
+    function ckCapFor(rowIdx, mark){
+        if (ckMaxExtra === null || ckMaxExtra === undefined || isNaN(ckMaxExtra)) return null;
+        const base = (ckBase[rowIdx] && ckBase[rowIdx][mark] !== undefined) ? ckBase[rowIdx][mark] : null;
+        if (base === null || isNaN(base)) return null;
+        return base + Number(ckMaxExtra);
+    }
+    // Nhấp nháy cảnh báo khi người dùng nhập vượt trần (đã tự kéo về mức tối đa)
+    let _ckFlashTimer = null;
+    function zaloFlashCap(inp, cap){
+        inp.classList.remove('ck-flash'); void inp.offsetWidth; inp.classList.add('ck-flash');
+        if (typeof zaloToast === 'function') {
+            zaloToast('🔒 Chiết khấu tối đa cho ô này là <b>' + cap + '%</b> — đã tự điều chỉnh về mức cho phép.', 3500);
+        }
+    }
+    // ===== Thanh Lưu chiết khấu: hiển thị trạng thái đã lưu / chưa lưu =====
+    function updateCkSaveBar(){
+        const bar = document.getElementById('ckSaveBar');
+        if (!bar) return;
+        const hasCk = getCkColIdx(6) !== -1 || getCkColIdx(12) !== -1;
+        if (!hasCk || !currentData || !currentData.length){ bar.style.display = 'none'; return; }
+        bar.style.display = 'flex';
+        const status = document.getElementById('ckSaveStatus');
+        const saveBtn = document.getElementById('ckSaveBtn');
+        const resetBtn = document.getElementById('ckResetBtn');
+        bar.classList.toggle('dirty', ckDirty);
+        bar.classList.toggle('saved', !ckDirty);
+        if (status) status.textContent = ckDirty ? '● Có thay đổi chiết khấu chưa lưu' : '✓ Chiết khấu đang khớp bản đã lưu';
+        if (saveBtn) saveBtn.disabled = !ckDirty;
+        if (resetBtn) resetBtn.disabled = !ckDirty;
+    }
+    // Lưu toàn bộ chiết khấu hiện trên bảng vào Firebase (theo Mã sp) → mọi máy thấy
+    async function saveCkDiscounts(){
+        const table = document.querySelector('.price-table');
+        if (!table){ return; }
+        const inputs = table.querySelectorAll('input.ck-input');
+        if (!inputs.length){ if (typeof zaloToast==='function') zaloToast('Không có ô chiết khấu để lưu.',3000); return; }
+        // Gộp theo Mã sp: { maKey: {6, 12} } — bỏ ô không có Mã sp
+        const payload = {};
+        let noKeyCount = 0;
+        inputs.forEach(inp=>{
+            const maKey = inp.dataset.makey || '';
+            const mark = inp.dataset.ckmark;
+            if (!maKey){ noKeyCount++; return; }
+            const v = String(inp.value||'').replace('%','').replace(',','.').trim();
+            if (v === '') return;
+            const num = parseFloat(v); if (isNaN(num)) return;
+            if (!payload[maKey]) payload[maKey] = {};
+            payload[maKey][mark] = num;
+        });
+        // Hợp nhất với dữ liệu đã lưu trước đó cho các sản phẩm không hiển thị (giữ nguyên)
+        const merged = Object.assign({}, ckSaved);
+        Object.keys(payload).forEach(k=>{ merged[k] = Object.assign({}, merged[k], payload[k]); });
+        const saveBtn = document.getElementById('ckSaveBtn');
+        if (saveBtn){ saveBtn.disabled = true; saveBtn.textContent = '⏳ Đang lưu...'; }
+        try {
+            await database.ref('ckSavedDiscounts').set(merged);
+            ckSaved = merged; ckDirty = false;
+            if (typeof zaloToast==='function') zaloToast('💾 Đã lưu chiết khấu lên Firebase — các máy khác sẽ tự cập nhật.' + (noKeyCount? ' (Bỏ qua '+noKeyCount+' ô không có Mã sp)':''), 5000);
+        } catch(err){
+            if (typeof zaloToast==='function') zaloToast('⚠️ Lỗi lưu chiết khấu: ' + (err&&err.message||err), 6000);
+        } finally {
+            if (saveBtn){ saveBtn.textContent = '💾 Lưu chiết khấu'; }
+            updateCkSaveBar();
+        }
+    }
+    // Bỏ chỉnh sửa tạm chưa lưu → quay lại chiết khấu đã lưu / gốc
+    function resetCkTemp(){
+        ckDiscount = {}; ckDirty = false;
+        updateCkSaveBar();
+        try { redrawWithFilters(); } catch(e){}
+        if (typeof zaloToast==='function') zaloToast('↩ Đã bỏ các thay đổi chưa lưu, quay về chiết khấu đã lưu.', 3500);
+    }
     // Tính lại "Giá mua từ n hộp" cho 1 hàng dựa trên đơn giá & % chiết khấu đã nhập
     function recomputeGiaMuaForRow(tr, rowData, rowIdx, idxs){
         const donGia = parsePriceNumber(idxs.donGiaIdx !== -1 ? rowData[idxs.donGiaIdx] : NaN);
@@ -2823,23 +3014,73 @@
                 if(maSpColIdx !== -1 && colIdx === maSpColIdx) td.dataset.col = 'masp';
                 if (pickedQuoteCols.has(headersCache[colIdx])) td.classList.add('col-picked-cell');
 
-                // ===== Ô CHIẾT KHẤU (CK ≥ 6 hộp / CK ≥ 12 hộp): cho nhập % =====
+                // ===== Ô CHIẾT KHẤU (CK ≥ 6 hộp / CK ≥ 12 hộp): cho nhập %, khóa trần theo mức thêm tối đa =====
                 if (colIdx === ck6Idx || colIdx === ck12Idx) {
                     const mark = (colIdx === ck6Idx) ? 6 : 12;
                     const inp = document.createElement('input');
                     inp.type = 'text'; inp.inputMode = 'decimal'; inp.className = 'ck-input'; inp.placeholder = '% CK';
-                    const saved = (ckDiscount[rowIdx] && ckDiscount[rowIdx][mark] !== undefined) ? ckDiscount[rowIdx][mark] : '';
-                    if (saved === '' && cell !== undefined && cell !== null && String(cell).trim() !== '') {
-                        const pre = parseFloat(String(cell).replace('%','').replace(',','.'));
-                        if (!isNaN(pre)) { inp.value = pre; if(!ckDiscount[rowIdx]) ckDiscount[rowIdx]={}; ckDiscount[rowIdx][mark]=String(pre); }
-                    } else { inp.value = saved; }
+                    // Ghi nhận mức chiết khấu GỐC (từ Excel) để làm cơ sở khóa trần
+                    let baseVal = NaN;
+                    if (cell !== undefined && cell !== null && String(cell).trim() !== '') {
+                        baseVal = parseFloat(String(cell).replace('%','').replace(',','.'));
+                        if (!isNaN(baseVal)) { if(!ckBase[rowIdx]) ckBase[rowIdx]={}; ckBase[rowIdx][mark]=baseVal; }
+                    }
+                    // Giá trị đã LƯU (theo Mã sp) — dùng khi chưa có chỉnh tạm
+                    const maKey = (maSpColIdx !== -1) ? ckMaKey(rowData[maSpColIdx]) : '';
+                    let savedForCell = undefined;
+                    if (maKey && ckSaved[maKey] && ckSaved[maKey][mark] !== undefined && ckSaved[maKey][mark] !== null && ckSaved[maKey][mark] !== '') {
+                        savedForCell = ckSaved[maKey][mark];
+                    }
+                    const temp = (ckDiscount[rowIdx] && ckDiscount[rowIdx][mark] !== undefined) ? ckDiscount[rowIdx][mark] : '';
+                    if (temp !== '') {
+                        inp.value = temp;                                   // đang có chỉnh tạm chưa lưu
+                    } else if (savedForCell !== undefined) {
+                        inp.value = savedForCell;                           // dùng chiết khấu đã lưu
+                        if(!ckDiscount[rowIdx]) ckDiscount[rowIdx]={}; ckDiscount[rowIdx][mark]=String(savedForCell);
+                    } else if (!isNaN(baseVal)) {
+                        inp.value = baseVal;                                // dùng mức gốc từ Excel
+                        if(!ckDiscount[rowIdx]) ckDiscount[rowIdx]={}; ckDiscount[rowIdx][mark]=String(baseVal);
+                    } else { inp.value = ''; }
+                    inp.dataset.makey = maKey;
+                    // Nếu giá trị đã lưu vượt trần hiện hành (do đổi cài đặt) → kéo về trần
+                    {
+                        const capNow = ckCapFor(rowIdx, mark);
+                        if (capNow !== null){
+                            const cv = parseFloat(String(inp.value).replace(',','.'));
+                            if (!isNaN(cv) && cv > capNow){ inp.value = capNow; if(!ckDiscount[rowIdx]) ckDiscount[rowIdx]={}; ckDiscount[rowIdx][mark]=String(capNow); }
+                        }
+                    }
+                    // Tooltip hiển thị trần cho phép
+                    const applyCapUI = () => {
+                        const cap = ckCapFor(rowIdx, mark);
+                        if (cap !== null) {
+                            inp.title = 'Tối đa ' + cap + '% (gốc ' + ckBase[rowIdx][mark] + '% + thêm ' + ckMaxExtra + '%)';
+                            inp.classList.toggle('ck-capped', parseFloat(String(inp.value).replace(',','.')) >= cap - 1e-9);
+                        } else { inp.title = ''; inp.classList.remove('ck-capped'); }
+                    };
+                    applyCapUI();
+                    // Clamp giá trị về trần khi vượt
+                    const clampToCap = (silent) => {
+                        const cap = ckCapFor(rowIdx, mark);
+                        if (cap === null) return;
+                        let v = parseFloat(String(inp.value).replace(',','.'));
+                        if (!isNaN(v) && v > cap) {
+                            inp.value = cap;
+                            if (!silent) zaloFlashCap(inp, cap);
+                        }
+                    };
                     inp.addEventListener('input', ()=>{
+                        clampToCap(false);
                         if (!ckDiscount[rowIdx]) ckDiscount[rowIdx] = {};
                         ckDiscount[rowIdx][mark] = inp.value.replace('%','').trim();
+                        ckDirty = true; if (typeof updateCkSaveBar === 'function') updateCkSaveBar();
+                        applyCapUI();
                         recomputeGiaMuaForRow(tr, rowData, rowIdx, gmIdxs);
                     });
+                    inp.addEventListener('blur', ()=>{ clampToCap(true); applyCapUI(); });
                     // Không cho click ô nhập lan sang chọn hàng
                     inp.addEventListener('click', e=> e.stopPropagation());
+                    inp.dataset.ckmark = mark;
                     td.appendChild(inp); tr.appendChild(td);
                     return;
                 }
@@ -2881,6 +3122,7 @@
         tableContainer.innerHTML = ""; (tbody.rows.length>0 || headersCache.length>0) ? tableContainer.appendChild(table) : (tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị sau khi lọc.</p>');
         enableColumnResize(table, visibleIdx);
         renderColPickBar();
+        updateCkSaveBar();
         
         const productRowCount = tbody.querySelectorAll('tr:not(.group-row)').length;
         if(rowCountBadge){
@@ -4592,6 +4834,13 @@
         wire('fcCreateQuote', 'createQuoteBtn');
         wire('fcExcelDskh', 'excelDskhBtn');
         wire('fcReport', 'reportBtn');
+        // ===== Nút Lưu / Hoàn tác chiết khấu =====
+        const ckSaveBtn = document.getElementById('ckSaveBtn');
+        const ckResetBtn = document.getElementById('ckResetBtn');
+        if (ckSaveBtn) ckSaveBtn.addEventListener('click', saveCkDiscounts);
+        if (ckResetBtn) ckResetBtn.addEventListener('click', resetCkTemp);
+        const setBtn = document.getElementById('settingsBtn');
+        if (setBtn) setBtn.addEventListener('click', ()=>{ if (typeof window.openAdminSettings === 'function') window.openAdminSettings(); });
     });
 </script>
 <div id="zaloToast"></div>
