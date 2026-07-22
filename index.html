@@ -11,7 +11,73 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f5f5f5; }
+        body { font-family: 'Segoe UI', 'Inter', Arial, sans-serif; margin: 0; padding: 0; background-color: #f5f5f5; }
+        /* ============ LANDING HERO (trang giao diện chính) ============ */
+        .site-hero{ position:relative; overflow:hidden; color:#fff;
+            background:
+              radial-gradient(1200px 500px at 12% -10%, rgba(66,133,244,.55), transparent 60%),
+              radial-gradient(900px 500px at 100% 0%, rgba(0,201,167,.45), transparent 55%),
+              linear-gradient(135deg,#0b1e3f 0%,#123a7a 45%,#0a5a8f 100%);
+        }
+        /* Lưới điểm công nghệ mờ nền */
+        .site-hero::before{ content:""; position:absolute; inset:0;
+            background-image:radial-gradient(rgba(255,255,255,.10) 1px, transparent 1.4px);
+            background-size:26px 26px; opacity:.5; pointer-events:none; }
+        .hero-inner{ position:relative; z-index:2; max-width:1180px; margin:0 auto; padding:40px 150px 40px 40px;
+            display:grid; grid-template-columns:1.15fr .85fr; gap:34px; align-items:center; }
+        .hero-badge{ display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,.12);
+            border:1px solid rgba(255,255,255,.25); backdrop-filter:blur(6px); color:#dbe9ff;
+            font-size:12.5px; font-weight:700; letter-spacing:.5px; padding:6px 14px; border-radius:999px; text-transform:uppercase; }
+        .hero-badge .dot{ width:8px; height:8px; border-radius:50%; background:#00e5a0; box-shadow:0 0 0 4px rgba(0,229,160,.25); animation:heroPulse 2s infinite; }
+        @keyframes heroPulse{ 0%,100%{ box-shadow:0 0 0 4px rgba(0,229,160,.25);} 50%{ box-shadow:0 0 0 8px rgba(0,229,160,0);} }
+        .hero-title{ font-size:38px; line-height:1.12; font-weight:900; margin:16px 0 6px; letter-spacing:.3px;
+            background:linear-gradient(90deg,#ffffff 0%,#bfe0ff 60%,#8ff0d6 100%); -webkit-background-clip:text; background-clip:text; color:transparent;
+            text-shadow:0 2px 30px rgba(0,0,0,.15); }
+        .hero-sub{ font-size:15.5px; color:#cfe0f7; max-width:560px; line-height:1.6; margin:10px 0 8px; }
+        .hero-author{ display:inline-flex; align-items:center; gap:10px; margin-top:14px; font-size:14px; color:#eaf2ff; }
+        .hero-author b{ color:#00e5a0; font-weight:800; letter-spacing:.5px; }
+        .hero-author .chip{ background:rgba(0,229,160,.14); border:1px solid rgba(0,229,160,.4); padding:5px 12px; border-radius:999px; }
+        .hero-cta{ display:flex; gap:12px; flex-wrap:wrap; margin-top:22px; }
+        .hero-cta button{ border:none; cursor:pointer; font-weight:800; font-size:14.5px; padding:13px 22px; border-radius:12px;
+            display:inline-flex; align-items:center; gap:9px; transition:transform .18s, box-shadow .18s; }
+        .hero-cta .cta-primary{ background:linear-gradient(135deg,#00c9a7,#00a98f); color:#04231d; box-shadow:0 10px 24px rgba(0,201,167,.4); }
+        .hero-cta .cta-secondary{ background:rgba(255,255,255,.12); color:#fff; border:1px solid rgba(255,255,255,.3); backdrop-filter:blur(6px); }
+        .hero-cta button:hover{ transform:translateY(-3px); box-shadow:0 14px 30px rgba(0,0,0,.28); }
+        .hero-visual{ position:relative; text-align:center; }
+        .hero-visual img{ max-width:100%; width:420px; border-radius:20px;
+            box-shadow:0 24px 60px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.08);
+            animation:heroFloat 6s ease-in-out infinite; }
+        @keyframes heroFloat{ 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-14px);} }
+        .hero-glow{ position:absolute; inset:auto 0 -40px 0; height:120px; filter:blur(50px);
+            background:radial-gradient(closest-side, rgba(0,229,160,.6), transparent); z-index:1; }
+        /* Dải thống kê / tính năng dưới hero */
+        .feature-strip{ max-width:1180px; margin:-30px auto 0; padding:0 40px 10px; position:relative; z-index:3;
+            display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+        .feature-card{ background:#fff; border-radius:16px; padding:18px 18px; box-shadow:0 10px 30px rgba(16,42,90,.10);
+            border:1px solid #eef2f9; display:flex; gap:14px; align-items:flex-start; cursor:pointer; transition:transform .18s, box-shadow .18s; }
+        .feature-card:hover{ transform:translateY(-4px); box-shadow:0 16px 40px rgba(16,42,90,.18); }
+        .feature-card .fc-ico{ width:46px; height:46px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; color:#fff; }
+        .feature-card .fc-t{ font-weight:800; color:#12305f; font-size:15px; margin:2px 0 3px; }
+        .feature-card .fc-d{ font-size:12.5px; color:#6b7a94; line-height:1.45; }
+        .fc-blue{ background:linear-gradient(135deg,#4285f4,#3367d6); }
+        .fc-green{ background:linear-gradient(135deg,#34a853,#2d8e47); }
+        .fc-orange{ background:linear-gradient(135deg,#ff9800,#f57c00); }
+        .fc-teal{ background:linear-gradient(135deg,#00897b,#00695c); }
+        .site-welcome{ max-width:1180px; margin:26px auto 40px; padding:0 40px; }
+        .site-welcome .sw-box{ background:#fff; border:1px solid #e9eef6; border-left:5px solid #4285f4; border-radius:14px;
+            padding:20px 24px; box-shadow:0 8px 24px rgba(16,42,90,.06); color:#33465f; font-size:14.5px; line-height:1.7; }
+        .site-welcome .sw-box h3{ margin:0 0 8px; color:#12305f; font-size:17px; }
+        .site-footer-note{ text-align:center; color:#8a97ad; font-size:13px; padding:0 20px 30px; }
+        .site-footer-note b{ color:#00897b; }
+        @media (max-width:900px){
+            .hero-inner{ grid-template-columns:1fr; padding:28px 20px 26px; gap:22px; text-align:center; }
+            .hero-visual{ order:-1; } .hero-visual img{ width:300px; }
+            .hero-title{ font-size:27px; } .hero-sub{ margin-left:auto; margin-right:auto; }
+            .hero-cta{ justify-content:center; }
+            .feature-strip{ grid-template-columns:1fr 1fr; margin-top:18px; padding:0 20px; }
+            .site-welcome{ padding:0 20px; } .site-hero .hero-inner{ padding-right:20px; }
+        }
+        @media (max-width:520px){ .feature-strip{ grid-template-columns:1fr; } .hero-title{ font-size:23px; } }
         .view-price-btn,.database-btn,.home-erp-btn,.notification-btn,.create-quote-btn,.report-btn,.exceldskh-btn{ position:fixed; right:20px; color:#fff; border:none; border-radius:8px; width:120px; height:50px; font-size:16px; font-weight:bold; cursor:pointer; box-shadow:0 4px 8px rgba(0,0,0,.2); display:flex; justify-content:center; align-items:center; text-align:center; transition:all .3s; z-index:1000; }
         .view-price-btn{ bottom:130px; background:#4285f4; } .view-price-btn:hover{ background:#3367d6; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,.3)}
         .database-btn{ bottom:70px; background:#8e24aa; } .database-btn:hover{ background:#7b1fa2; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,.3)}
@@ -1038,6 +1104,55 @@
     </style>
 </head>
 <body>
+    <!-- ============ GIAO DIỆN CHÍNH (LANDING) ============ -->
+    <header class="site-hero">
+        <div class="hero-inner">
+            <div class="hero-text">
+                <span class="hero-badge"><span class="dot"></span> Ứng dụng công nghệ AI · Dược &amp; Mỹ phẩm</span>
+                <h1 class="hero-title">BẢNG TRA CỨU VÀ BÁO GIÁ SẢN PHẨM</h1>
+                <p class="hero-sub">Nền tảng tra cứu giá, tạo báo giá chuyên nghiệp và gửi Zalo tự động — tích hợp AI, đồng bộ dữ liệu real-time trên mọi thiết bị, giúp đội ngũ kinh doanh làm việc nhanh và chính xác.</p>
+                <div class="hero-author"><span class="chip">🚀 Được phát triển bởi <b>MTRIET</b></span></div>
+                <div class="hero-cta">
+                    <button class="cta-primary" id="heroViewPrice">💊 Tra cứu &amp; Xem giá</button>
+                    <button class="cta-secondary" id="heroCreateQuote">🧾 Tạo báo giá</button>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <img src="https://cdn.imgpile.com/f/JrWiDlp_xl.png" alt="Minh họa nền tảng tra cứu và báo giá sản phẩm" loading="lazy"
+                     onerror="this.style.display='none'; var g=this.parentNode.querySelector('.hero-glow'); if(g)g.style.display='none';" />
+                <div class="hero-glow"></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Dải tính năng / lối tắt -->
+    <section class="feature-strip">
+        <div class="feature-card" id="fcViewPrice">
+            <div class="fc-ico fc-blue">💊</div>
+            <div><div class="fc-t">Xem giá sản phẩm</div><div class="fc-d">Tra cứu bảng giá, lọc theo nhóm, chọn cột đưa vào báo giá.</div></div>
+        </div>
+        <div class="feature-card" id="fcCreateQuote">
+            <div class="fc-ico fc-green">🧾</div>
+            <div><div class="fc-t">Tạo báo giá &amp; gửi Zalo</div><div class="fc-d">Xuất ảnh/PDF chuyên nghiệp, gửi khách hàng ngay trên Zalo.</div></div>
+        </div>
+        <div class="feature-card" id="fcExcelDskh">
+            <div class="fc-ico fc-orange">📁</div>
+            <div><div class="fc-t">Quản lý Excel DSKH</div><div class="fc-d">Upload nhiều file danh sách khách hàng, xóa file có bảo mật.</div></div>
+        </div>
+        <div class="feature-card" id="fcReport">
+            <div class="fc-ico fc-teal">📊</div>
+            <div><div class="fc-t">Báo cáo tuần</div><div class="fc-d">Giám đốc theo dõi nhân viên gửi báo giá, số lần trong tuần.</div></div>
+        </div>
+    </section>
+
+    <div class="site-welcome">
+        <div class="sw-box">
+            <h3>👋 Chào mừng đến với nền tảng tra cứu &amp; báo giá</h3>
+            Sử dụng thanh nút bên phải màn hình hoặc các thẻ lối tắt phía trên để bắt đầu: <b>Xem Giá</b> để tra cứu sản phẩm, <b>Tạo Báo Giá</b> để lập và gửi báo giá qua Zalo, <b>Excel DSKH</b> để quản lý danh sách khách hàng, và <b>Báo Cáo Tuần</b> để theo dõi hiệu quả gửi báo giá. Toàn bộ dữ liệu được đồng bộ real-time giữa các máy.
+        </div>
+    </div>
+    <div class="site-footer-note">© Bản quyền nền tảng thuộc <b>MTRIET</b> · Bảng tra cứu và báo giá sản phẩm dược &amp; mỹ phẩm</div>
+
     <button class="notification-btn" id="notificationBtn">Thông báo</button>
     <a href="https://erp-ideco.skyit.vn/#/app/order/index/" class="home-erp-btn" id="homeErpBtn">HOME ERP</a>
     <button class="view-price-btn" id="viewPriceBtn">Xem Giá</button>
@@ -4290,6 +4405,15 @@
         if (dOv) dOv.addEventListener('click', e => { if (e.target === dOv) dOv.style.display = 'none'; });
         document.addEventListener('keydown', e => { if (e.key === 'Escape' && dOv && dOv.style.display === 'flex') dOv.style.display = 'none'; });
         renderUploadedFilesBar(); // đặt trạng thái rỗng/tiêu đề ban đầu
+        // ===== Lối tắt trên trang giao diện chính (hero + thẻ tính năng) =====
+        const _click = id => { const el = document.getElementById(id); if (el) el.click(); };
+        const wire = (fromId, toId) => { const f = document.getElementById(fromId); if (f) f.addEventListener('click', () => _click(toId)); };
+        wire('heroViewPrice', 'viewPriceBtn');
+        wire('fcViewPrice', 'viewPriceBtn');
+        wire('heroCreateQuote', 'createQuoteBtn');
+        wire('fcCreateQuote', 'createQuoteBtn');
+        wire('fcExcelDskh', 'excelDskhBtn');
+        wire('fcReport', 'reportBtn');
     });
 </script>
 <div id="zaloToast"></div>
