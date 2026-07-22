@@ -12,6 +12,40 @@
     
     <style>
         body { font-family: 'Segoe UI', 'Inter', Arial, sans-serif; margin: 0; padding: 0; background-color: #f5f5f5; }
+        /* ============ CỔNG ĐĂNG NHẬP ============ */
+        #loginGate{ position:fixed; inset:0; z-index:2000; display:flex; align-items:center; justify-content:center; padding:20px;
+            background:
+              radial-gradient(1000px 500px at 10% -10%, rgba(66,133,244,.55), transparent 60%),
+              radial-gradient(800px 500px at 100% 0%, rgba(0,201,167,.45), transparent 55%),
+              linear-gradient(135deg,#0b1e3f 0%,#123a7a 45%,#0a5a8f 100%);
+        }
+        #loginGate::before{ content:""; position:absolute; inset:0;
+            background-image:radial-gradient(rgba(255,255,255,.10) 1px, transparent 1.4px); background-size:26px 26px; opacity:.5; }
+        #loginGate .lg-card{ position:relative; z-index:2; width:100%; max-width:410px; background:rgba(255,255,255,.97);
+            border-radius:20px; padding:34px 30px 26px; box-shadow:0 24px 70px rgba(0,0,0,.45); text-align:center;
+            border:1px solid rgba(255,255,255,.6); animation:lgIn .35s ease; }
+        @keyframes lgIn{ from{ opacity:0; transform:translateY(16px) scale(.98);} to{ opacity:1; transform:none;} }
+        #loginGate .lg-logo{ width:66px; height:66px; margin:0 auto 14px; border-radius:18px; display:flex; align-items:center; justify-content:center;
+            font-size:32px; background:linear-gradient(135deg,#4285f4,#00c9a7); box-shadow:0 10px 24px rgba(0,201,167,.4); }
+        #loginGate .lg-title{ margin:0 0 6px; font-size:18px; font-weight:900; color:#12305f; line-height:1.3; letter-spacing:.2px; }
+        #loginGate .lg-sub{ margin:0 0 20px; font-size:13.5px; color:#6b7a94; }
+        #loginGate .lg-field{ position:relative; margin-bottom:12px; }
+        #loginGate .lg-field input{ width:100%; box-sizing:border-box; padding:13px 44px 13px 14px; border:1.5px solid #d4dff0; border-radius:11px;
+            font-size:15px; color:#12305f; outline:none; transition:border .15s, box-shadow .15s; }
+        #loginGate .lg-field input:focus{ border-color:#4285f4; box-shadow:0 0 0 3px rgba(66,133,244,.16); }
+        #loginGate .lg-eye{ position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:17px; opacity:.6; padding:6px; }
+        #loginGate .lg-eye:hover{ opacity:1; }
+        #loginGate .lg-remember{ display:flex; align-items:center; gap:8px; justify-content:flex-start; font-size:13px; color:#4a5a72; margin:2px 2px 14px; cursor:pointer; }
+        #loginGate .lg-remember input{ width:16px; height:16px; cursor:pointer; }
+        #loginGate .lg-error{ min-height:18px; font-size:13px; color:#e53935; font-weight:600; margin-bottom:8px; }
+        #loginGate .lg-btn{ width:100%; border:none; cursor:pointer; font-weight:800; font-size:15px; padding:13px; border-radius:11px; color:#fff;
+            background:linear-gradient(135deg,#4285f4,#00a98f); box-shadow:0 10px 24px rgba(0,169,143,.35); transition:transform .15s, box-shadow .15s; }
+        #loginGate .lg-btn:hover{ transform:translateY(-2px); box-shadow:0 14px 30px rgba(0,169,143,.45); }
+        #loginGate .lg-link{ display:block; width:100%; margin-top:12px; background:none; border:none; cursor:pointer; color:#4a5a72; font-size:13px; font-weight:600; padding:6px; }
+        #loginGate .lg-link:hover{ color:#4285f4; text-decoration:underline; }
+        #loginGate .lg-foot{ margin-top:16px; font-size:12.5px; color:#9aa7bd; }
+        #loginGate .lg-foot b{ color:#00897b; letter-spacing:.5px; }
+        #lgChangeBox{ position:absolute; inset:0; z-index:3; display:none; align-items:center; justify-content:center; padding:20px; }
         /* ============ LANDING HERO (trang giao diện chính) ============ */
         .site-hero{ position:relative; overflow:hidden; color:#fff;
             background:
@@ -1104,6 +1138,40 @@
     </style>
 </head>
 <body>
+    <!-- ============ CỔNG ĐĂNG NHẬP BẢO MẬT ============ -->
+    <div id="loginGate">
+        <div class="lg-card">
+            <div class="lg-logo">🔐</div>
+            <h2 class="lg-title">BẢNG TRA CỨU VÀ BÁO GIÁ SẢN PHẨM</h2>
+            <p class="lg-sub">Vui lòng đăng nhập để sử dụng ứng dụng</p>
+            <div class="lg-field">
+                <input type="password" id="lgPassword" placeholder="Nhập mật khẩu đăng nhập" autocomplete="current-password" />
+                <button type="button" id="lgToggle" class="lg-eye" title="Hiện/ẩn mật khẩu">👁</button>
+            </div>
+            <label class="lg-remember"><input type="checkbox" id="lgRemember" checked /> Ghi nhớ đăng nhập trên máy này</label>
+            <div class="lg-error" id="lgError"></div>
+            <button class="lg-btn" id="lgSubmit">Đăng nhập →</button>
+            <button class="lg-link" id="lgChangeLink">⚙ Cài đặt · Đổi mật khẩu</button>
+            <div class="lg-foot">Được phát triển bởi <b>MTRIET</b></div>
+        </div>
+
+        <!-- Hộp đổi mật khẩu -->
+        <div id="lgChangeBox">
+            <div class="lg-card">
+                <div class="lg-logo">⚙️</div>
+                <h2 class="lg-title" style="font-size:20px">Đổi mật khẩu đăng nhập</h2>
+                <p class="lg-sub">Nhập mật khẩu quản trị, sau đó đặt mật khẩu mới</p>
+                <div class="lg-field"><input type="password" id="lgAdminPass" placeholder="Mật khẩu quản trị" autocomplete="off" /></div>
+                <div class="lg-field"><input type="password" id="lgNewPass" placeholder="Mật khẩu đăng nhập mới" autocomplete="new-password" /></div>
+                <div class="lg-field"><input type="password" id="lgNewPass2" placeholder="Nhập lại mật khẩu mới" autocomplete="new-password" /></div>
+                <div class="lg-error" id="lgChangeError"></div>
+                <div class="lg-error" id="lgChangeOk" style="color:#00a884"></div>
+                <button class="lg-btn" id="lgChangeSubmit">Áp dụng mật khẩu mới</button>
+                <button class="lg-link" id="lgChangeCancel">← Quay lại đăng nhập</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ============ GIAO DIỆN CHÍNH (LANDING) ============ -->
     <header class="site-hero">
         <div class="hero-inner">
@@ -1566,6 +1634,116 @@
         firebase.initializeApp(firebaseConfig);
     }
     const database = firebase.database();
+
+    // ============ CỔNG ĐĂNG NHẬP BẢO MẬT ============
+    (function initLoginGate(){
+        const DEFAULT_LOGIN_PASS = 'ideco@2026';
+        const ADMIN_PASS = 'minhtriet1973';
+        const LS_PASS = 'appLoginPass_v1';       // mật khẩu hiện hành (đồng bộ Firebase + dự phòng local)
+        const LS_AUTH = 'appLoggedIn_v1';         // cờ "ghi nhớ đăng nhập" trên máy này
+        let currentPass = null;                   // sẽ nạp từ Firebase/local
+
+        function getStoredPass(){
+            return localStorage.getItem(LS_PASS) || DEFAULT_LOGIN_PASS;
+        }
+        // Nạp mật khẩu hiện hành từ Firebase (mọi máy dùng chung); nếu chưa có thì tạo mặc định
+        try {
+            database.ref('appAccessConfig/loginPass').on('value', snap => {
+                const val = snap.val();
+                if (val === null || val === undefined) {
+                    // Khởi tạo lần đầu bằng mật khẩu đang có trên máy (hoặc mặc định)
+                    const seed = getStoredPass();
+                    database.ref('appAccessConfig/loginPass').set(seed).catch(()=>{});
+                    currentPass = seed;
+                } else {
+                    currentPass = String(val);
+                    try { localStorage.setItem(LS_PASS, currentPass); } catch(e){}
+                }
+            });
+        } catch(e){ console.warn('loginPass listener:', e); currentPass = getStoredPass(); }
+
+        function passInEffect(){ return currentPass || getStoredPass(); }
+
+        const gate = document.getElementById('loginGate');
+        const passInput = document.getElementById('lgPassword');
+        const rememberCb = document.getElementById('lgRemember');
+        const errEl = document.getElementById('lgError');
+        const submitBtn = document.getElementById('lgSubmit');
+        const toggleBtn = document.getElementById('lgToggle');
+        const changeLink = document.getElementById('lgChangeLink');
+        const changeBox = document.getElementById('lgChangeBox');
+        const adminInput = document.getElementById('lgAdminPass');
+        const newInput = document.getElementById('lgNewPass');
+        const new2Input = document.getElementById('lgNewPass2');
+        const changeErr = document.getElementById('lgChangeError');
+        const changeOk = document.getElementById('lgChangeOk');
+        const changeSubmit = document.getElementById('lgChangeSubmit');
+        const changeCancel = document.getElementById('lgChangeCancel');
+
+        function unlock(){
+            if (gate) gate.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+        function lockScroll(){ document.body.style.overflow = 'hidden'; }
+
+        // Nếu đã ghi nhớ đăng nhập trước đó → vào thẳng
+        if (localStorage.getItem(LS_AUTH) === '1') {
+            unlock();
+        } else {
+            lockScroll();
+            setTimeout(()=>{ if (passInput) passInput.focus(); }, 200);
+        }
+
+        function tryLogin(){
+            const val = (passInput.value || '');
+            if (!val){ errEl.textContent = 'Vui lòng nhập mật khẩu.'; return; }
+            if (val === passInEffect()) {
+                if (rememberCb && rememberCb.checked) {
+                    try { localStorage.setItem(LS_AUTH, '1'); } catch(e){}
+                } else {
+                    try { localStorage.removeItem(LS_AUTH); } catch(e){}
+                }
+                errEl.textContent = '';
+                unlock();
+            } else {
+                errEl.textContent = '❌ Mật khẩu không đúng. Vui lòng thử lại.';
+                passInput.select();
+            }
+        }
+        if (submitBtn) submitBtn.addEventListener('click', tryLogin);
+        if (passInput) passInput.addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
+        if (toggleBtn) toggleBtn.addEventListener('click', ()=>{ passInput.type = passInput.type === 'password' ? 'text' : 'password'; });
+
+        // ---- Đổi mật khẩu (cần mật khẩu quản trị) ----
+        function showChange(show){
+            if (!changeBox) return;
+            changeBox.style.display = show ? 'flex' : 'none';
+            if (show){ changeErr.textContent=''; changeOk.textContent=''; adminInput.value=''; newInput.value=''; new2Input.value=''; setTimeout(()=>adminInput.focus(),100); }
+        }
+        if (changeLink) changeLink.addEventListener('click', ()=> showChange(true));
+        if (changeCancel) changeCancel.addEventListener('click', ()=> showChange(false));
+        function applyNewPass(){
+            changeErr.textContent=''; changeOk.textContent='';
+            if (adminInput.value !== ADMIN_PASS){ changeErr.textContent='❌ Sai mật khẩu quản trị.'; adminInput.select(); return; }
+            const np = (newInput.value || '').trim();
+            if (np.length < 4){ changeErr.textContent='Mật khẩu mới phải từ 4 ký tự trở lên.'; return; }
+            if (np !== new2Input.value){ changeErr.textContent='Hai ô mật khẩu mới không khớp.'; return; }
+            // Lưu Firebase (mọi máy) + local
+            try { localStorage.setItem(LS_PASS, np); } catch(e){}
+            currentPass = np;
+            database.ref('appAccessConfig/loginPass').set(np).then(()=>{
+                changeOk.textContent='✅ Đã đổi mật khẩu. Áp dụng cho mọi máy. Đăng nhập lại bằng mật khẩu mới.';
+                // buộc đăng nhập lại bằng mật khẩu mới
+                try { localStorage.removeItem(LS_AUTH); } catch(e){}
+                setTimeout(()=>{ showChange(false); if(passInput){ passInput.value=''; passInput.focus(); } }, 1600);
+            }).catch(err=>{
+                changeOk.textContent='✅ Đã đổi mật khẩu trên máy này (chưa đồng bộ được Firebase: '+(err&&err.message||err)+').';
+                setTimeout(()=>{ showChange(false); if(passInput){ passInput.value=''; passInput.focus(); } }, 2000);
+            });
+        }
+        if (changeSubmit) changeSubmit.addEventListener('click', applyNewPass);
+        [adminInput,newInput,new2Input].forEach(el=>{ if(el) el.addEventListener('keydown', e=>{ if(e.key==='Enter') applyNewPass(); }); });
+    })();
 
     // ========== GLOBAL VARIABLES ==========
     let uploadedFiles = [];
