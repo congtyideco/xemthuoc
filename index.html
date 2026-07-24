@@ -7,6 +7,8 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
@@ -2427,38 +2429,220 @@
         selectAllFilteredProducts();
     });
 
-    // ========== XUẤT EXCEL ==========
-    quoteExcelBtn.addEventListener('click', () => {
-        const companyInfo = [ ["CÔNG TY TNHH TM -DV KẾT GIAO PHÁT TRIỂN QUỐC TẾ ( IDECO)"], ["Địa chỉ: 003 Carillon 5 262/3 Lũy Bán Bích - P.Tân Phú - Tp.HCM"], ["Điện thoại: 0385400436"], ["Website: www.goibaogia.com"], [] ];
-        const titleText = document.querySelector('.quote-title').innerText || "BÁO GIÁ SẢN PHẨM THUỐC";
-        const custName = document.getElementById("quoteCustomerName").innerText;
-        const custContact = document.getElementById("quoteCustomerContact").innerText;
-        const custPhone = document.getElementById("quoteCustomerPhone").innerText;
-        const custAddress = document.getElementById("quoteCustomerAddress").innerText;
-        const customerInfo = [ [titleText], [], ["Khách hàng:", custName], ["Người phụ trách:", custContact], ["Điện thoại:", custPhone], ["Địa chỉ:", custAddress], [] ];
+    // ========== XUẤT EXCEL CHUẨN (ExcelJS: khung viền, canh lề, in A4 như PDF) ==========
+    quoteExcelBtn.addEventListener('click', async () => {
         const tableEl = document.querySelector("#quoteTableContainer table");
         if (!tableEl) { alert("Không tìm thấy bảng dữ liệu báo giá."); return; }
-        const tableData = []; const headers = [];
-        const thList = tableEl.querySelectorAll("thead th");
-        thList.forEach(th => { if (th.innerText.toLowerCase().includes("hình")) return; headers.push(th.innerText); });
-        tableData.push(headers);
-        const trList = tableEl.querySelectorAll("tbody tr");
-        trList.forEach(tr => {
-            const row = []; const tdList = tr.querySelectorAll("td");
-            tdList.forEach((td, index) => { const headerText = thList[index].innerText.toLowerCase(); if (headerText.includes("hình")) return; row.push(td.innerText); });
-            tableData.push(row);
-        });
-        const footerRows = [ [], ["Ghi chú: Gía này bao gồm VAT 5%"], [], ["Ngày lập:", `${quoteDateDay.innerText}/${quoteDateMonth.innerText}/${quoteDateYear.innerText}`], [], [], ["ĐẠI DIỆN CÔNG TY IDECO"], [], [], ["(Ký và ghi rõ họ tên)"] ];
-        const finalData = [...companyInfo, ...customerInfo, ...tableData, ...footerRows];
-        const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(finalData);
-        if(!ws['!merges']) ws['!merges'] = [];
-        ws['!merges'].push({s:{r:0,c:0}, e:{r:0,c:4}}); ws['!merges'].push({s:{r:5,c:0}, e:{r:5,c:4}}); 
-        const wscols = headers.map(() => ({wch: 20})); if(wscols.length > 0) wscols[0] = {wch: 5}; if(wscols.length > 1) wscols[1] = {wch: 30}; 
-        ws['!cols'] = wscols;
-        XLSX.utils.book_append_sheet(wb, ws, "BaoGia_IDECO");
-        const now = new Date();
-        const fileName = `BaoGia_IDECO_${now.getDate()}${now.getMonth()+1}${now.getFullYear()}.xlsx`;
-        XLSX.writeFile(wb, fileName);
+        if (typeof ExcelJS === 'undefined') { alert("Thư viện ExcelJS chưa tải xong, vui lòng thử lại sau vài giây."); return; }
+
+        const oldTxt = quoteExcelBtn.textContent;
+        quoteExcelBtn.textContent = 'Đang xuất...';
+        quoteExcelBtn.disabled = true;
+
+        try {
+            const THIN   = { style: 'thin',   color: { argb: 'FF333333' } };
+            const MEDIUM = { style: 'medium', color: { argb: 'FF1A4E8A' } };
+            const box    = { top: THIN, left: THIN, bottom: THIN, right: THIN };
+            const FONT   = 'Times New Roman';
+
+            // ---- Lấy dữ liệu bảng, bỏ cột Hình ----
+            const thList  = Array.from(tableEl.querySelectorAll("thead th"));
+            const keepIdx = thList.map((th, i) => th.innerText.toLowerCase().includes("hình") ? -1 : i).filter(i => i >= 0);
+            const headers = keepIdx.map(i => thList[i].innerText.trim().replace(/\s+/g, ' '));
+            const rows = Array.from(tableEl.querySelectorAll("tbody tr")).map(tr => {
+                const tds = Array.from(tr.querySelectorAll("td"));
+                return keepIdx.map(i => (tds[i] ? tds[i].innerText.trim().replace(/\s+/g, ' ') : ''));
+            });
+            if (!headers.length) { alert("Bảng báo giá không có cột dữ liệu."); return; }
+
+            const NC = headers.length;
+            const colLetter = (n) => { let s = ''; while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; };
+            const LAST = colLetter(NC);
+
+            const wb = new ExcelJS.Workbook();
+            wb.creator = 'IDECO'; wb.created = new Date();
+            const ws = wb.addWorksheet('BaoGia_IDECO', {
+                pageSetup: {
+                    paperSize: 9, orientation: 'landscape',
+                    fitToPage: true, fitToWidth: 1, fitToHeight: 0,
+                    horizontalCentered: true,
+                    margins: { left: 0.35, right: 0.35, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 }
+                },
+                views: [{ showGridLines: false }]
+            });
+
+            const putFull = (r, text, o = {}) => {
+                if (NC > 1) ws.mergeCells(`A${r}:${LAST}${r}`);
+                const c = ws.getCell(`A${r}`);
+                c.value = text;
+                c.font = { name: FONT, size: o.size || 11, bold: !!o.bold, italic: !!o.italic, color: { argb: o.color || 'FF000000' } };
+                c.alignment = { horizontal: o.align || 'left', vertical: 'middle', wrapText: true };
+                if (o.h) ws.getRow(r).height = o.h;
+                return c;
+            };
+
+            // ---- Tiêu đề công ty ----
+            putFull(1, 'CÔNG TY TNHH TM - DV KẾT GIAO PHÁT TRIỂN QUỐC TẾ (IDECO)', { bold: true, size: 14, align: 'center', color: 'FF1A4E8A', h: 24 });
+            putFull(2, 'Địa chỉ: 003 Carillon 5, 262/3 Lũy Bán Bích, P. Tân Phú, TP. Hồ Chí Minh', { size: 10, align: 'center', h: 16 });
+            putFull(3, 'Điện thoại: 0385400436   |   Website: www.goibaogia.com', { size: 10, align: 'center', h: 16 });
+
+            ws.getRow(4).height = 7;
+            for (let c = 1; c <= NC; c++) ws.getCell(4, c).border = { bottom: MEDIUM };
+
+            const titleText = ((document.querySelector('.quote-title') || {}).innerText || 'BÁO GIÁ SẢN PHẨM').trim();
+            putFull(6, titleText.toUpperCase(), { bold: true, size: 18, align: 'center', color: 'FF1D6F42', h: 32 });
+
+            // ---- Thông tin khách hàng ----
+            const gv = id => { const e = document.getElementById(id); return e ? e.innerText.trim() : ''; };
+            const info = [
+                ['Khách hàng:',      gv('quoteCustomerName')],
+                ['Người phụ trách:', gv('quoteCustomerContact')],
+                ['Điện thoại:',      gv('quoteCustomerPhone')],
+                ['Địa chỉ:',         gv('quoteCustomerAddress')]
+            ];
+            let r = 8;
+            info.forEach(([lb, val]) => {
+                const lc = ws.getCell(`A${r}`);
+                lc.value = lb;
+                lc.font = { name: FONT, size: 11, bold: true };
+                lc.alignment = { vertical: 'middle', horizontal: 'left' };
+                if (NC >= 2) {
+                    ws.mergeCells(`B${r}:${LAST}${r}`);
+                    const vc = ws.getCell(`B${r}`);
+                    vc.value = val;
+                    vc.font = { name: FONT, size: 11 };
+                    vc.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
+                }
+                ws.getRow(r).height = 18;
+                r++;
+            });
+
+            r++;
+            const HR = r; // dòng header bảng
+
+            // ---- Header bảng ----
+            const hrow = ws.getRow(HR);
+            hrow.values = headers;
+            hrow.height = 28;
+            for (let c = 1; c <= NC; c++) {
+                const cell = ws.getCell(HR, c);
+                cell.font = { name: FONT, size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4285F4' } };
+                cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+                cell.border = { top: MEDIUM, left: THIN, bottom: MEDIUM, right: THIN };
+            }
+
+            // ---- Dữ liệu ----
+            const toNum = (s) => {
+                if (!s) return null;
+                const t = s.replace(/[₫đVNDvnd\s]/g, '');
+                if (!/^-?[\d.,]+$/.test(t)) return null;
+                let n;
+                if (t.includes(',') && t.includes('.')) n = t.lastIndexOf(',') > t.lastIndexOf('.') ? t.replace(/\./g, '').replace(',', '.') : t.replace(/,/g, '');
+                else if ((t.match(/\./g) || []).length > 1) n = t.replace(/\./g, '');
+                else if (/,\d{3}$/.test(t) || (t.match(/,/g) || []).length > 1) n = t.replace(/,/g, '');
+                else n = t.replace(',', '.');
+                const v = Number(n);
+                return isNaN(v) ? null : v;
+            };
+            const hKey = headers.map(h => h.toLowerCase());
+            const isMoneyCol  = hKey.map(h => /giá|gía|tiền|thành ti|đơn giá/.test(h));
+            const isCenterCol = hKey.map(h => /^stt|stt|đvt|đơn vị|quy cách|sl|số lượng|hạn|date|hsd|ngày|mã/.test(h));
+
+            rows.forEach((row, i) => {
+                const rIdx = HR + 1 + i;
+                const rr = ws.getRow(rIdx);
+                rr.values = row.map((v, ci) => {
+                    if (isMoneyCol[ci] || /^\d[\d.,]*$/.test(v)) { const n = toNum(v); if (n !== null) return n; }
+                    return v;
+                });
+                rr.height = 20;
+                for (let c = 1; c <= NC; c++) {
+                    const cell = ws.getCell(rIdx, c);
+                    cell.font = { name: FONT, size: 11 };
+                    cell.border = box;
+                    cell.alignment = {
+                        horizontal: isMoneyCol[c - 1] ? 'right' : (isCenterCol[c - 1] ? 'center' : 'left'),
+                        vertical: 'middle', wrapText: true
+                    };
+                    if (typeof cell.value === 'number' && isMoneyCol[c - 1]) cell.numFmt = '#,##0';
+                    if (i % 2 === 1) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF4F8FF' } };
+                }
+            });
+
+            const LAST_ROW = HR + rows.length;
+
+            // ---- Viền ngoài đậm quanh bảng ----
+            for (let c = 1; c <= NC; c++) {
+                const b = ws.getCell(LAST_ROW, c).border || {};
+                ws.getCell(LAST_ROW, c).border = { ...b, bottom: MEDIUM };
+            }
+            for (let rw = HR; rw <= LAST_ROW; rw++) {
+                const l = ws.getCell(rw, 1).border || {};
+                ws.getCell(rw, 1).border = { ...l, left: MEDIUM };
+                const rg = ws.getCell(rw, NC).border || {};
+                ws.getCell(rw, NC).border = { ...rg, right: MEDIUM };
+            }
+
+            // ---- Footer ----
+            let f = LAST_ROW + 2;
+            putFull(f, 'Ghi chú: Giá trên đã bao gồm VAT 5%.', { italic: true, size: 11, color: 'FFC62828', h: 18 });
+
+            const dd = (document.getElementById('quoteDateDay')   || {}).innerText || '';
+            const mm = (document.getElementById('quoteDateMonth') || {}).innerText || '';
+            const yy = (document.getElementById('quoteDateYear')  || {}).innerText || '';
+            const startCol = NC >= 4 ? Math.ceil(NC / 2) + 1 : 1;
+            const signBlock = (row, text, opt) => {
+                if (startCol < NC) ws.mergeCells(row, startCol, row, NC);
+                const c = ws.getCell(row, startCol);
+                c.value = text;
+                c.font = { name: FONT, size: opt.size, bold: !!opt.bold, italic: !!opt.italic };
+                c.alignment = { horizontal: 'center', vertical: 'middle' };
+                ws.getRow(row).height = opt.h || 18;
+            };
+            f += 2; signBlock(f, `Ngày ${dd} tháng ${mm} năm ${yy}`, { size: 11, italic: true });
+            f += 1; signBlock(f, 'ĐẠI DIỆN CÔNG TY IDECO', { size: 12, bold: true, h: 20 });
+            f += 1; signBlock(f, '(Ký, ghi rõ họ tên)', { size: 10, italic: true });
+            ws.getRow(f + 1).height = 60;
+
+            // ---- Độ rộng cột tự động ----
+            headers.forEach((h, i) => {
+                let max = h.length;
+                rows.forEach(rw => { max = Math.max(max, String(rw[i] == null ? '' : rw[i]).length); });
+                let w = Math.min(Math.max(max + 4, 10), 48);
+                const k = hKey[i];
+                if (/^stt/.test(k)) w = 6;
+                else if (/tên|sản phẩm|hàng hóa|hoạt chất/.test(k)) w = Math.max(w, 32);
+                else if (isMoneyCol[i]) w = Math.max(Math.min(w, 16), 13);
+                ws.getColumn(i + 1).width = w;
+            });
+
+            // ---- Lặp header khi in, đóng băng, lọc ----
+            ws.pageSetup.printTitlesRow = `${HR}:${HR}`;
+            ws.views = [{ state: 'frozen', ySplit: HR, showGridLines: false }];
+            if (rows.length > 0) ws.autoFilter = { from: { row: HR, column: 1 }, to: { row: LAST_ROW, column: NC } };
+
+            // ---- Xuất file ----
+            const buf = await wb.xlsx.writeBuffer();
+            const now = new Date();
+            const stamp = `${String(now.getDate()).padStart(2,'0')}${String(now.getMonth()+1).padStart(2,'0')}${now.getFullYear()}`;
+            const cust = gv('quoteCustomerName').replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, '_').slice(0, 30);
+            const fileName = `BaoGia_IDECO${cust ? '_' + cust : ''}_${stamp}.xlsx`;
+            const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            if (typeof saveAs === 'function') { saveAs(blob, fileName); }
+            else {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = fileName; document.body.appendChild(a); a.click();
+                setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1500);
+            }
+        } catch (err) {
+            console.error('Lỗi xuất Excel:', err);
+            alert('Xuất Excel thất bại: ' + err.message);
+        } finally {
+            quoteExcelBtn.textContent = oldTxt;
+            quoteExcelBtn.disabled = false;
+        }
     });
 
     // ========== TỰ ĐỘNG ĐIỀN SỐ THỨ TỰ (STT) KHI TẢI FILE EXCEL ==========
