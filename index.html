@@ -1913,6 +1913,7 @@
     let originalImageFile = null;  
     // CRUD
     let rowIndexMap = []; 
+    let masterIdxCache = 0;   // index file chuẩn (nhiều cột nhất) dùng làm gốc schema
     let editingRowState = { index: null, originalData: [] }; 
     const REMOVE_BG_API_KEY = "iHt8DKCwKg4Va63ACXopN7nm"; 
     // MẶC ĐỊNH LÀ LANDSCAPE
@@ -2754,24 +2755,101 @@
         else if(uploadedFiles.length===1) fileNameDisplay.textContent = uploadedFiles[0].name;
         else fileNameDisplay.textContent = `${uploadedFiles.length} file đã chọn`;
     }
+    // ===== ÁNH XẠ CỘT THEO TÊN HEADER (khắc phục file phụ khác cấu trúc cột) =====
+    // Chuẩn hoá tên cột: bỏ dấu, bỏ ký tự đặc biệt, gộp về 1 khoá duy nhất
+    function normHeaderKey(h){
+        let s = String(h == null ? '' : h).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        s = s.replace(/đ/gi, 'd').toLowerCase();
+        s = s.replace(/\(.*?\)/g, ' ');                 // bỏ "(VNĐ)"
+        s = s.replace(/[≥>=<]/g, ' ');                  // bỏ ký hiệu so sánh
+        s = s.replace(/[^a-z0-9]+/g, ' ').trim();       // chỉ giữ chữ + số
+        // Gộp các biến thể phổ biến về một tên chuẩn
+        if (/^(stt|so thu tu|tt)$/.test(s)) return 'stt';
+        if (/^(ma sp|masp|ma san pham|ma thuoc|ma hang)$/.test(s)) return 'ma sp';
+        if (/^(ten thuoc|ten sp|ten san pham|ten hang|san pham|ten)$/.test(s)) return 'ten thuoc';
+        if (/^(hoat chat|thanh phan)$/.test(s)) return 'hoat chat';
+        if (/^(ham luong|nong do)$/.test(s)) return 'ham luong';
+        if (/^(cong dung chinh|cong dung|chi dinh|tac dung)$/.test(s)) return 'cong dung chinh';
+        if (/^(quy cach|dong goi|dvt|don vi tinh)$/.test(s)) return 'quy cach';
+        if (/^(nsx|nha san xuat|hang san xuat)$/.test(s)) return 'nsx';
+        if (/^(xuat xu|nuoc san xuat)$/.test(s)) return 'xuat xu';
+        if (/^(nhom dieu tri|nhom benh|nhom)$/.test(s)) return 'nhom dieu tri';
+        // Các cột giá / chiết khấu theo mốc số hộp
+        if (/^don gia/.test(s) && !/6|12/.test(s)) return 'don gia';
+        if (/^ck/.test(s) && /\b6\b/.test(s)) return 'ck 6';
+        if (/^ck/.test(s) && /\b12\b/.test(s)) return 'ck 12';
+        if (/gia mua/.test(s) && /\b6\b/.test(s)) return 'gia 6';
+        if (/gia mua/.test(s) && /\b12\b/.test(s)) return 'gia 12';
+        return s;
+    }
+    // Sắp lại 1 file cho khớp schema của file chuẩn (masterHeader)
+    // Cột file phụ không có -> để trống. Cột lạ (không có trong master) -> nối thêm vào cuối master.
+    function alignFileToMaster(fileData, masterHeader){
+        if (!fileData || fileData.length === 0) return { data: fileData, header: masterHeader };
+        const srcHeader = fileData[0] || [];
+        const master = masterHeader.slice();
+        const masterKeys = master.map(normHeaderKey);
+        const srcKeys = srcHeader.map(normHeaderKey);
+
+        // Nếu schema trùng khít thì bỏ qua, khỏi tốn công
+        if (srcKeys.length === masterKeys.length && srcKeys.every((k, i) => k === masterKeys[i])) {
+            return { data: fileData, header: master };
+        }
+
+        // Cột lạ của file phụ -> bổ sung vào cuối master để không mất dữ liệu
+        srcKeys.forEach((k, i) => {
+            if (!k) return;
+            if (masterKeys.indexOf(k) === -1) {
+                master.push(srcHeader[i]);
+                masterKeys.push(k);
+            }
+        });
+
+        // map[masterIdx] = srcIdx (hoặc -1 nếu file phụ không có cột này)
+        const map = masterKeys.map(k => (k ? srcKeys.indexOf(k) : -1));
+
+        const out = [master.slice()];
+        for (let r = 1; r < fileData.length; r++) {
+            const src = fileData[r] || [];
+            out.push(map.map(si => (si === -1 ? '' : (src[si] == null ? '' : src[si]))));
+        }
+        return { data: out, header: master };
+    }
+
     function displayAllData(){
         if (editingRowState.index !== null) { handleEditRow(); }
         if(uploadedFiles.length===0){ tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị. Vui lòng tải lên file Excel.</p>'; columnToolbar.style.display='none'; return; }
         currentData = [];
         rowIndexMap = [];
-        let isFirstFile = true;
+
+        // Chọn file CHUẨN làm gốc schema: file đầu tiên có nhiều cột nhất (thường là bảng giá chính)
+        const withData = uploadedFiles.map((f, i) => ({ f, i }))
+            .filter(o => o.f.data && o.f.data.length > 0 && o.f.data[0] && o.f.data[0].length);
+        if (withData.length === 0) { tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị.</p>'; return; }
+        let masterIdx = withData[0].i;
+        let maxCols = withData[0].f.data[0].length;
+        withData.forEach(o => { const n = o.f.data[0].length; if (n > maxCols) { maxCols = n; masterIdx = o.i; } });
+
+        masterIdxCache = masterIdx;
+        let masterHeader = uploadedFiles[masterIdx].data[0].slice();
+
+        // Vòng 1: mở rộng masterHeader bằng các cột lạ có trong file phụ
+        uploadedFiles.forEach(file => {
+            if (!file.data || file.data.length === 0) return;
+            masterHeader = alignFileToMaster(file.data, masterHeader).header;
+        });
+
+        // Vòng 2: sắp lại toàn bộ file theo masterHeader đã hoàn chỉnh rồi gộp
+        currentData.push(masterHeader);
+        rowIndexMap.push({ fileIndex: masterIdx, rowIndexInFile: 0 });
+        headersCache = masterHeader;
+
         uploadedFiles.forEach((file, fileIndex) => {
             if (!file.data || file.data.length === 0) return;
-            let dataSlice = file.data;
-            if (isFirstFile && dataSlice.length > 0) {
-                currentData.push(dataSlice[0]);
-                rowIndexMap.push({ fileIndex: fileIndex, rowIndexInFile: 0 });
-                headersCache = dataSlice[0];
-                isFirstFile = false;
-            }
-            for (let i = 1; i < dataSlice.length; i++) {
-                if (dataSlice[i] && dataSlice[i].some(cell => String(cell).trim() !== '')) {
-                    currentData.push(dataSlice[i]);
+            const aligned = alignFileToMaster(file.data, masterHeader).data;
+            for (let i = 1; i < aligned.length; i++) {
+                if (aligned[i] && aligned[i].some(cell => String(cell == null ? '' : cell).trim() !== '')) {
+                    currentData.push(aligned[i]);
                     rowIndexMap.push({ fileIndex: fileIndex, rowIndexInFile: i });
                 }
             }
@@ -2812,7 +2890,19 @@
 
         // Nếu bảng không có cột nhóm -> chỉ đánh lại STT liền mạch, không trộn
         const hasMultipleFiles = uploadedFiles.filter(f => f.data && f.data.length > 1).length > 1;
-        if(gIdx === -1 || !hasMultipleFiles){
+        // Chỉ trộn khi cột "Nhóm điều trị" THỰC SỰ có dữ liệu ở phần lớn số dòng.
+        // Tránh trường hợp file phụ thiếu cột nhóm -> sinh nhóm rác và đẩy dữ liệu xuống cuối.
+        let filledGroup = 0, productRows = 0;
+        if (gIdx !== -1) {
+            for (let i = 1; i < currentData.length; i++) {
+                const row = currentData[i];
+                if (!row || isGroupHeaderRow(row)) continue;
+                productRows++;
+                if (String(row[gIdx] == null ? '' : row[gIdx]).trim() !== '') filledGroup++;
+            }
+        }
+        const groupUsable = gIdx !== -1 && productRows > 0 && (filledGroup / productRows) >= 0.5;
+        if(!groupUsable || !hasMultipleFiles){
             renumberStt(sttIdx);
             return;
         }
@@ -2822,6 +2912,12 @@
         const groupMap = new Map();               // normName -> { headerRow, name, items:[] }
         const looseItems = [];                    // SP chưa có nhóm rõ ràng (hiếm)
         let curKey = null;
+
+        // Gắn tạm ánh xạ nguồn vào từng dòng để sau khi trộn vẫn sửa/xóa được
+        const srcOf = new Map();                  // row (object ref) -> {fileIndex,rowIndexInFile}
+        for(let i=1;i<currentData.length;i++){
+            if(currentData[i] && rowIndexMap[i]) srcOf.set(currentData[i], rowIndexMap[i]);
+        }
 
         for(let i=1;i<currentData.length;i++){
             const row = currentData[i];
@@ -2838,6 +2934,7 @@
             // Hàng sản phẩm: ưu tiên phân nhóm theo GIÁ TRỊ cột "Nhóm điều trị"
             const gVal = String((row[gIdx]||'')).trim();
             let key = gVal ? normGroup(gVal) : curKey;
+            // Dòng không xác định được nhóm -> để riêng, KHÔNG tạo nhóm rác
             if(key){
                 if(!groupMap.has(key)){
                     // Nhóm mới (từ file phụ) chưa có tiêu đề -> tạo tiêu đề nhóm mới ở cuối
@@ -2875,8 +2972,11 @@
         looseItems.forEach(it => rebuilt.push(it));
 
         currentData = rebuilt;
-        // rowIndexMap không còn ánh xạ 1-1 sau khi trộn -> vô hiệu hóa để tránh sai lệch
-        rowIndexMap = [];
+        // Dựng lại rowIndexMap theo thứ tự mới để vẫn sửa/xóa được đúng dòng gốc
+        rowIndexMap = rebuilt.map((row, i) => {
+            if (i === 0) return { fileIndex: masterIdxCache, rowIndexInFile: 0 };
+            return srcOf.get(row) || null;   // dòng tiêu đề nhóm (do app sinh ra) -> null
+        });
         renumberStt(findSttColIdx(currentData[0]));
     }
     // Đánh lại STT liền mạch 1..n cho toàn bộ hàng sản phẩm (bỏ qua hàng tiêu đề nhóm)
