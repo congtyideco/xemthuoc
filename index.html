@@ -1179,6 +1179,21 @@
             #notificationDisplay { max-width: 95%; }
         }
         /* ====== HẾT PHẦN THÔNG BÁO MỚI ====== */
+
+        /* ====== ĐỐI CHIẾU EXCEL & CHỌN NHANH (mới) ====== */
+        .match-table{ width:100%; border-collapse:collapse; font-size:13px; }
+        .match-table th{ background:#f0f4f9; color:#1a3d7c; text-align:left; padding:8px 9px; position:sticky; top:0; z-index:1; border-bottom:2px solid #d5deee; }
+        .match-table td{ padding:7px 9px; border-bottom:1px solid #eef1f6; vertical-align:middle; }
+        .match-table tr.match-row-ok td{ background:#f2fbf4; }
+        .match-table tr.match-row-weak td{ background:#fff9ec; }
+        .match-table tr.match-row-bad td{ background:#fdf3f3; color:#9a3b3b; }
+        .match-badge{ display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:700; white-space:nowrap; }
+        .match-badge.ok{ background:#d7f5df; color:#1e7d34; }
+        .match-badge.weak{ background:#ffedc2; color:#8a5a00; }
+        .match-badge.bad{ background:#fbdcdc; color:#a33; }
+        .match-summary-box{ display:flex; gap:14px; flex-wrap:wrap; background:#f6f9ff; border:1px solid #d9e4fb; border-radius:8px; padding:10px 14px; font-size:13px; }
+        .match-summary-box b{ color:#1a3d7c; }
+        #matchExcelStatus.loading{ color:#e08a00; font-weight:700; }
     </style>
 </head>
 <body>
@@ -1443,6 +1458,19 @@
                             <button class="export-btn" id="manageImagesBtn" style="background: #9c27b0; color:#fff;">🖼️ Quản lý ảnh</button>
                         </div>
                     </div>
+
+                    <!-- Đối chiếu Excel & chọn nhanh (mới) -->
+                    <div class="pro-tool-card" id="matchToolCard">
+                        <h4>🔎 Đối chiếu Excel & Chọn nhanh</h4>
+                        <div style="font-size:11.5px; color:#667085; line-height:1.5; margin-bottom:8px;">
+                            Tải lên 1 file Excel bất kỳ (VD: danh sách sản phẩm khách hàng cần báo giá). Hệ thống sẽ tự dò tên sản phẩm trùng hoặc gần đúng với bảng giá, tự tick chọn và gom thành 1 bảng để lập báo giá nhanh — không cần tìm thủ công.
+                        </div>
+                        <div class="file-input-container">
+                            <label for="matchExcelInput" class="file-input-label" style="background:#00897b; font-size:12px; padding:6px 12px;">📎 Chọn file cần đối chiếu</label>
+                            <input type="file" id="matchExcelInput" class="file-input" accept=".xlsx, .xls" />
+                            <span class="file-name" id="matchExcelStatus">Chưa chọn file</span>
+                        </div>
+                    </div>
                     
                 </div>
             </div>
@@ -1519,6 +1547,21 @@
             <div class="quote-dialog-buttons">
                 <button class="quote-dialog-cancel" id="quoteDialogCancel">Hủy</button>
                 <button class="quote-dialog-create" id="quoteDialogCreate">Tạo Báo Giá</button>
+            </div>
+        </div>
+    </div>
+    <div class="popup-overlay" id="matchResultOverlay">
+        <div class="popup-content" style="max-width:920px;">
+            <div class="popup-header">
+                <h2 class="popup-title" style="color:#00897b;">🔎 Kết quả đối chiếu sản phẩm</h2>
+                <button class="close-btn" id="matchResultCloseBtn">&times;</button>
+            </div>
+            <div class="match-summary-box" id="matchResultSummary"></div>
+            <div style="font-size:12px;color:#888;margin:8px 0 4px;">Bỏ tick những dòng bạn không muốn đưa vào bảng báo giá, sau đó bấm "Tạo bảng dữ liệu".</div>
+            <div class="table-container" id="matchResultTableContainer" style="max-height:52vh; overflow-y:auto;"></div>
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:14px;">
+                <button id="matchResultCancelBtn" style="padding:9px 18px;border:1px solid #ccc;border-radius:6px;background:#fff;cursor:pointer;font-weight:600;">Hủy</button>
+                <button id="matchResultCreateBtn" style="padding:9px 20px;border:none;border-radius:6px;background:#00897b;color:#fff;cursor:pointer;font-weight:700;">✅ Tạo bảng dữ liệu</button>
             </div>
         </div>
     </div>
@@ -1913,7 +1956,6 @@
     let originalImageFile = null;  
     // CRUD
     let rowIndexMap = []; 
-    let masterIdxCache = 0;   // index file chuẩn (nhiều cột nhất) dùng làm gốc schema
     let editingRowState = { index: null, originalData: [] }; 
     const REMOVE_BG_API_KEY = "iHt8DKCwKg4Va63ACXopN7nm"; 
     // MẶC ĐỊNH LÀ LANDSCAPE
@@ -2755,101 +2797,24 @@
         else if(uploadedFiles.length===1) fileNameDisplay.textContent = uploadedFiles[0].name;
         else fileNameDisplay.textContent = `${uploadedFiles.length} file đã chọn`;
     }
-    // ===== ÁNH XẠ CỘT THEO TÊN HEADER (khắc phục file phụ khác cấu trúc cột) =====
-    // Chuẩn hoá tên cột: bỏ dấu, bỏ ký tự đặc biệt, gộp về 1 khoá duy nhất
-    function normHeaderKey(h){
-        let s = String(h == null ? '' : h).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-        s = s.replace(/đ/gi, 'd').toLowerCase();
-        s = s.replace(/\(.*?\)/g, ' ');                 // bỏ "(VNĐ)"
-        s = s.replace(/[≥>=<]/g, ' ');                  // bỏ ký hiệu so sánh
-        s = s.replace(/[^a-z0-9]+/g, ' ').trim();       // chỉ giữ chữ + số
-        // Gộp các biến thể phổ biến về một tên chuẩn
-        if (/^(stt|so thu tu|tt)$/.test(s)) return 'stt';
-        if (/^(ma sp|masp|ma san pham|ma thuoc|ma hang)$/.test(s)) return 'ma sp';
-        if (/^(ten thuoc|ten sp|ten san pham|ten hang|san pham|ten)$/.test(s)) return 'ten thuoc';
-        if (/^(hoat chat|thanh phan)$/.test(s)) return 'hoat chat';
-        if (/^(ham luong|nong do)$/.test(s)) return 'ham luong';
-        if (/^(cong dung chinh|cong dung|chi dinh|tac dung)$/.test(s)) return 'cong dung chinh';
-        if (/^(quy cach|dong goi|dvt|don vi tinh)$/.test(s)) return 'quy cach';
-        if (/^(nsx|nha san xuat|hang san xuat)$/.test(s)) return 'nsx';
-        if (/^(xuat xu|nuoc san xuat)$/.test(s)) return 'xuat xu';
-        if (/^(nhom dieu tri|nhom benh|nhom)$/.test(s)) return 'nhom dieu tri';
-        // Các cột giá / chiết khấu theo mốc số hộp
-        if (/^don gia/.test(s) && !/6|12/.test(s)) return 'don gia';
-        if (/^ck/.test(s) && /\b6\b/.test(s)) return 'ck 6';
-        if (/^ck/.test(s) && /\b12\b/.test(s)) return 'ck 12';
-        if (/gia mua/.test(s) && /\b6\b/.test(s)) return 'gia 6';
-        if (/gia mua/.test(s) && /\b12\b/.test(s)) return 'gia 12';
-        return s;
-    }
-    // Sắp lại 1 file cho khớp schema của file chuẩn (masterHeader)
-    // Cột file phụ không có -> để trống. Cột lạ (không có trong master) -> nối thêm vào cuối master.
-    function alignFileToMaster(fileData, masterHeader){
-        if (!fileData || fileData.length === 0) return { data: fileData, header: masterHeader };
-        const srcHeader = fileData[0] || [];
-        const master = masterHeader.slice();
-        const masterKeys = master.map(normHeaderKey);
-        const srcKeys = srcHeader.map(normHeaderKey);
-
-        // Nếu schema trùng khít thì bỏ qua, khỏi tốn công
-        if (srcKeys.length === masterKeys.length && srcKeys.every((k, i) => k === masterKeys[i])) {
-            return { data: fileData, header: master };
-        }
-
-        // Cột lạ của file phụ -> bổ sung vào cuối master để không mất dữ liệu
-        srcKeys.forEach((k, i) => {
-            if (!k) return;
-            if (masterKeys.indexOf(k) === -1) {
-                master.push(srcHeader[i]);
-                masterKeys.push(k);
-            }
-        });
-
-        // map[masterIdx] = srcIdx (hoặc -1 nếu file phụ không có cột này)
-        const map = masterKeys.map(k => (k ? srcKeys.indexOf(k) : -1));
-
-        const out = [master.slice()];
-        for (let r = 1; r < fileData.length; r++) {
-            const src = fileData[r] || [];
-            out.push(map.map(si => (si === -1 ? '' : (src[si] == null ? '' : src[si]))));
-        }
-        return { data: out, header: master };
-    }
-
     function displayAllData(){
         if (editingRowState.index !== null) { handleEditRow(); }
         if(uploadedFiles.length===0){ tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị. Vui lòng tải lên file Excel.</p>'; columnToolbar.style.display='none'; return; }
         currentData = [];
         rowIndexMap = [];
-
-        // Chọn file CHUẨN làm gốc schema: file đầu tiên có nhiều cột nhất (thường là bảng giá chính)
-        const withData = uploadedFiles.map((f, i) => ({ f, i }))
-            .filter(o => o.f.data && o.f.data.length > 0 && o.f.data[0] && o.f.data[0].length);
-        if (withData.length === 0) { tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị.</p>'; return; }
-        let masterIdx = withData[0].i;
-        let maxCols = withData[0].f.data[0].length;
-        withData.forEach(o => { const n = o.f.data[0].length; if (n > maxCols) { maxCols = n; masterIdx = o.i; } });
-
-        masterIdxCache = masterIdx;
-        let masterHeader = uploadedFiles[masterIdx].data[0].slice();
-
-        // Vòng 1: mở rộng masterHeader bằng các cột lạ có trong file phụ
-        uploadedFiles.forEach(file => {
-            if (!file.data || file.data.length === 0) return;
-            masterHeader = alignFileToMaster(file.data, masterHeader).header;
-        });
-
-        // Vòng 2: sắp lại toàn bộ file theo masterHeader đã hoàn chỉnh rồi gộp
-        currentData.push(masterHeader);
-        rowIndexMap.push({ fileIndex: masterIdx, rowIndexInFile: 0 });
-        headersCache = masterHeader;
-
+        let isFirstFile = true;
         uploadedFiles.forEach((file, fileIndex) => {
             if (!file.data || file.data.length === 0) return;
-            const aligned = alignFileToMaster(file.data, masterHeader).data;
-            for (let i = 1; i < aligned.length; i++) {
-                if (aligned[i] && aligned[i].some(cell => String(cell == null ? '' : cell).trim() !== '')) {
-                    currentData.push(aligned[i]);
+            let dataSlice = file.data;
+            if (isFirstFile && dataSlice.length > 0) {
+                currentData.push(dataSlice[0]);
+                rowIndexMap.push({ fileIndex: fileIndex, rowIndexInFile: 0 });
+                headersCache = dataSlice[0];
+                isFirstFile = false;
+            }
+            for (let i = 1; i < dataSlice.length; i++) {
+                if (dataSlice[i] && dataSlice[i].some(cell => String(cell).trim() !== '')) {
+                    currentData.push(dataSlice[i]);
                     rowIndexMap.push({ fileIndex: fileIndex, rowIndexInFile: i });
                 }
             }
@@ -2890,19 +2855,7 @@
 
         // Nếu bảng không có cột nhóm -> chỉ đánh lại STT liền mạch, không trộn
         const hasMultipleFiles = uploadedFiles.filter(f => f.data && f.data.length > 1).length > 1;
-        // Chỉ trộn khi cột "Nhóm điều trị" THỰC SỰ có dữ liệu ở phần lớn số dòng.
-        // Tránh trường hợp file phụ thiếu cột nhóm -> sinh nhóm rác và đẩy dữ liệu xuống cuối.
-        let filledGroup = 0, productRows = 0;
-        if (gIdx !== -1) {
-            for (let i = 1; i < currentData.length; i++) {
-                const row = currentData[i];
-                if (!row || isGroupHeaderRow(row)) continue;
-                productRows++;
-                if (String(row[gIdx] == null ? '' : row[gIdx]).trim() !== '') filledGroup++;
-            }
-        }
-        const groupUsable = gIdx !== -1 && productRows > 0 && (filledGroup / productRows) >= 0.5;
-        if(!groupUsable || !hasMultipleFiles){
+        if(gIdx === -1 || !hasMultipleFiles){
             renumberStt(sttIdx);
             return;
         }
@@ -2912,12 +2865,6 @@
         const groupMap = new Map();               // normName -> { headerRow, name, items:[] }
         const looseItems = [];                    // SP chưa có nhóm rõ ràng (hiếm)
         let curKey = null;
-
-        // Gắn tạm ánh xạ nguồn vào từng dòng để sau khi trộn vẫn sửa/xóa được
-        const srcOf = new Map();                  // row (object ref) -> {fileIndex,rowIndexInFile}
-        for(let i=1;i<currentData.length;i++){
-            if(currentData[i] && rowIndexMap[i]) srcOf.set(currentData[i], rowIndexMap[i]);
-        }
 
         for(let i=1;i<currentData.length;i++){
             const row = currentData[i];
@@ -2934,7 +2881,6 @@
             // Hàng sản phẩm: ưu tiên phân nhóm theo GIÁ TRỊ cột "Nhóm điều trị"
             const gVal = String((row[gIdx]||'')).trim();
             let key = gVal ? normGroup(gVal) : curKey;
-            // Dòng không xác định được nhóm -> để riêng, KHÔNG tạo nhóm rác
             if(key){
                 if(!groupMap.has(key)){
                     // Nhóm mới (từ file phụ) chưa có tiêu đề -> tạo tiêu đề nhóm mới ở cuối
@@ -2972,11 +2918,8 @@
         looseItems.forEach(it => rebuilt.push(it));
 
         currentData = rebuilt;
-        // Dựng lại rowIndexMap theo thứ tự mới để vẫn sửa/xóa được đúng dòng gốc
-        rowIndexMap = rebuilt.map((row, i) => {
-            if (i === 0) return { fileIndex: masterIdxCache, rowIndexInFile: 0 };
-            return srcOf.get(row) || null;   // dòng tiêu đề nhóm (do app sinh ra) -> null
-        });
+        // rowIndexMap không còn ánh xạ 1-1 sau khi trộn -> vô hiệu hóa để tránh sai lệch
+        rowIndexMap = [];
         renumberStt(findSttColIdx(currentData[0]));
     }
     // Đánh lại STT liền mạch 1..n cho toàn bộ hàng sản phẩm (bỏ qua hàng tiêu đề nhóm)
@@ -5133,6 +5076,273 @@
         zaloToast('✅ Đã thêm <b>' + zaloEsc(name) + '</b> vào danh sách và <b>load lên báo giá</b>.<br>Kiểm tra thông tin phía trên rồi bấm <b>🖼 Ảnh</b> (dán nhanh Ctrl+V) hoặc <b>📄 PDF</b> để gửi Zalo.', 9000);
         // Cập nhật gợi ý ở form tạo báo giá luôn dùng được
     });
+
+    // ============================================================
+    // ===== ĐỐI CHIẾU EXCEL BẤT KỲ & TỰ ĐỘNG CHỌN SẢN PHẨM (MỚI) =====
+    // Cho phép tải lên 1 file Excel bất kỳ (VD: danh sách khách cần báo giá),
+    // tự dò tên sản phẩm trùng/gần đúng với bảng giá đang có, tự tick chọn
+    // rồi gom các sản phẩm khớp thành 1 bảng duy nhất để lập báo giá nhanh.
+    // Không thay đổi bất kỳ chức năng nào khác của ứng dụng.
+    // ============================================================
+    const matchExcelInput = document.getElementById('matchExcelInput');
+    const matchExcelStatus = document.getElementById('matchExcelStatus');
+    const matchResultOverlay = document.getElementById('matchResultOverlay');
+    const matchResultCloseBtn = document.getElementById('matchResultCloseBtn');
+    const matchResultCancelBtn = document.getElementById('matchResultCancelBtn');
+    const matchResultCreateBtn = document.getElementById('matchResultCreateBtn');
+    const matchResultSummary = document.getElementById('matchResultSummary');
+    const matchResultTableContainer = document.getElementById('matchResultTableContainer');
+
+    const MATCH_AUTO_THRESHOLD = 0.55;    // >= mức này: đủ tin cậy để tự động tick chọn
+    const MATCH_SUGGEST_THRESHOLD = 0.32; // >= mức này: vẫn hiển thị làm gợi ý (không tự tick)
+    let matchDialogResults = []; // dữ liệu đang hiển thị trong popup đối chiếu
+
+    // Bỏ dấu tiếng Việt để so khớp không phân biệt dấu (đ/Đ xử lý riêng vì NFD không tách được)
+    function stripDiacriticsVN(s){
+        return String(s == null ? '' : s)
+            .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+            .replace(/đ/g,'d').replace(/Đ/g,'D');
+    }
+    // Chuẩn hoá chuỗi để so khớp thông minh: bỏ dấu, chữ thường, bỏ ký tự lạ, gộp khoảng trắng
+    function normMatchVN(s){
+        return stripDiacriticsVN(s).toLowerCase().replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
+    }
+    // Hệ số Dice trên bigram ký tự — chịu được sai chính tả nhỏ, viết tắt, đảo nhẹ thứ tự chữ
+    function diceCoefficientVN(a,b){
+        if(a === b) return 1;
+        if(a.length < 2 || b.length < 2) return 0;
+        const bigrams = s => { const arr=[]; for(let i=0;i<s.length-1;i++) arr.push(s.substring(i,i+2)); return arr; };
+        const bgA = bigrams(a), bgB = bigrams(b);
+        const mapB = {};
+        bgB.forEach(bg => { mapB[bg] = (mapB[bg]||0) + 1; });
+        let hits = 0;
+        bgA.forEach(bg => { if(mapB[bg] > 0){ hits++; mapB[bg]--; } });
+        return (2*hits) / (bgA.length + bgB.length);
+    }
+    // Trùng theo từ (Jaccard) — chịu được thứ tự từ bị đảo/khác nhau
+    function tokenJaccardVN(a,b){
+        const ta = new Set(a.split(' ').filter(Boolean));
+        const tb = new Set(b.split(' ').filter(Boolean));
+        if(ta.size === 0 || tb.size === 0) return 0;
+        let inter = 0; ta.forEach(t => { if(tb.has(t)) inter++; });
+        const union = new Set([...ta, ...tb]).size;
+        return union === 0 ? 0 : inter/union;
+    }
+    // Điểm khớp tổng hợp giữa 2 tên sản phẩm (0..1) — dùng để "đoán tên gần đúng"
+    function nameSimilarityVN(a, b){
+        const na = normMatchVN(a), nb = normMatchVN(b);
+        if(!na || !nb) return 0;
+        if(na === nb) return 1;
+        let score = Math.max(diceCoefficientVN(na, nb), tokenJaccardVN(na, nb));
+        if(na.includes(nb) || nb.includes(na)){
+            const shorter = Math.min(na.length, nb.length), longer = Math.max(na.length, nb.length);
+            score = Math.max(score, 0.75 + 0.2 * (shorter/longer));
+        }
+        return score;
+    }
+    // Đoán cột "Tên sản phẩm" trong 1 file Excel bất kỳ: ưu tiên theo tiêu đề cột,
+    // nếu không nhận diện được tiêu đề thì đoán theo nội dung (cột chữ dài & đa dạng nhất)
+    function guessNameColIdx(headerRow, bodyRows){
+        const idx = headerRow.findIndex(h => h && (String(h).toLowerCase().includes('tên') || String(h).toLowerCase().includes('name') || String(h).toLowerCase().includes('sản phẩm') || String(h).toLowerCase().includes('hàng hóa') || String(h).toLowerCase().includes('mặt hàng')));
+        if(idx !== -1) return idx;
+        let bestIdx = -1, bestScore = -1;
+        const sampleRows = bodyRows.slice(0, 300);
+        for(let c=0; c<headerRow.length; c++){
+            let totalLen = 0, count = 0; const uniq = new Set();
+            sampleRows.forEach(row => {
+                const v = String((row||[])[c] == null ? '' : row[c]).trim();
+                if(!v) return;
+                if(/^[\d.,\-\/%]+$/.test(v)) return; // bỏ cột toàn số / mã
+                totalLen += v.length; count++; uniq.add(v);
+            });
+            if(count === 0) continue;
+            const avgLen = totalLen / count;
+            const uniqRatio = uniq.size / count;
+            const score = avgLen * uniqRatio * Math.sqrt(count);
+            if(score > bestScore){ bestScore = score; bestIdx = c; }
+        }
+        return bestIdx;
+    }
+    // Đoán cột "Mã sp" trong 1 file Excel bất kỳ (nếu có) để khớp CHÍNH XÁC theo mã trước khi khớp mờ theo tên
+    function guessCodeColIdx(headerRow){
+        return headerRow.findIndex(h => {
+            if(!h) return false;
+            const s = String(h).toLowerCase().replace(/\s+/g,'');
+            return s === 'masp' || s === 'mãsp' || s.includes('masanpham') || s.includes('mãsảnphẩm') || s === 'sku' || s === 'code';
+        });
+    }
+    function escapeHtmlMatch(s){
+        return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    // Xử lý khi người dùng chọn file Excel để đối chiếu
+    async function handleMatchExcelSelect(event){
+        const file = event.target.files && event.target.files[0];
+        if(!file) return;
+        if(!currentData || currentData.length < 2){
+            alert('Vui lòng tải bảng giá chính (mục "Xem Giá") trước khi đối chiếu file Excel.');
+            event.target.value = '';
+            return;
+        }
+        matchExcelStatus.textContent = '⏳ Đang đọc & đối chiếu...';
+        matchExcelStatus.classList.add('loading');
+        try{
+            const refData = await readExcelFile(file);
+            if(!refData || refData.length < 2){
+                alert('File vừa chọn không có dữ liệu hợp lệ.');
+                return;
+            }
+            const refHeader = refData[0];
+            const refBody = refData.slice(1);
+            const refNameIdx = guessNameColIdx(refHeader, refBody);
+            if(refNameIdx === -1){
+                alert('Không tìm được cột tên sản phẩm trong file vừa tải lên.');
+                return;
+            }
+            const refCodeIdx = guessCodeColIdx(refHeader);
+            const mainNameIdx = findProductNameColumnIndex();
+            const mainCodeIdx = getMaSpColIdx();
+            if(mainNameIdx === -1){
+                alert('Bảng dữ liệu chính chưa có cột "Tên sản phẩm" để đối chiếu.');
+                return;
+            }
+            // Danh sách sản phẩm trong bảng chính (bỏ qua các hàng tiêu đề nhóm)
+            const candidates = [];
+            for(let i=1; i<currentData.length; i++){
+                const row = currentData[i];
+                if(!row || isGroupHeaderRow(row)) continue;
+                const nm = String(row[mainNameIdx] == null ? '' : row[mainNameIdx]).trim();
+                if(!nm) continue;
+                candidates.push({
+                    idx: i,
+                    name: nm,
+                    code: mainCodeIdx !== -1 ? String(row[mainCodeIdx] == null ? '' : row[mainCodeIdx]).trim() : ''
+                });
+            }
+            const results = [];
+            for(let r=0; r<refBody.length; r++){
+                const row = refBody[r] || [];
+                const refName = String(row[refNameIdx] == null ? '' : row[refNameIdx]).trim();
+                if(!refName) continue;
+                const refCode = refCodeIdx !== -1 ? String(row[refCodeIdx] == null ? '' : row[refCodeIdx]).trim() : '';
+                let best = null, bestScore = 0;
+                // Ưu tiên khớp CHÍNH XÁC theo Mã sp nếu file tải lên có cột mã
+                if(refCode && mainCodeIdx !== -1){
+                    const codeHit = candidates.find(c => c.code && ckMaKey(c.code) === ckMaKey(refCode));
+                    if(codeHit){ best = codeHit; bestScore = 1; }
+                }
+                // Nếu chưa khớp theo mã thì khớp mờ theo tên (đoán tên gần đúng)
+                if(!best){
+                    for(const c of candidates){
+                        const sc = nameSimilarityVN(refName, c.name);
+                        if(sc > bestScore){ bestScore = sc; best = c; }
+                    }
+                }
+                results.push({
+                    refName,
+                    match: bestScore >= MATCH_SUGGEST_THRESHOLD ? best : null,
+                    score: bestScore,
+                    checked: bestScore >= MATCH_AUTO_THRESHOLD
+                });
+            }
+            matchDialogResults = results;
+            renderMatchResultDialog();
+        }catch(err){
+            console.error('Lỗi đối chiếu Excel:', err);
+            alert('Lỗi khi đọc/đối chiếu file: ' + (err && err.message ? err.message : err));
+        }finally{
+            matchExcelStatus.classList.remove('loading');
+            matchExcelStatus.textContent = file.name;
+            event.target.value = ''; // cho phép chọn lại đúng file này ở lần sau
+        }
+    }
+    // Hiển thị popup kết quả đối chiếu, cho phép rà soát & bỏ tick trước khi tạo bảng
+    function renderMatchResultDialog(){
+        const total = matchDialogResults.length;
+        const foundCount = matchDialogResults.filter(r => r.match).length;
+        const autoCount = matchDialogResults.filter(r => r.checked).length;
+        const notFoundCount = total - foundCount;
+        matchResultSummary.innerHTML =
+            `<span>📄 Tổng dòng trong file: <b>${total}</b></span>` +
+            `<span>✅ Khớp được sản phẩm: <b style="color:#1e7d34">${foundCount}</b></span>` +
+            `<span>☑️ Tự động chọn: <b style="color:#1e7d34">${autoCount}</b></span>` +
+            `<span>⚠️ Không tìm thấy: <b style="color:#a33">${notFoundCount}</b></span>`;
+
+        const rowsHtml = matchDialogResults.map((r, i) => {
+            let rowClass, badge;
+            if(!r.match){
+                rowClass = 'match-row-bad';
+                badge = '<span class="match-badge bad">Không tìm thấy</span>';
+            } else if(r.score >= MATCH_AUTO_THRESHOLD){
+                rowClass = 'match-row-ok';
+                badge = '<span class="match-badge ok">' + (r.score >= 0.999 ? 'Khớp chính xác' : 'Khớp ~' + Math.round(r.score*100) + '%') + '</span>';
+            } else {
+                rowClass = 'match-row-weak';
+                badge = '<span class="match-badge weak">Gần đúng ~' + Math.round(r.score*100) + '%</span>';
+            }
+            const matchedNameHtml = r.match ? escapeHtmlMatch(r.match.name) : '<i style="color:#aaa">— chưa thấy trong bảng giá —</i>';
+            const disabled = r.match ? '' : 'disabled';
+            return `<tr class="${rowClass}">
+                <td style="width:34px;text-align:center;"><input type="checkbox" class="match-row-cb" data-idx="${i}" ${r.checked ? 'checked' : ''} ${disabled}></td>
+                <td>${escapeHtmlMatch(r.refName)}</td>
+                <td>${matchedNameHtml}</td>
+                <td style="white-space:nowrap;">${badge}</td>
+            </tr>`;
+        }).join('');
+
+        matchResultTableContainer.innerHTML =
+            `<table class="match-table"><thead><tr>
+                <th style="width:34px;"></th>
+                <th>Tên trong file tải lên</th>
+                <th>Sản phẩm khớp trong bảng giá</th>
+                <th>Độ khớp</th>
+            </tr></thead><tbody>${rowsHtml}</tbody></table>`;
+
+        matchResultTableContainer.querySelectorAll('.match-row-cb').forEach(cb => {
+            cb.addEventListener('change', () => {
+                const i = parseInt(cb.dataset.idx, 10);
+                if(matchDialogResults[i]) matchDialogResults[i].checked = cb.checked;
+            });
+        });
+
+        matchResultOverlay.style.display = 'block';
+    }
+    function closeMatchResultDialog(){
+        matchResultOverlay.style.display = 'none';
+    }
+    // Xác nhận: gom các sản phẩm đã tick thành 1 bảng dữ liệu duy nhất, tự động tích chọn để lập báo giá nhanh
+    function confirmMatchAndBuildTable(){
+        const matchedIdxs = matchDialogResults.filter(r => r.checked && r.match).map(r => r.match.idx);
+        if(matchedIdxs.length === 0){
+            alert('Chưa có sản phẩm nào được tick để tạo bảng.');
+            return;
+        }
+        selectedRowIdx.clear();
+        matchedIdxs.forEach(idx => selectedRowIdx.add(idx));
+
+        closeMatchResultDialog();
+        if(popupOverlay.style.display !== 'block') popupOverlay.style.display = 'block';
+        searchInput.value = '';
+        if(groupFilter) groupFilter.value = '';
+        showingOnlySelected = true;
+        renderSelectedOnly();
+        updateActionButtonsState();
+        updateFilteredSection();
+
+        const skipped = matchDialogResults.length - matchedIdxs.length;
+        setTimeout(() => {
+            let msg = `✅ Đã tạo bảng gồm ${matchedIdxs.length} sản phẩm khớp từ file vừa tải lên, sẵn sàng để lập báo giá.`;
+            if(skipped > 0) msg += `\n⚠️ ${skipped} dòng chưa được đưa vào (không tìm thấy trong bảng giá hoặc bạn đã bỏ tick).`;
+            msg += `\n\nBấm "Tạo Báo Giá ▾" ở góc trên để tiếp tục.`;
+            alert(msg);
+        }, 300);
+    }
+
+    if(matchExcelInput) matchExcelInput.addEventListener('change', handleMatchExcelSelect);
+    if(matchResultCloseBtn) matchResultCloseBtn.addEventListener('click', closeMatchResultDialog);
+    if(matchResultCancelBtn) matchResultCancelBtn.addEventListener('click', closeMatchResultDialog);
+    if(matchResultCreateBtn) matchResultCreateBtn.addEventListener('click', confirmMatchAndBuildTable);
+    matchResultOverlay.addEventListener('click', (e) => { if(e.target === matchResultOverlay) closeMatchResultDialog(); });
+    // ===== HẾT PHẦN ĐỐI CHIẾU EXCEL & CHỌN NHANH =====
 
     document.addEventListener('DOMContentLoaded', ()=>{ 
         loadNotification(); 
