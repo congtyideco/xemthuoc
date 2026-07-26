@@ -1463,13 +1463,27 @@
                     <div class="pro-tool-card" id="matchToolCard">
                         <h4>🔎 Đối chiếu Excel & Chọn nhanh</h4>
                         <div style="font-size:11.5px; color:#667085; line-height:1.5; margin-bottom:8px;">
-                            Tải lên 1 file Excel bất kỳ (VD: danh sách sản phẩm khách hàng cần báo giá). Hệ thống sẽ tự dò tên sản phẩm trùng hoặc gần đúng với bảng giá, tự tick chọn và gom thành 1 bảng để lập báo giá nhanh — không cần tìm thủ công.
+                            Tải lên 1 file Excel bất kỳ (VD: danh sách sản phẩm khách hàng cần báo giá). Hệ thống sẽ tự dò tên sản phẩm trùng hoặc gần đúng với bảng giá, tự tick chọn và gom thành 1 bảng để lập báo giá nhanh — không cần tìm thủ công. Dòng nào không dò được sẽ hiện rõ "Không tìm thấy" để bạn tự kiểm tra lại, không bị bỏ sót âm thầm.
                         </div>
                         <div class="file-input-container">
                             <label for="matchExcelInput" class="file-input-label" style="background:#00897b; font-size:12px; padding:6px 12px;">📎 Chọn file cần đối chiếu</label>
                             <input type="file" id="matchExcelInput" class="file-input" accept=".xlsx, .xls" />
                             <span class="file-name" id="matchExcelStatus">Chưa chọn file</span>
                         </div>
+                    </div>
+
+                    <!-- Nhập tay danh sách & đối chiếu từng dòng (mới) -->
+                    <div class="pro-tool-card" id="matchManualCard">
+                        <h4>✍️ Nhập tay danh sách & Đối chiếu</h4>
+                        <div style="font-size:11.5px; color:#667085; line-height:1.5; margin-bottom:8px;">
+                            Gõ hoặc dán tên sản phẩm, <b>mỗi dòng 1 sản phẩm</b>, theo đúng thứ tự. Bấm <b>"Đối chiếu"</b> — dòng nào sai/chưa khớp sẽ báo ngay kèm gợi ý tên gần đúng (bấm vào gợi ý để tự sửa). Chỉ khi <b>tất cả các dòng đều đúng</b> mới bấm được <b>"Tải lên & Cập nhật"</b>.
+                        </div>
+                        <textarea id="matchManualInput" rows="6" placeholder="VD:&#10;Paracetamol 500mg&#10;Vitamin C 1000mg&#10;..." style="width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid #d4dff0; border-radius:8px; font-size:13px; font-family:inherit; resize:vertical;"></textarea>
+                        <div class="pro-row" style="margin-top:8px;">
+                            <button class="btn" id="matchManualCheckBtn" style="background:#4285f4; color:#fff;">🔍 Đối chiếu</button>
+                            <button class="btn" id="matchManualUpdateBtn" style="background:#00897b; color:#fff;" disabled title="Chỉ bật khi tất cả các dòng đã đối chiếu đúng">⬆️ Tải lên &amp; Cập nhật bảng</button>
+                        </div>
+                        <div id="matchManualResultBox" style="margin-top:10px;"></div>
                     </div>
                     
                 </div>
@@ -5174,6 +5188,31 @@
     function escapeHtmlMatch(s){
         return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     }
+    // Danh sách sản phẩm (idx/tên/mã) trong bảng chính hiện có — dùng chung cho cả đối chiếu Excel & nhập tay
+    function buildMainCandidates(){
+        const mainNameIdx = findProductNameColumnIndex();
+        if(mainNameIdx === -1) return [];
+        const mainCodeIdx = getMaSpColIdx();
+        const candidates = [];
+        for(let i=1; i<currentData.length; i++){
+            const row = currentData[i];
+            if(!row || isGroupHeaderRow(row)) continue;
+            const nm = String(row[mainNameIdx] == null ? '' : row[mainNameIdx]).trim();
+            if(!nm) continue;
+            candidates.push({
+                idx: i,
+                name: nm,
+                code: mainCodeIdx !== -1 ? String(row[mainCodeIdx] == null ? '' : row[mainCodeIdx]).trim() : ''
+            });
+        }
+        return candidates;
+    }
+    // Tìm top N sản phẩm khớp gần nhất với 1 tên bất kỳ (sắp xếp điểm khớp giảm dần)
+    function findBestMatchesForName(name, candidates, topN){
+        const scored = candidates.map(c => ({ c, score: nameSimilarityVN(name, c.name) }));
+        scored.sort((a,b) => b.score - a.score);
+        return scored.slice(0, topN || 3);
+    }
     // Xử lý khi người dùng chọn file Excel để đối chiếu
     async function handleMatchExcelSelect(event){
         const file = event.target.files && event.target.files[0];
@@ -5200,24 +5239,13 @@
             }
             const refCodeIdx = guessCodeColIdx(refHeader);
             const mainNameIdx = findProductNameColumnIndex();
-            const mainCodeIdx = getMaSpColIdx();
             if(mainNameIdx === -1){
                 alert('Bảng dữ liệu chính chưa có cột "Tên sản phẩm" để đối chiếu.');
                 return;
             }
+            const mainCodeIdx = getMaSpColIdx();
             // Danh sách sản phẩm trong bảng chính (bỏ qua các hàng tiêu đề nhóm)
-            const candidates = [];
-            for(let i=1; i<currentData.length; i++){
-                const row = currentData[i];
-                if(!row || isGroupHeaderRow(row)) continue;
-                const nm = String(row[mainNameIdx] == null ? '' : row[mainNameIdx]).trim();
-                if(!nm) continue;
-                candidates.push({
-                    idx: i,
-                    name: nm,
-                    code: mainCodeIdx !== -1 ? String(row[mainCodeIdx] == null ? '' : row[mainCodeIdx]).trim() : ''
-                });
-            }
+            const candidates = buildMainCandidates();
             const results = [];
             for(let r=0; r<refBody.length; r++){
                 const row = refBody[r] || [];
@@ -5342,6 +5370,147 @@
     if(matchResultCancelBtn) matchResultCancelBtn.addEventListener('click', closeMatchResultDialog);
     if(matchResultCreateBtn) matchResultCreateBtn.addEventListener('click', confirmMatchAndBuildTable);
     matchResultOverlay.addEventListener('click', (e) => { if(e.target === matchResultOverlay) closeMatchResultDialog(); });
+
+    // ============================================================
+    // ===== NHẬP TAY DANH SÁCH SẢN PHẨM & ĐỐI CHIẾU TỪNG DÒNG (MỚI) =====
+    // Cho phép gõ/dán tên sản phẩm theo thứ tự từ trên xuống (mỗi dòng 1 SP),
+    // bấm "Đối chiếu" để kiểm tra từng dòng; dòng sai/chưa khớp sẽ được báo
+    // ngay kèm gợi ý tên gần đúng. Chỉ khi TẤT CẢ các dòng đã đúng thì nút
+    // "Tải lên & Cập nhật bảng" mới được bật.
+    // ============================================================
+    const matchManualInput = document.getElementById('matchManualInput');
+    const matchManualCheckBtn = document.getElementById('matchManualCheckBtn');
+    const matchManualUpdateBtn = document.getElementById('matchManualUpdateBtn');
+    const matchManualResultBox = document.getElementById('matchManualResultBox');
+    let matchManualLineResults = [];   // kết quả đối chiếu lần gần nhất (song song từng dòng textarea)
+    let matchManualCheckedText = null; // nội dung textarea tại thời điểm đối chiếu gần nhất
+
+    // Chạy đối chiếu cho toàn bộ danh sách đang nhập trong textarea
+    function runManualMatchCheck(){
+        if(!matchManualInput) return;
+        const raw = matchManualInput.value;
+        if(!raw.trim()){
+            matchManualResultBox.innerHTML = '<div style="font-size:12.5px;color:#999;font-style:italic;">Chưa nhập tên sản phẩm nào.</div>';
+            matchManualCheckedText = raw; matchManualLineResults = [];
+            matchManualUpdateBtn.disabled = true;
+            return;
+        }
+        if(!currentData || currentData.length < 2){
+            alert('Vui lòng tải bảng giá chính (mục "Xem Giá") trước khi đối chiếu.');
+            return;
+        }
+        const candidates = buildMainCandidates();
+        if(candidates.length === 0){
+            alert('Bảng dữ liệu chính chưa có cột "Tên sản phẩm" để đối chiếu.');
+            return;
+        }
+        const lines = raw.split('\n').map(s => s.trim());
+        const results = lines.map((line, i) => {
+            if(!line) return null; // dòng trống: bỏ qua, không tính là lỗi
+            const top = findBestMatchesForName(line, candidates, 3);
+            const best = top[0];
+            const ok = !!best && best.score >= MATCH_AUTO_THRESHOLD;
+            return {
+                lineNo: i + 1,
+                text: line,
+                best: best ? best.c : null,
+                score: best ? best.score : 0,
+                ok,
+                suggestions: top.filter(t => t.score >= MATCH_SUGGEST_THRESHOLD)
+            };
+        });
+        matchManualLineResults = results;
+        matchManualCheckedText = raw;
+        renderManualMatchResults();
+    }
+    // Vẽ lại danh sách kết quả đối chiếu theo từng dòng, kèm gợi ý bấm-để-sửa cho dòng sai
+    function renderManualMatchResults(){
+        const items = matchManualLineResults.filter(Boolean);
+        if(items.length === 0){
+            matchManualResultBox.innerHTML = '<div style="font-size:12.5px;color:#999;font-style:italic;">Chưa có dòng hợp lệ để đối chiếu.</div>';
+            matchManualUpdateBtn.disabled = true;
+            return;
+        }
+        const okCount = items.filter(r => r.ok).length;
+        const badCount = items.length - okCount;
+        let html = `<div class="match-summary-box" style="margin-bottom:8px;">
+            <span>📄 Tổng dòng: <b>${items.length}</b></span>
+            <span>✅ Đúng: <b style="color:#1e7d34">${okCount}</b></span>
+            <span>⚠️ Cần sửa: <b style="color:#a33">${badCount}</b></span>
+        </div>`;
+        html += items.map(r => {
+            if(r.ok){
+                const badgeTxt = r.score >= 0.999 ? 'Khớp chính xác' : ('Khớp ~' + Math.round(r.score*100) + '%');
+                return `<div style="padding:6px 9px;border-radius:6px;background:#f2fbf4;margin-bottom:5px;font-size:12.5px;">
+                    <b>${r.lineNo}.</b> ${escapeHtmlMatch(r.text)} → ✅ <b>${escapeHtmlMatch(r.best.name)}</b>
+                    <span class="match-badge ok" style="margin-left:6px;">${badgeTxt}</span>
+                </div>`;
+            }
+            const sugg = r.suggestions.length
+                ? r.suggestions.map(s => `<button type="button" class="manual-suggest-btn" data-line="${r.lineNo}" data-name="${escapeHtmlMatch(s.c.name)}" style="margin:3px 4px 0 0;padding:3px 8px;border:1px solid #ffcf8a;background:#fff7ea;border-radius:12px;font-size:11.5px;cursor:pointer;color:#8a5a00;">${escapeHtmlMatch(s.c.name)} (~${Math.round(s.score*100)}%)</button>`).join('')
+                : '<i style="color:#aaa;font-size:11.5px;">Không có gợi ý nào gần giống — kiểm tra lại chính tả hoặc sản phẩm chưa có trong bảng giá.</i>';
+            return `<div style="padding:6px 9px;border-radius:6px;background:#fdf3f3;margin-bottom:5px;font-size:12.5px;">
+                <b>${r.lineNo}.</b> ${escapeHtmlMatch(r.text)} → <span class="match-badge bad">❌ Sai tên / chưa khớp</span>
+                <div style="margin-top:4px;">Có phải bạn muốn nhập: ${sugg}</div>
+            </div>`;
+        }).join('');
+        matchManualResultBox.innerHTML = html;
+
+        matchManualResultBox.querySelectorAll('.manual-suggest-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const lineNo = parseInt(btn.dataset.line, 10);
+                const name = btn.dataset.name;
+                const lines = matchManualInput.value.split('\n');
+                lines[lineNo - 1] = name;
+                matchManualInput.value = lines.join('\n');
+                runManualMatchCheck(); // chọn gợi ý xong tự đối chiếu lại ngay
+            });
+        });
+
+        // Chỉ bật nút "Tải lên & Cập nhật" khi mọi dòng đều đúng VÀ nội dung chưa bị sửa sau lần đối chiếu này
+        matchManualUpdateBtn.disabled = !(badCount === 0 && okCount > 0 && matchManualCheckedText === matchManualInput.value);
+    }
+    // Sửa nội dung sau khi đã đối chiếu → khoá lại nút cập nhật, bắt buộc đối chiếu lại
+    if(matchManualInput){
+        matchManualInput.addEventListener('input', () => {
+            if(matchManualCheckedText !== null && matchManualCheckedText !== matchManualInput.value){
+                matchManualUpdateBtn.disabled = true;
+            }
+        });
+    }
+    // Xác nhận: chỉ cho phép khi toàn bộ danh sách đã đối chiếu đúng — gom thành 1 bảng dữ liệu & tự tích chọn
+    function confirmManualMatchAndBuildTable(){
+        if(matchManualCheckedText !== matchManualInput.value){
+            alert('Nội dung vừa sửa — vui lòng bấm "Đối chiếu" lại trước khi tải lên.');
+            return;
+        }
+        const items = matchManualLineResults.filter(Boolean);
+        const badLines = items.filter(r => !r.ok).map(r => r.lineNo);
+        if(badLines.length > 0){
+            alert('Còn dòng ' + badLines.join(', ') + ' chưa đúng tên sản phẩm.\nVui lòng sửa lại hoặc bấm chọn gợi ý, sau đó bấm "Đối chiếu" lại.');
+            return;
+        }
+        const matchedIdxs = items.filter(r => r.ok && r.best).map(r => r.best.idx);
+        if(matchedIdxs.length === 0){
+            alert('Chưa có sản phẩm hợp lệ nào để tạo bảng.');
+            return;
+        }
+        selectedRowIdx.clear();
+        matchedIdxs.forEach(idx => selectedRowIdx.add(idx));
+        if(popupOverlay.style.display !== 'block') popupOverlay.style.display = 'block';
+        searchInput.value = '';
+        if(groupFilter) groupFilter.value = '';
+        showingOnlySelected = true;
+        renderSelectedOnly();
+        updateActionButtonsState();
+        updateFilteredSection();
+        setTimeout(() => {
+            alert(`✅ Đã cập nhật bảng gồm ${matchedIdxs.length} sản phẩm từ danh sách nhập tay, sẵn sàng để lập báo giá.\n\nBấm "Tạo Báo Giá ▾" ở góc trên để tiếp tục.`);
+        }, 300);
+    }
+    if(matchManualCheckBtn) matchManualCheckBtn.addEventListener('click', runManualMatchCheck);
+    if(matchManualUpdateBtn) matchManualUpdateBtn.addEventListener('click', confirmManualMatchAndBuildTable);
+    // ===== HẾT PHẦN NHẬP TAY & ĐỐI CHIẾU TỪNG DÒNG =====
     // ===== HẾT PHẦN ĐỐI CHIẾU EXCEL & CHỌN NHANH =====
 
     document.addEventListener('DOMContentLoaded', ()=>{ 
