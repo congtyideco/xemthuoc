@@ -1781,7 +1781,32 @@
     // ===== Chiết khấu ĐÃ LƯU (đồng bộ mọi máy), khóa theo Mã sp: { maSpKey: {6: %, 12: %} } =====
     let ckSaved = {};
     let ckDirty = false; // có chỉnh chiết khấu chưa lưu hay không
-    function ckMaKey(v){ return String(v == null ? '' : v).trim().toLowerCase(); }
+    // --- Khoá Firebase phải KHÔNG chứa . # $ / [ ] và ký tự điều khiển ---
+    // Mã sp thực tế có dạng "TH_ AGICARDI_2.5" → phải mã hoá dấu chấm, nếu không Firebase báo
+    // "value argument contains an invalid key". Mã hoá bằng token trong ngoặc đơn (ký tự hợp lệ)
+    // nên các mã KHÔNG chứa ký tự cấm vẫn giữ nguyên khoá cũ → dữ liệu đã lưu trước đây vẫn dùng được.
+    const CK_KEY_ESC = { '.':'(d)', '#':'(h)', '$':'(s)', '/':'(sl)', '[':'(lb)', ']':'(rb)' };
+    function ckEscapeKey(s){
+        return String(s)
+            .replace(/[\u0000-\u001F\u007F]/g, '')            // bỏ ký tự điều khiển (Firebase cấm)
+            .replace(/[.#$/\[\]]/g, ch => CK_KEY_ESC[ch])     // mã hoá 6 ký tự cấm
+            .slice(0, 700);                                    // an toàn giới hạn 768 byte của Firebase
+    }
+    // Khoá chuẩn (dùng để LƯU) — có mã hoá ký tự cấm
+    function ckMaKey(v){ return ckEscapeKey(String(v == null ? '' : v).trim().toLowerCase()); }
+    // Khoá kiểu cũ (chỉ trim + lowercase) — chỉ dùng để ĐỌC dữ liệu đã lưu từ bản trước
+    function ckMaKeyLegacy(v){ return String(v == null ? '' : v).trim().toLowerCase(); }
+    // Kiểm tra khoá có hợp lệ với Firebase Realtime Database hay không
+    function ckKeyIsValid(k){
+        return typeof k === 'string' && k.length > 0 && k.length <= 768 && !/[.#$/\[\]\u0000-\u001F\u007F]/.test(k);
+    }
+    // Đọc chiết khấu đã lưu theo Mã sp: ưu tiên khoá mới, rồi đến khoá cũ (tương thích ngược)
+    function ckGetSaved(rawMa, mark){
+        const k1 = ckMaKey(rawMa), k2 = ckMaKeyLegacy(rawMa);
+        const pick = (k) => (k && ckSaved[k] && ckSaved[k][mark] !== undefined && ckSaved[k][mark] !== null && ckSaved[k][mark] !== '') ? ckSaved[k][mark] : undefined;
+        const a = pick(k1);
+        return (a !== undefined) ? a : pick(k2);
+    }
     try {
         database.ref('ckSavedDiscounts').on('value', snap => {
             ckSaved = snap.val() || {};
@@ -3122,28 +3147,50 @@
         if (!inputs.length){ if (typeof zaloToast==='function') zaloToast('Không có ô chiết khấu để lưu.',3000); return; }
         // Gộp theo Mã sp: { maKey: {6, 12} } — bỏ ô không có Mã sp
         const payload = {};
-        let noKeyCount = 0;
+        const cleared = {};                 // { maKey: { mark: true } } — ô bị xoá trắng → gỡ khỏi bản đã lưu
+        const legacyToDrop = new Set();     // khoá kiểu cũ cần dọn sau khi chuyển sang khoá mới
+        let noKeyCount = 0, badKeyCount = 0;
         inputs.forEach(inp=>{
-            const maKey = inp.dataset.makey || '';
+            const maKey = ckEscapeKey(inp.dataset.makey || '');   // bảo hiểm 2 lớp: mã hoá lại trước khi ghi
             const mark = inp.dataset.ckmark;
             if (!maKey){ noKeyCount++; return; }
+            if (!ckKeyIsValid(maKey)){ badKeyCount++; return; }    // không bao giờ để khoá xấu lọt xuống Firebase
+            const legacy = ckMaKeyLegacy(inp.dataset.makeyraw || '');
+            if (legacy && legacy !== maKey) legacyToDrop.add(legacy);
             const v = String(inp.value||'').replace('%','').replace(',','.').trim();
-            if (v === '') return;
+            if (v === ''){ if(!cleared[maKey]) cleared[maKey]={}; cleared[maKey][mark] = true; return; }
             const num = parseFloat(v); if (isNaN(num)) return;
             if (!payload[maKey]) payload[maKey] = {};
             payload[maKey][mark] = num;
         });
         // Hợp nhất với dữ liệu đã lưu trước đó cho các sản phẩm không hiển thị (giữ nguyên)
-        const merged = Object.assign({}, ckSaved);
+        const merged = {};
+        Object.keys(ckSaved || {}).forEach(k=>{
+            const sk = ckEscapeKey(k);                             // dọn cả dữ liệu cũ nếu lỡ có khoá không hợp lệ
+            if (!ckKeyIsValid(sk)) return;
+            merged[sk] = Object.assign({}, merged[sk], ckSaved[k]);
+        });
         Object.keys(payload).forEach(k=>{ merged[k] = Object.assign({}, merged[k], payload[k]); });
+        // Ô đã xoá trắng → bỏ mức chiết khấu đã lưu tương ứng (không giữ lại giá trị cũ)
+        Object.keys(cleared).forEach(k=>{
+            if (!merged[k]) return;
+            Object.keys(cleared[k]).forEach(mk=>{ delete merged[k][mk]; });
+            if (!Object.keys(merged[k]).length) delete merged[k];
+        });
+        // Dọn bản ghi trùng theo khoá kiểu cũ (đã được chuyển sang khoá mới ở trên)
+        legacyToDrop.forEach(lk=>{ if (merged[lk] && payload[ckMaKey(lk)]) delete merged[lk]; });
         const saveBtn = document.getElementById('ckSaveBtn');
         if (saveBtn){ saveBtn.disabled = true; saveBtn.textContent = '⏳ Đang lưu...'; }
         try {
             await database.ref('ckSavedDiscounts').set(merged);
             ckSaved = merged; ckDirty = false;
-            if (typeof zaloToast==='function') zaloToast('💾 Đã lưu chiết khấu lên Firebase — các máy khác sẽ tự cập nhật.' + (noKeyCount? ' (Bỏ qua '+noKeyCount+' ô không có Mã sp)':''), 5000);
+            let note = '';
+            if (noKeyCount)  note += ' (Bỏ qua ' + noKeyCount + ' ô không có Mã sp)';
+            if (badKeyCount) note += ' (Bỏ qua ' + badKeyCount + ' ô có Mã sp không hợp lệ)';
+            if (typeof zaloToast==='function') zaloToast('💾 Đã lưu ' + Object.keys(merged).length + ' mã sp lên Firebase — các máy khác sẽ tự cập nhật.' + note, 5000);
         } catch(err){
-            if (typeof zaloToast==='function') zaloToast('⚠️ Lỗi lưu chiết khấu: ' + (err&&err.message||err), 6000);
+            console.error('saveCkDiscounts:', err, 'keys:', Object.keys(merged));
+            if (typeof zaloToast==='function') zaloToast('⚠️ Lỗi lưu chiết khấu: ' + (err&&err.message||err), 8000);
         } finally {
             if (saveBtn){ saveBtn.textContent = '💾 Lưu chiết khấu'; }
             updateCkSaveBar();
@@ -3292,11 +3339,9 @@
                         if (!isNaN(baseVal)) { if(!ckBase[rowIdx]) ckBase[rowIdx]={}; ckBase[rowIdx][mark]=baseVal; }
                     }
                     // Giá trị đã LƯU (theo Mã sp) — dùng khi chưa có chỉnh tạm
-                    const maKey = (maSpColIdx !== -1) ? ckMaKey(rowData[maSpColIdx]) : '';
-                    let savedForCell = undefined;
-                    if (maKey && ckSaved[maKey] && ckSaved[maKey][mark] !== undefined && ckSaved[maKey][mark] !== null && ckSaved[maKey][mark] !== '') {
-                        savedForCell = ckSaved[maKey][mark];
-                    }
+                    const rawMa = (maSpColIdx !== -1) ? rowData[maSpColIdx] : '';
+                    const maKey = (maSpColIdx !== -1) ? ckMaKey(rawMa) : '';
+                    let savedForCell = (maKey ? ckGetSaved(rawMa, mark) : undefined);
                     const temp = (ckDiscount[rowIdx] && ckDiscount[rowIdx][mark] !== undefined) ? ckDiscount[rowIdx][mark] : '';
                     if (temp !== '') {
                         inp.value = temp;                                   // đang có chỉnh tạm chưa lưu
@@ -3308,6 +3353,7 @@
                         if(!ckDiscount[rowIdx]) ckDiscount[rowIdx]={}; ckDiscount[rowIdx][mark]=String(baseVal);
                     } else { inp.value = ''; }
                     inp.dataset.makey = maKey;
+                    inp.dataset.makeyraw = String(rawMa == null ? '' : rawMa);
                     // Nếu giá trị đã lưu vượt trần hiện hành (do đổi cài đặt) → kéo về trần
                     {
                         const capNow = ckCapFor(rowIdx, mark);
