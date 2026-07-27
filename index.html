@@ -5638,5 +5638,972 @@
   </div>
 </div>
 <div id="appFooter" data-html2canvas-ignore="true" style="text-align:center;padding:18px 10px 26px;font-size:13px;font-weight:bold;letter-spacing:1px;color:#8e24aa;">✨ ỨNG DỤNG AI ĐƯỢC PHÁT TRIỂN BỞI MTRIET ✨</div>
+
+<!-- ===== MODULE LƯU & MỞ LẠI BÁO GIÁ (v3.2) — chèn độc lập, không sửa logic cũ ===== -->
+<script>
+/* =========================================================================
+   MODULE: LƯU & MỞ LẠI BÁO GIÁ  (v3.2 — LuuBaoGia)
+   - Lưu nguyên trạng báo giá đang hiển thị (tiêu đề, thông tin KH, bảng sản
+     phẩm, hình ảnh, độ rộng cột, ghi chú, chữ ký) vào IndexedDB của máy.
+   - Mở lại bất cứ lúc nào để chào cho khách hàng khác, không cần làm lại.
+   - Xuất / nhập file .baogia.json để chuyển qua máy khác.
+   - Tự lưu bản nháp mỗi 30 giây. Phím tắt Ctrl+S.
+   Module độc lập, không sửa logic cũ.
+   ========================================================================= */
+(function () {
+    'use strict';
+
+    var DB_NAME = 'IDECO_BAOGIA_DB', STORE = 'quotes', DRAFT_ID = '__draft__';
+    var LS_KEY = 'ideco_baogia_saved_v1';
+    var SNAP_VER = 2;
+
+    /* ---------- Tiện ích ---------- */
+    function $(id) { return document.getElementById(id); }
+    function esc(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
+    function toast(msg, ms) {
+        if (typeof window.zaloToast === 'function') { try { window.zaloToast(msg, ms || 4000); return; } catch (e) { } }
+        var t = $('bgToast');
+        if (!t) { t = document.createElement('div'); t.id = 'bgToast'; document.body.appendChild(t); }
+        t.innerHTML = msg; t.className = 'show';
+        clearTimeout(t._tm); t._tm = setTimeout(function () { t.className = ''; }, ms || 4000);
+    }
+    function fmtDT(ts) {
+        var d = new Date(ts);
+        var p = function (n) { return String(n).padStart(2, '0'); };
+        return p(d.getDate()) + '/' + p(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+    }
+    function fmtSize(b) {
+        if (!b) return '—';
+        if (b < 1024) return b + ' B';
+        if (b < 1048576) return (b / 1024).toFixed(0) + ' KB';
+        return (b / 1048576).toFixed(2) + ' MB';
+    }
+    function slug(s) {
+        return String(s || 'BaoGia').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/đ/g, 'd').replace(/Đ/g, 'D').replace(/[^A-Za-z0-9]+/g, '_')
+            .replace(/^_+|_+$/g, '').slice(0, 60) || 'BaoGia';
+    }
+    function uid() { return 'bg_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8); }
+
+    /* ---------- Kho lưu trữ: IndexedDB, dự phòng localStorage ---------- */
+    var dbp = null;
+    function openDB() {
+        if (dbp) return dbp;
+        dbp = new Promise(function (res, rej) {
+            try {
+                var rq = indexedDB.open(DB_NAME, 1);
+                rq.onupgradeneeded = function (e) {
+                    var db = e.target.result;
+                    if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, { keyPath: 'id' });
+                };
+                rq.onsuccess = function (e) { res(e.target.result); };
+                rq.onerror = function () { rej(rq.error); };
+            } catch (err) { rej(err); }
+        });
+        return dbp;
+    }
+    function lsAll() { try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); } catch (e) { return []; } }
+    function lsSave(arr) { localStorage.setItem(LS_KEY, JSON.stringify(arr)); }
+
+    function dbPut(rec) {
+        return openDB().then(function (db) {
+            return new Promise(function (res, rej) {
+                var t = db.transaction(STORE, 'readwrite');
+                t.objectStore(STORE).put(rec);
+                t.oncomplete = function () { res(true); };
+                t.onerror = function () { rej(t.error); };
+                t.onabort = function () { rej(t.error); };
+            });
+        }).catch(function () {
+            var arr = lsAll().filter(function (r) { return r.id !== rec.id; });
+            arr.push(rec); lsSave(arr); return true;
+        });
+    }
+    function dbAll() {
+        return openDB().then(function (db) {
+            return new Promise(function (res, rej) {
+                var t = db.transaction(STORE, 'readonly');
+                var rq = t.objectStore(STORE).getAll();
+                rq.onsuccess = function () { res(rq.result || []); };
+                rq.onerror = function () { rej(rq.error); };
+            });
+        }).catch(function () { return lsAll(); });
+    }
+    function dbGet(id) {
+        return openDB().then(function (db) {
+            return new Promise(function (res, rej) {
+                var t = db.transaction(STORE, 'readonly');
+                var rq = t.objectStore(STORE).get(id);
+                rq.onsuccess = function () { res(rq.result || null); };
+                rq.onerror = function () { rej(rq.error); };
+            });
+        }).catch(function () {
+            var f = lsAll().filter(function (r) { return r.id === id; });
+            return f[0] || null;
+        });
+    }
+    function dbDel(id) {
+        return openDB().then(function (db) {
+            return new Promise(function (res, rej) {
+                var t = db.transaction(STORE, 'readwrite');
+                t.objectStore(STORE).delete(id);
+                t.oncomplete = function () { res(true); };
+                t.onerror = function () { rej(t.error); };
+            });
+        }).catch(function () { lsSave(lsAll().filter(function (r) { return r.id !== id; })); return true; });
+    }
+
+    /* ---------- Chụp ảnh (snapshot) báo giá đang hiển thị ---------- */
+    function quotePageEl() { return $('quotePage'); }
+    function noteBlock() {
+        var f = document.querySelector('#quotePage .quote-footer');
+        return f ? f.children[0] : null;              // khối "Ghi chú" bên trái
+    }
+    function signBlock() {
+        var f = document.querySelector('#quotePage .quote-footer');
+        return f ? f.children[1] : null;              // khối chữ ký bên phải
+    }
+    function readGlobal(name, def) { try { return eval(name); } catch (e) { return def; } }
+
+    function captureQuote() {
+        var wrapEl = $('quoteTableContainer');
+        if (!wrapEl || !wrapEl.querySelector('table')) return null;
+
+        // Nhân bản bảng rồi gỡ tay kéo giãn cột để lưu HTML sạch
+        var clone = wrapEl.cloneNode(true);
+        Array.prototype.forEach.call(clone.querySelectorAll('.col-resizer'), function (r) { r.remove(); });
+
+        var titleEl = document.querySelector('#quotePage .quote-title');
+        var sign = signBlock();
+        var signEditables = sign ? Array.prototype.map.call(sign.querySelectorAll('[contentEditable="true"]'), function (e) { return e.innerHTML; }) : [];
+
+        var tableHTML = clone.innerHTML;
+        var rows = clone.querySelectorAll('tbody tr').length;
+        var cols = clone.querySelectorAll('thead th').length;
+        var imgs = clone.querySelectorAll('img').length;
+
+        return {
+            id: uid(),
+            v: SNAP_VER,
+            app: 'IDECO_BAOGIA',
+            name: '',
+            savedAt: Date.now(),
+            quoteType: readGlobal('currentQuoteType', 'general'),
+            orientation: readGlobal('currentPaperOrientation', 'landscape'),
+            title: titleEl ? titleEl.innerHTML : '',
+            customer: {
+                name: ($('quoteCustomerName') || {}).innerHTML || '',
+                contact: ($('quoteCustomerContact') || {}).innerHTML || '',
+                phone: ($('quoteCustomerPhone') || {}).innerHTML || '',
+                address: ($('quoteCustomerAddress') || {}).innerHTML || ''
+            },
+            tableHTML: tableHTML,
+            noteHTML: noteBlock() ? noteBlock().innerHTML : '',
+            signHTML: signEditables,
+            meta: { rows: rows, cols: cols, images: imgs, size: tableHTML.length }
+        };
+    }
+
+    /* ---------- Phục hồi báo giá ---------- */
+    function restoreQuote(snap, keepCustomer) {
+        if (!snap || !snap.tableHTML) { toast('⚠️ Bản lưu không hợp lệ.', 4000); return; }
+
+        var titleEl = document.querySelector('#quotePage .quote-title');
+        if (titleEl && snap.title) titleEl.innerHTML = snap.title;
+
+        var c = snap.customer || {};
+        [['quoteCustomerName', c.name], ['quoteCustomerContact', c.contact],
+        ['quoteCustomerPhone', c.phone], ['quoteCustomerAddress', c.address]].forEach(function (p) {
+            var el = $(p[0]); if (!el) return;
+            el.innerHTML = keepCustomer ? (p[1] || '') : '';
+            el.contentEditable = 'true';
+        });
+
+        // Ngày báo giá luôn cập nhật theo hôm nay
+        var now = new Date();
+        if ($('quoteDateDay')) $('quoteDateDay').textContent = String(now.getDate()).padStart(2, '0');
+        if ($('quoteDateMonth')) $('quoteDateMonth').textContent = String(now.getMonth() + 1).padStart(2, '0');
+        if ($('quoteDateYear')) $('quoteDateYear').textContent = now.getFullYear();
+
+        // Bảng sản phẩm
+        var wrapEl = $('quoteTableContainer');
+        wrapEl.innerHTML = snap.tableHTML;
+        var table = wrapEl.querySelector('table');
+        if (table) {
+            table.classList.add('quote-table');
+            table.classList.remove('printing-mode');
+            try {
+                if (typeof enableColumnResize === 'function') {
+                    var n = table.querySelectorAll('thead th').length;
+                    enableColumnResize(table, Array.from({ length: n }, function (_, i) { return i; }));
+                }
+            } catch (e) { }
+        }
+
+        // Ghi chú & chữ ký
+        if (snap.noteHTML && noteBlock()) noteBlock().innerHTML = snap.noteHTML;
+        if (snap.signHTML && snap.signHTML.length && signBlock()) {
+            var eds = signBlock().querySelectorAll('[contentEditable="true"]');
+            snap.signHTML.forEach(function (h, i) { if (eds[i]) eds[i].innerHTML = h; });
+        }
+
+        // Khôi phục loại báo giá / khổ giấy
+        try { if (snap.quoteType) currentQuoteType = snap.quoteType; } catch (e) { }
+        try { if (snap.orientation) currentPaperOrientation = snap.orientation; } catch (e) { }
+        try { if (!keepCustomer) zaloSelectedPhone = null; } catch (e) { }
+
+        // Hiện trang báo giá
+        var po = $('popupOverlay'); if (po) po.style.display = 'none';
+        var qd = $('quoteDialog'); if (qd) qd.style.display = 'none';
+        quotePageEl().style.display = 'block';
+        window.scrollTo(0, 0);
+
+        // Nạp lại danh sách khách hàng gửi Zalo
+        try { if (typeof renderZaloCustomerList === 'function') renderZaloCustomerList(($('zaloCustSearch') || {}).value || ''); } catch (e) { }
+        try { if (typeof renderZaloUploadList === 'function') renderZaloUploadList(($('zaloCustSearch') || {}).value || ''); } catch (e) { }
+
+        closeLib();
+        if (keepCustomer) {
+            toast('📂 Đã mở lại báo giá <b>' + esc(snap.name || 'không tên') + '</b> — giữ nguyên thông tin khách hàng cũ.', 5000);
+        } else {
+            toast('📂 Đã mở báo giá <b>' + esc(snap.name || 'không tên') + '</b> cho <b>khách hàng mới</b>.<br>👉 Bấm chọn khách hàng ở bảng <b>GỬI BÁO GIÁ QUA ZALO</b> bên dưới để điền thông tin.', 7000);
+        }
+    }
+
+    /* ---------- Lưu ---------- */
+    function defaultName(snap) {
+        var kh = (snap.customer.name || '').replace(/<[^>]*>/g, '').trim();
+        var d = new Date();
+        var p = function (n) { return String(n).padStart(2, '0'); };
+        var stamp = p(d.getDate()) + '-' + p(d.getMonth() + 1);
+        var loai = snap.quoteType === 'longchau' ? 'Long Châu' : (snap.quoteType === 'pharmacity' ? 'Pharmacity' : 'Báo giá');
+        return (kh ? loai + ' - ' + kh : loai + ' ' + snap.meta.rows + ' SP') + ' (' + stamp + ')';
+    }
+
+    function doSave() {
+        var snap = captureQuote();
+        if (!snap) { toast('⚠️ Chưa có báo giá nào đang mở để lưu.', 4000); return; }
+        var name = window.prompt('💾 Đặt tên cho báo giá này (để mở lại sau, dùng chào khách hàng khác):', defaultName(snap));
+        if (name === null) return;
+        name = (name || '').trim() || defaultName(snap);
+        snap.name = name;
+        dbPut(snap).then(function () {
+            toast('💾 Đã lưu báo giá <b>' + esc(name) + '</b> (' + snap.meta.rows + ' sản phẩm).<br>Mở lại bất cứ lúc nào ở nút <b>📂 Báo Giá Đã Lưu</b>.', 6000);
+        }).catch(function (err) {
+            toast('⚠️ Lỗi lưu báo giá: ' + esc(err && err.message || err), 7000);
+        });
+    }
+
+    function downloadSnap(snap) {
+        var blob = new Blob([JSON.stringify(snap)], { type: 'application/json;charset=utf-8' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = slug(snap.name) + '.baogia.json';
+        document.body.appendChild(a); a.click();
+        setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    }
+
+    function importFiles(files) {
+        var list = Array.prototype.slice.call(files || []);
+        if (!list.length) return;
+        var ok = 0, done = 0;
+        list.forEach(function (f) {
+            var r = new FileReader();
+            r.onload = function () {
+                try {
+                    var snap = JSON.parse(r.result);
+                    if (!snap || !snap.tableHTML) throw new Error('File không phải bản lưu báo giá');
+                    snap.id = uid(); snap.savedAt = Date.now();
+                    snap.name = (snap.name || f.name.replace(/\.baogia\.json$/i, '')) + ' (nhập file)';
+                    dbPut(snap).then(function () { ok++; finish(); });
+                } catch (e) { finish(); }
+            };
+            r.onerror = finish;
+            r.readAsText(f);
+        });
+        function finish() {
+            done++;
+            if (done >= list.length) {
+                renderLib();
+                toast(ok ? ('📥 Đã nhập <b>' + ok + '</b> báo giá từ file.') : '⚠️ Không nhập được file nào.', 5000);
+            }
+        }
+    }
+
+    /* ---------- Bản nháp tự động ---------- */
+    function autoDraft() {
+        var qp = quotePageEl();
+        if (!qp || qp.style.display !== 'block') return;
+        var snap = captureQuote();
+        if (!snap) return;
+        snap.id = DRAFT_ID; snap.isDraft = true;
+        snap.name = 'Bản nháp tự động — ' + fmtDT(Date.now());
+        dbPut(snap).catch(function () { });
+    }
+
+    /* ---------- Giao diện thư viện ---------- */
+    var libCache = [];
+    function openLib() {
+        var ov = $('bgLibOverlay'); if (!ov) return;
+        ov.style.display = 'flex';
+        renderLib();
+    }
+    function closeLib() { var ov = $('bgLibOverlay'); if (ov) ov.style.display = 'none'; }
+
+    function renderLib(filter) {
+        var body = $('bgLibBody'); if (!body) return;
+        body.innerHTML = '<div class="bg-empty">Đang tải danh sách...</div>';
+        dbAll().then(function (arr) {
+            libCache = arr.sort(function (a, b) {
+                if (a.id === DRAFT_ID) return -1;
+                if (b.id === DRAFT_ID) return 1;
+                return (b.savedAt || 0) - (a.savedAt || 0);
+            });
+            paintLib(filter || ($('bgLibSearch') || {}).value || '');
+        }).catch(function (err) {
+            body.innerHTML = '<div class="bg-empty">Lỗi đọc dữ liệu: ' + esc(err && err.message || err) + '</div>';
+        });
+    }
+
+    function paintLib(kw) {
+        var body = $('bgLibBody'); if (!body) return;
+        var k = (kw || '').toLowerCase().trim();
+        var rows = libCache.filter(function (r) {
+            if (!k) return true;
+            var hay = (r.name || '') + ' ' + ((r.customer && r.customer.name) || '');
+            return hay.replace(/<[^>]*>/g, '').toLowerCase().indexOf(k) !== -1;
+        });
+        var real = libCache.filter(function (r) { return r.id !== DRAFT_ID; }).length;
+        var cnt = $('bgLibCount');
+        if (cnt) cnt.textContent = real + ' báo giá đã lưu';
+
+        if (!rows.length) {
+            body.innerHTML = '<div class="bg-empty">' + (k ? 'Không tìm thấy báo giá phù hợp.' :
+                'Chưa có báo giá nào được lưu.<br><span style="font-size:13px;color:#888">Tạo báo giá → bấm <b>💾 Lưu Báo Giá</b> ở cuối trang báo giá.</span>') + '</div>';
+            return;
+        }
+        var html = '<table class="bg-lib-table"><thead><tr>' +
+            '<th style="width:34%">Tên báo giá</th><th style="width:20%">Khách hàng đã lưu</th>' +
+            '<th style="width:11%">Số SP</th><th style="width:15%">Ngày lưu</th><th>Thao tác</th>' +
+            '</tr></thead><tbody>';
+        rows.forEach(function (r) {
+            var kh = ((r.customer && r.customer.name) || '').replace(/<[^>]*>/g, '').trim() || '—';
+            var draft = r.id === DRAFT_ID;
+            html += '<tr class="' + (draft ? 'bg-draft' : '') + '">' +
+                '<td><b>' + esc(r.name || '(không tên)') + '</b>' + (draft ? ' <span class="bg-tag">TỰ ĐỘNG</span>' : '') +
+                '<div class="bg-sub">' + (r.meta ? fmtSize(r.meta.size) : '') +
+                (r.meta && r.meta.images ? ' · ' + r.meta.images + ' hình' : '') +
+                (r.quoteType && r.quoteType !== 'general' ? ' · ' + (r.quoteType === 'longchau' ? 'Long Châu' : 'Pharmacity') : '') + '</div></td>' +
+                '<td>' + esc(kh) + '</td>' +
+                '<td style="text-align:center">' + ((r.meta && r.meta.rows) || 0) + '</td>' +
+                '<td>' + fmtDT(r.savedAt) + '</td>' +
+                '<td class="bg-acts">' +
+                '<button class="bg-b open" data-act="open" data-id="' + r.id + '">📂 Mở</button>' +
+                '<button class="bg-b newc" data-act="opennew" data-id="' + r.id + '">👤 Mở cho KH mới</button>' +
+                '<button class="bg-b file" data-act="file" data-id="' + r.id + '" title="Tải file .baogia.json để gửi qua máy khác">⬇ File</button>' +
+                (draft ? '' : '<button class="bg-b ren" data-act="rename" data-id="' + r.id + '" title="Đổi tên">✏</button>') +
+                '<button class="bg-b del" data-act="del" data-id="' + r.id + '" title="Xóa">🗑</button>' +
+                '</td></tr>';
+        });
+        body.innerHTML = html + '</tbody></table>';
+    }
+
+    function libClick(e) {
+        var btn = e.target.closest('button[data-act]'); if (!btn) return;
+        var id = btn.dataset.id, act = btn.dataset.act;
+        if (act === 'open' || act === 'opennew') {
+            dbGet(id).then(function (s) { if (s) restoreQuote(s, act === 'open'); });
+        } else if (act === 'file') {
+            dbGet(id).then(function (s) { if (s) downloadSnap(s); });
+        } else if (act === 'rename') {
+            dbGet(id).then(function (s) {
+                if (!s) return;
+                var n = window.prompt('✏ Đổi tên báo giá:', s.name || '');
+                if (n === null) return;
+                s.name = (n || '').trim() || s.name;
+                dbPut(s).then(function () { renderLib(); });
+            });
+        } else if (act === 'del') {
+            var row = btn.closest('tr');
+            var nm = row ? row.querySelector('b').textContent : '';
+            if (!confirm('Xóa báo giá "' + nm + '" khỏi máy này?\n(Không ảnh hưởng dữ liệu sản phẩm / khách hàng)')) return;
+            dbDel(id).then(function () { renderLib(); toast('🗑 Đã xóa báo giá.', 3000); });
+        }
+    }
+
+    /* ---------- Dựng giao diện (chèn bằng JS) ---------- */
+    function injectCSS() {
+        var css =
+            '.quote-save-btn{background:#8e24aa;color:#fff;border:none;padding:10px 20px;border-radius:5px;cursor:pointer;margin-right:10px;font-weight:bold}' +
+            '.quote-lib-btn{background:#ff8f00;color:#fff;border:none;padding:10px 20px;border-radius:5px;cursor:pointer;font-weight:bold}' +
+            '#bgLibOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100000;align-items:center;justify-content:center;padding:20px}' +
+            '#bgLibBox{background:#fff;border-radius:12px;width:1080px;max-width:97%;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.35)}' +
+            '.bg-head{display:flex;align-items:center;gap:12px;padding:14px 18px;background:linear-gradient(90deg,#ff8f00,#ef6c00);color:#fff}' +
+            '.bg-head h3{margin:0;font-size:18px;flex:1}' +
+            '.bg-head .bg-count{font-size:13px;opacity:.95;background:rgba(255,255,255,.2);padding:4px 10px;border-radius:20px}' +
+            '.bg-head .bg-close{background:none;border:none;color:#fff;font-size:26px;line-height:1;cursor:pointer;padding:0 4px}' +
+            '.bg-tools{display:flex;gap:10px;align-items:center;padding:12px 18px;border-bottom:1px solid #eee;flex-wrap:wrap}' +
+            '.bg-tools input[type=text]{flex:1;min-width:220px;padding:9px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px}' +
+            '.bg-tools .bg-imp{background:#00897b;color:#fff;border:none;padding:9px 14px;border-radius:8px;cursor:pointer;font-weight:600}' +
+            '.bg-note{padding:10px 18px;background:#fff8e1;border-bottom:1px solid #ffe082;font-size:13px;color:#795548;line-height:1.5}' +
+            '.bg-body{overflow:auto;padding:6px 18px 18px}' +
+            '.bg-lib-table{width:100%;border-collapse:collapse;font-size:13.5px}' +
+            '.bg-lib-table th{position:sticky;top:0;background:#fafafa;border-bottom:2px solid #eee;padding:9px 8px;text-align:left;color:#555;font-size:12.5px;text-transform:uppercase;letter-spacing:.4px}' +
+            '.bg-lib-table td{border-bottom:1px solid #f0f0f0;padding:9px 8px;vertical-align:middle}' +
+            '.bg-lib-table tr:hover td{background:#fffdf5}' +
+            '.bg-lib-table tr.bg-draft td{background:#f3e5f5}' +
+            '.bg-sub{font-size:11.5px;color:#999;margin-top:3px}' +
+            '.bg-tag{background:#8e24aa;color:#fff;border-radius:10px;padding:1px 7px;font-size:10.5px;vertical-align:middle}' +
+            '.bg-acts{white-space:nowrap}' +
+            '.bg-b{border:none;border-radius:6px;padding:6px 9px;margin:2px;cursor:pointer;font-size:12.5px;font-weight:600;color:#fff}' +
+            '.bg-b.open{background:#2e7d32}.bg-b.newc{background:#1565c0}.bg-b.file{background:#546e7a}' +
+            '.bg-b.ren{background:#ff8f00}.bg-b.del{background:#c62828}' +
+            '.bg-empty{padding:40px 10px;text-align:center;color:#777;font-size:15px;line-height:1.7}' +
+            '#bgToast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(140%);background:#323232;color:#fff;padding:12px 18px;border-radius:10px;font-size:14px;max-width:88%;z-index:100001;transition:transform .3s;line-height:1.5}' +
+            '#bgToast.show{transform:translateX(-50%) translateY(0)}' +
+            '.bg-menu-item{display:flex;align-items:center;gap:10px;width:100%;border:none;background:#fff;padding:12px 14px;cursor:pointer;font-size:14px;text-align:left;border-top:1px solid #eee;color:#e65100;font-weight:600}' +
+            '.bg-menu-item:hover{background:#fff3e0}' +
+            '@media print{.quote-save-btn,.quote-lib-btn,#bgLibOverlay,#bgToast{display:none!important}}';
+        var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
+    }
+
+    function injectUI() {
+        // 1) Hai nút trên trang báo giá
+        var acts = document.querySelector('#quotePage .quote-actions');
+        if (acts) {
+            var bSave = document.createElement('button');
+            bSave.className = 'quote-save-btn'; bSave.id = 'quoteSaveBtn';
+            bSave.title = 'Lưu báo giá này để lần sau mở lại dùng chào khách hàng khác (Ctrl+S)';
+            bSave.innerHTML = '💾 Lưu Báo Giá';
+            var bLib = document.createElement('button');
+            bLib.className = 'quote-lib-btn'; bLib.id = 'quoteLibBtn';
+            bLib.title = 'Danh sách báo giá đã lưu';
+            bLib.innerHTML = '📂 Báo Giá Đã Lưu';
+            acts.appendChild(bSave); acts.appendChild(bLib);
+            bSave.addEventListener('click', doSave);
+            bLib.addEventListener('click', openLib);
+        }
+        // 2) Mục trong dropdown "Tạo Báo Giá"
+        var dd = $('quoteMenuDropdown');
+        if (dd) {
+            var mi = document.createElement('button');
+            mi.className = 'bg-menu-item'; mi.id = 'bgOpenSavedMenu';
+            mi.innerHTML = '<span class="icon">📂</span><span>Mở Báo Giá Đã Lưu</span>';
+            dd.appendChild(mi);
+            mi.addEventListener('click', function (e) {
+                e.stopPropagation();
+                dd.classList.remove('show');
+                openLib();
+            });
+        }
+        // 3) Hộp thoại thư viện
+        var ov = document.createElement('div');
+        ov.id = 'bgLibOverlay';
+        ov.innerHTML =
+            '<div id="bgLibBox">' +
+            '<div class="bg-head"><h3>📂 BÁO GIÁ ĐÃ LƯU</h3>' +
+            '<span class="bg-count" id="bgLibCount">—</span>' +
+            '<button class="bg-close" id="bgLibClose" title="Đóng">&times;</button></div>' +
+            '<div class="bg-note">💡 <b>Mở</b> = giữ nguyên thông tin khách hàng cũ · <b>Mở cho KH mới</b> = xóa trống phần khách hàng để bạn chọn khách khác từ bảng Zalo rồi gửi ngay. ' +
+            'Báo giá lưu trên <b>máy này</b>; muốn dùng ở máy khác hãy bấm <b>⬇ File</b> rồi <b>Nhập file</b> ở máy kia.</div>' +
+            '<div class="bg-tools">' +
+            '<input type="text" id="bgLibSearch" placeholder="🔍 Tìm theo tên báo giá hoặc tên khách hàng..." />' +
+            '<button class="bg-imp" id="bgImportBtn">📥 Nhập file .baogia.json</button>' +
+            '<input type="file" id="bgImportInput" accept=".json,.baogia.json" multiple style="display:none" />' +
+            '</div>' +
+            '<div class="bg-body" id="bgLibBody"></div>' +
+            '</div>';
+        document.body.appendChild(ov);
+
+        $('bgLibClose').addEventListener('click', closeLib);
+        ov.addEventListener('click', function (e) { if (e.target === ov) closeLib(); });
+        $('bgLibBody').addEventListener('click', libClick);
+        $('bgLibSearch').addEventListener('input', function () { paintLib(this.value); });
+        $('bgImportBtn').addEventListener('click', function () { $('bgImportInput').click(); });
+        $('bgImportInput').addEventListener('change', function () { importFiles(this.files); this.value = ''; });
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && $('bgLibOverlay').style.display === 'flex') closeLib();
+            if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+                var qp = quotePageEl();
+                if (qp && qp.style.display === 'block') { e.preventDefault(); doSave(); }
+            }
+        });
+    }
+
+    function start() {
+        injectCSS();
+        injectUI();
+        setInterval(autoDraft, 30000);
+        window.IDECO_BaoGiaStore = { save: doSave, open: openLib, capture: captureQuote, restore: restoreQuote };
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+    else start();
+})();
+
+</script>
+
+<!-- ===== MODULE XUẤT EXCEL BÁO GIÁ KÈM ẢNH SẢN PHẨM (v3.3) ===== -->
+<script>
+/* =========================================================================
+   MODULE: XUẤT EXCEL BÁO GIÁ KÈM ẢNH SẢN PHẨM  (v3.3 — ExcelAnh)
+   - Nhúng ảnh THẬT vào file .xlsx (ExcelJS addImage) — khách mở không cần mạng.
+   - Ảnh tự nén về ~220px, canh giữa ô, giữ đúng tỉ lệ, không méo.
+   - Layout chuyên nghiệp: logo công ty, tiêu đề, khối thông tin KH, bảng viền
+     đậm, tô sọc, định dạng tiền tệ, đóng băng + lặp header khi in, chân trang
+     có số trang, khối chữ ký.
+   - Có ô tick "Kèm hình SP" cạnh nút Xuất Excel (mặc định bật).
+   Module độc lập: thay thế handler cũ của nút Xuất Excel bằng cách nhân bản nút.
+   ========================================================================= */
+(function () {
+    'use strict';
+
+    var FONT = 'Times New Roman';
+    var IMG_MAX_PX = 220;          // độ phân giải ảnh nhúng (nén để file nhẹ)
+    var IMG_COL_WIDTH = 14;        // ~103px
+    var IMG_ROW_HEIGHT = 74;       // điểm (~99px)
+    var LOGO_URL = 'https://cdn.imgpile.com/f/GK3nMDF_xl.png';
+
+    function $(id) { return document.getElementById(id); }
+    function txt(el) { return el ? (el.innerText || el.textContent || '').trim() : ''; }
+    function toast(m, ms) {
+        if (typeof window.zaloToast === 'function') { try { return window.zaloToast(m, ms || 4500); } catch (e) { } }
+        var t = $('bgToast');
+        if (t) { t.innerHTML = m; t.className = 'show'; clearTimeout(t._tm); t._tm = setTimeout(function () { t.className = ''; }, ms || 4500); }
+    }
+
+    /* ---------- Nạp & nén ảnh về base64 ---------- */
+    function loadImage(src) {
+        return new Promise(function (res, rej) {
+            var im = new Image();
+            if (!/^data:/i.test(src)) im.crossOrigin = 'anonymous';
+            im.onload = function () { res(im); };
+            im.onerror = function () { rej(new Error('Không tải được ảnh')); };
+            im.src = src;
+        });
+    }
+    function blobToDataURL(b) {
+        return new Promise(function (res, rej) {
+            var fr = new FileReader();
+            fr.onload = function () { res(fr.result); };
+            fr.onerror = function () { rej(fr.error); };
+            fr.readAsDataURL(b);
+        });
+    }
+    // → { dataUrl, ext, w, h } hoặc null
+    function prepareImage(src, maxPx) {
+        maxPx = maxPx || IMG_MAX_PX;
+        var im = null;
+        return loadImage(src).then(function (i) { im = i; }).catch(function () { })
+            .then(function () {
+                if (im) {
+                    var nw = im.naturalWidth || im.width, nh = im.naturalHeight || im.height;
+                    if (nw && nh) {
+                        try {
+                            var sc = Math.min(1, maxPx / Math.max(nw, nh));
+                            var w = Math.max(1, Math.round(nw * sc)), h = Math.max(1, Math.round(nh * sc));
+                            var cv = document.createElement('canvas');
+                            cv.width = w; cv.height = h;
+                            var ctx = cv.getContext('2d');
+                            ctx.drawImage(im, 0, 0, w, h);
+                            return { dataUrl: cv.toDataURL('image/png'), ext: 'png', w: w, h: h };
+                        } catch (e) { /* canvas bị "nhiễm" do CORS → rơi xuống dưới */ }
+                    }
+                    var m = /^data:image\/(png|jpe?g|gif);base64,/i.exec(src || '');
+                    if (m) {
+                        var e1 = m[1].toLowerCase(); if (e1 === 'jpg') e1 = 'jpeg';
+                        return { dataUrl: src, ext: e1, w: nw || maxPx, h: nh || maxPx };
+                    }
+                }
+                // Thử tải trực tiếp (khi ảnh cùng miền hoặc server cho phép CORS)
+                return fetch(src, { mode: 'cors' }).then(function (r) { return r.blob(); }).then(function (b) {
+                    var e2 = (b.type || '').replace('image/', '').toLowerCase();
+                    if (e2 === 'jpg') e2 = 'jpeg';
+                    if (['png', 'jpeg', 'gif'].indexOf(e2) === -1) throw new Error('Định dạng không hỗ trợ');
+                    return blobToDataURL(b).then(function (d) {
+                        return { dataUrl: d, ext: e2, w: (im && im.naturalWidth) || maxPx, h: (im && im.naturalHeight) || maxPx };
+                    });
+                }).catch(function () { return null; });
+            });
+    }
+
+    /* ---------- Tiện ích Excel ---------- */
+    function colLetter(n) { var s = ''; while (n > 0) { var m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; }
+    function colPx(w) { return Math.round(w * 7 + 5); }
+    function rowPx(pt) { return Math.round(pt * 4 / 3); }
+    // Đọc số kiểu Việt Nam: "1.200.000" = 1200000 · "0,15" = 0.15 · "1,234,567" = 1234567
+    function toNum(s) {
+        if (s === null || s === undefined) return null;
+        var t = String(s).replace(/[^\d.,\-]/g, '').trim();
+        if (!t || !/\d/.test(t)) return null;
+        var hasC = t.indexOf(',') !== -1, hasD = t.indexOf('.') !== -1, n;
+        if (hasC && hasD) {
+            n = t.lastIndexOf(',') > t.lastIndexOf('.') ? t.replace(/\./g, '').replace(',', '.') : t.replace(/,/g, '');
+        } else if (hasC) {
+            n = /^-?\d{1,3}(,\d{3})+$/.test(t) ? t.replace(/,/g, '') : t.replace(',', '.');
+        } else if (hasD) {
+            n = /^-?\d{1,3}(\.\d{3})+$/.test(t) ? t.replace(/\./g, '') : t;
+        } else n = t;
+        var v = Number(n);
+        return isNaN(v) ? null : v;
+    }
+
+    /* ---------- Đọc bảng báo giá trên màn hình ---------- */
+    function readQuoteTable() {
+        var tableEl = document.querySelector('#quoteTableContainer table');
+        if (!tableEl) return null;
+        var thList = Array.prototype.slice.call(tableEl.querySelectorAll('thead th'));
+        var imgIdx = -1;
+        var heads = thList.map(function (th, i) {
+            var t = ((th.innerText || th.textContent) || '').trim().replace(/\s+/g, ' ');
+            if (/hình/i.test(t)) imgIdx = i;
+            return t;
+        });
+        var trs = Array.prototype.slice.call(tableEl.querySelectorAll('tbody tr'));
+        var rows = trs.map(function (tr) {
+            var tds = Array.prototype.slice.call(tr.querySelectorAll('td'));
+            return heads.map(function (_, i) { return tds[i] ? (((tds[i].innerText || tds[i].textContent) || '').trim().replace(/\s+/g, ' ')) : ''; });
+        });
+        var imgs = trs.map(function (tr) {
+            var im = imgIdx >= 0 ? tr.querySelectorAll('td')[imgIdx] : null;
+            im = im ? im.querySelector('img') : null;
+            return im && im.src ? im.src : null;
+        });
+        return { heads: heads, rows: rows, imgs: imgs, imgIdx: imgIdx };
+    }
+
+    /* ---------- Dựng workbook ---------- */
+    function buildWorkbook(opts) {
+        opts = opts || {};
+        var withImages = opts.withImages !== false;
+        var onProgress = opts.onProgress || function () { };
+        var data = opts.data || readQuoteTable();
+        if (!data) return Promise.reject(new Error('Không tìm thấy bảng dữ liệu báo giá.'));
+        if (typeof ExcelJS === 'undefined') return Promise.reject(new Error('Thư viện ExcelJS chưa tải xong, vui lòng thử lại sau vài giây.'));
+
+        var hasAnyImg = data.imgs.some(function (s) { return !!s; });
+        var useImg = withImages && data.imgIdx >= 0 && hasAnyImg;
+
+        // Cột đưa ra Excel: bỏ cột hình nếu không xuất ảnh
+        var outIdx = [], imgOutCol = -1;
+        data.heads.forEach(function (h, i) {
+            if (i === data.imgIdx) { if (!useImg) return; imgOutCol = outIdx.length; }
+            outIdx.push(i);
+        });
+        var headers = outIdx.map(function (i) { return i === data.imgIdx ? 'Hình ảnh' : data.heads[i]; });
+        var rows = data.rows.map(function (r) { return outIdx.map(function (i) { return i === data.imgIdx ? '' : r[i]; }); });
+        if (!headers.length) return Promise.reject(new Error('Bảng báo giá không có cột dữ liệu.'));
+
+        var NC = headers.length, LAST = colLetter(NC);
+        var THIN = { style: 'thin', color: { argb: 'FF9AA7B4' } };
+        var MEDIUM = { style: 'medium', color: { argb: 'FF1A4E8A' } };
+        var box = { top: THIN, left: THIN, bottom: THIN, right: THIN };
+
+        var wb = new ExcelJS.Workbook();
+        wb.creator = 'IDECO'; wb.company = 'IDECO'; wb.created = new Date();
+        var ws = wb.addWorksheet('BaoGia_IDECO', {
+            pageSetup: {
+                paperSize: 9, orientation: 'landscape',
+                fitToPage: true, fitToWidth: 1, fitToHeight: 0,
+                horizontalCentered: true,
+                margins: { left: 0.3, right: 0.3, top: 0.45, bottom: 0.45, header: 0.2, footer: 0.2 }
+            },
+            views: [{ showGridLines: false }]
+        });
+        ws.headerFooter = {
+            oddFooter: '&L&"' + FONT + '"&9IDECO · www.goibaogia.com · 0385400436&R&"' + FONT + '"&9Trang &P/&N'
+        };
+
+        function putFull(r, text, o) {
+            o = o || {};
+            if (NC > 1) ws.mergeCells('A' + r + ':' + LAST + r);
+            var c = ws.getCell('A' + r);
+            c.value = text;
+            c.font = { name: FONT, size: o.size || 11, bold: !!o.bold, italic: !!o.italic, color: { argb: o.color || 'FF000000' } };
+            c.alignment = { horizontal: o.align || 'left', vertical: 'middle', wrapText: true };
+            if (o.h) ws.getRow(r).height = o.h;
+            return c;
+        }
+
+        /* --- Khối tiêu đề công ty --- */
+        putFull(1, 'CÔNG TY TNHH TM - DV KẾT GIAO PHÁT TRIỂN QUỐC TẾ (IDECO)', { bold: true, size: 14, align: 'center', color: 'FF1A4E8A', h: 26 });
+        putFull(2, 'Địa chỉ: 003 Carillon 5, 262/3 Lũy Bán Bích, P. Tân Phú, TP. Hồ Chí Minh', { size: 10, align: 'center', h: 16 });
+        putFull(3, 'Điện thoại: 0385400436   |   Website: www.goibaogia.com   |   Email: idecopharma@gmail.com', { size: 10, align: 'center', h: 16 });
+        ws.getRow(4).height = 7;
+        for (var c4 = 1; c4 <= NC; c4++) ws.getCell(4, c4).border = { bottom: MEDIUM };
+
+        var titleText = (txt(document.querySelector('#quotePage .quote-title')) || 'BÁO GIÁ SẢN PHẨM').toUpperCase();
+        putFull(6, titleText, { bold: true, size: 18, align: 'center', color: 'FF1D6F42', h: 34 });
+
+        /* --- Thông tin khách hàng --- */
+        var info = [
+            ['Khách hàng:', txt($('quoteCustomerName'))],
+            ['Người phụ trách:', txt($('quoteCustomerContact'))],
+            ['Điện thoại:', txt($('quoteCustomerPhone'))],
+            ['Địa chỉ:', txt($('quoteCustomerAddress'))]
+        ];
+        var r = 8;
+        info.forEach(function (p) {
+            var lc = ws.getCell('A' + r);
+            lc.value = p[0];
+            lc.font = { name: FONT, size: 11, bold: true, color: { argb: 'FF1A4E8A' } };
+            lc.alignment = { vertical: 'middle', horizontal: 'left' };
+            if (NC >= 2) {
+                ws.mergeCells('B' + r + ':' + LAST + r);
+                var vc = ws.getCell('B' + r);
+                vc.value = p[1];
+                vc.font = { name: FONT, size: 11, bold: p[0].indexOf('Khách') === 0 };
+                vc.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
+            }
+            ws.getRow(r).height = 18;
+            r++;
+        });
+        r++;
+        var HR = r;
+
+        /* --- Header bảng --- */
+        var hrow = ws.getRow(HR);
+        headers.forEach(function (h, i) { ws.getCell(HR, i + 1).value = h; });
+        hrow.height = 30;
+        for (var c = 1; c <= NC; c++) {
+            var hc = ws.getCell(HR, c);
+            hc.font = { name: FONT, size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+            hc.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1A4E8A' } };
+            hc.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+            hc.border = { top: MEDIUM, left: THIN, bottom: MEDIUM, right: THIN };
+        }
+
+        /* --- Dữ liệu --- */
+        var hKey = headers.map(function (h) { return h.toLowerCase(); });
+        var isMoneyCol = hKey.map(function (h) { return /giá|gía|tiền|thành ti|đơn giá/.test(h); });
+        var isPctCol = hKey.map(function (h) { return /chiết khấu|^ck|\bck\b|%/.test(h); });
+        var isCodeCol = hKey.map(function (h) { return /mã|sđt|số điện|điện thoại|barcode|số đăng ký|\bsdk\b|số lô|^lô/.test(h); });
+        var isCenterCol = hKey.map(function (h, i) {
+            return i === imgOutCol || /^stt|đvt|đơn vị|quy cách|^sl|số lượng|hạn|hsd|ngày|mã|nước|đóng gói/.test(h);
+        });
+
+        rows.forEach(function (row, i) {
+            var rIdx = HR + 1 + i;
+            var rr = ws.getRow(rIdx);
+            row.forEach(function (v, ci) {
+                var out = v, cell0 = ws.getCell(rIdx, ci + 1);
+                if (ci === imgOutCol) out = '';
+                else if (isCodeCol[ci] || /^0\d/.test(v)) out = v;                    // mã hàng / SĐT: giữ nguyên chuỗi
+                else if (/^-?[\d.,]+\s*%$/.test(v)) {                                 // chiết khấu: thành số có đuôi %
+                    var pn = toNum(v);
+                    if (pn !== null) { out = pn; cell0.numFmt = '0.##"%"'; }
+                }
+                else if (isMoneyCol[ci] || /^-?\d[\d.,]*$/.test(v)) { var n = toNum(v); if (n !== null) out = n; }
+                cell0.value = out;
+            });
+            rr.height = useImg ? IMG_ROW_HEIGHT : 21;
+            for (var cc = 1; cc <= NC; cc++) {
+                var cell = ws.getCell(rIdx, cc);
+                cell.font = { name: FONT, size: 11 };
+                cell.border = box;
+                cell.alignment = {
+                    horizontal: isMoneyCol[cc - 1] ? 'right' : (isCenterCol[cc - 1] ? 'center' : 'left'),
+                    vertical: 'middle', wrapText: true
+                };
+                if (typeof cell.value === 'number' && isMoneyCol[cc - 1] && !cell.numFmt) cell.numFmt = '#,##0 "đ"';
+                if (isPctCol[cc - 1]) cell.font = { name: FONT, size: 11, bold: true, color: { argb: 'FFC62828' } };
+                if (i % 2 === 1) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF3F7FF' } };
+            }
+        });
+
+        var LAST_ROW = HR + rows.length;
+        for (var cb = 1; cb <= NC; cb++) {
+            var b1 = ws.getCell(LAST_ROW, cb).border || {};
+            ws.getCell(LAST_ROW, cb).border = Object.assign({}, b1, { bottom: MEDIUM });
+        }
+        for (var rw = HR; rw <= LAST_ROW; rw++) {
+            var bl = ws.getCell(rw, 1).border || {};
+            ws.getCell(rw, 1).border = Object.assign({}, bl, { left: MEDIUM });
+            var br = ws.getCell(rw, NC).border || {};
+            ws.getCell(rw, NC).border = Object.assign({}, br, { right: MEDIUM });
+        }
+
+        /* --- Độ rộng cột --- */
+        headers.forEach(function (h, i) {
+            if (i === imgOutCol) { ws.getColumn(i + 1).width = IMG_COL_WIDTH; return; }
+            var max = h.length;
+            rows.forEach(function (rwv) { max = Math.max(max, String(rwv[i] == null ? '' : rwv[i]).length); });
+            var w = Math.min(Math.max(max + 4, 10), 46);
+            var k = hKey[i];
+            if (/^stt/.test(k)) w = 6;
+            else if (/tên|sản phẩm|hàng hóa|hoạt chất/.test(k)) w = Math.max(w, 32);
+            else if (isMoneyCol[i]) w = Math.max(Math.min(w, 17), 14);
+            else if (isPctCol[i]) w = Math.max(Math.min(w, 13), 11);
+            ws.getColumn(i + 1).width = w;
+        });
+
+        /* --- Chân bảng: tổng số SP, ghi chú, chữ ký --- */
+        var f = LAST_ROW + 1;
+        putFull(f, 'Tổng cộng: ' + rows.length + ' sản phẩm', { bold: true, italic: true, size: 11, align: 'right', color: 'FF1A4E8A', h: 20 });
+
+        var noteEls = document.querySelectorAll('#quotePage .quote-footer > div:first-child [contentEditable="true"]');
+        var notes = Array.prototype.map.call(noteEls, function (e) { return txt(e); }).filter(Boolean);
+        if (!notes.length) notes = ['Giá trên đã bao gồm VAT 5%', 'Hiệu lực báo giá: 30 ngày'];
+        f += 1;
+        putFull(f, 'GHI CHÚ:', { bold: true, size: 11, color: 'FFC62828', h: 18 });
+        notes.forEach(function (n) { f += 1; putFull(f, '   • ' + n, { italic: true, size: 11, h: 17 }); });
+
+        var dd = txt($('quoteDateDay')), mm = txt($('quoteDateMonth')), yy = txt($('quoteDateYear'));
+        var startCol = NC >= 4 ? Math.ceil(NC / 2) + 1 : 1;
+        function signBlock(row, text, opt) {
+            if (startCol < NC) ws.mergeCells(row, startCol, row, NC);
+            var cc2 = ws.getCell(row, startCol);
+            cc2.value = text;
+            cc2.font = { name: FONT, size: opt.size, bold: !!opt.bold, italic: !!opt.italic };
+            cc2.alignment = { horizontal: 'center', vertical: 'middle' };
+            ws.getRow(row).height = opt.h || 18;
+        }
+        var signEls = document.querySelectorAll('#quotePage .quote-footer > div:nth-child(2) [contentEditable="true"]');
+        var s1 = txt(signEls[0]) || 'ĐẠI DIỆN CÔNG TY IDECO';
+        var s2 = txt(signEls[1]) || '(Ký, ghi rõ họ tên)';
+        f += 2; signBlock(f, 'TP. Hồ Chí Minh, ngày ' + dd + ' tháng ' + mm + ' năm ' + yy, { size: 11, italic: true });
+        f += 1; signBlock(f, s1.toUpperCase(), { size: 12, bold: true, h: 20 });
+        f += 1; signBlock(f, s2, { size: 10, italic: true });
+        ws.getRow(f + 1).height = 60;
+
+        /* --- Đóng băng, lặp header, lọc --- */
+        ws.pageSetup.printTitlesRow = HR + ':' + HR;
+        ws.pageSetup.printArea = 'A1:' + LAST + (f + 1);
+        ws.views = [{ state: 'frozen', ySplit: HR, showGridLines: false }];
+        if (rows.length > 0) ws.autoFilter = { from: { row: HR, column: 1 }, to: { row: LAST_ROW, column: NC } };
+
+        /* --- Nhúng ảnh --- */
+        var stats = { total: 0, ok: 0, fail: 0, withImages: useImg };
+        var jobs = Promise.resolve();
+
+        // Logo công ty góc trên trái
+        jobs = jobs.then(function () {
+            return prepareImage(LOGO_URL, 300).then(function (p) {
+                if (!p) return;
+                var id = wb.addImage({ base64: p.dataUrl, extension: p.ext });
+                var boxW = 132, boxH = 62;
+                var sc = Math.min(boxW / p.w, boxH / p.h);
+                ws.addImage(id, { tl: { col: 0.08, row: 0.15 }, ext: { width: Math.round(p.w * sc), height: Math.round(p.h * sc) }, editAs: 'absolute' });
+            }).catch(function () { });
+        });
+
+        if (useImg) {
+            var cw = colPx(IMG_COL_WIDTH), rh = rowPx(IMG_ROW_HEIGHT);
+            var boxW = cw - 10, boxH = rh - 8;
+            data.imgs.forEach(function (src, i) {
+                if (!src) return;
+                stats.total++;
+                jobs = jobs.then(function () {
+                    onProgress(stats.ok + stats.fail + 1, stats.total);
+                    return prepareImage(src, IMG_MAX_PX).then(function (p) {
+                        if (!p) { stats.fail++; return; }
+                        var sc = Math.min(boxW / p.w, boxH / p.h);
+                        var dw = Math.max(8, Math.round(p.w * sc)), dh = Math.max(8, Math.round(p.h * sc));
+                        var id = wb.addImage({ base64: p.dataUrl, extension: p.ext });
+                        var r0 = HR + i;                 // 0-based: dòng dữ liệu thứ i
+                        var c0 = imgOutCol;              // 0-based
+                        ws.addImage(id, {
+                            tl: { col: c0 + (cw - dw) / 2 / cw, row: r0 + (rh - dh) / 2 / rh },
+                            ext: { width: dw, height: dh },
+                            editAs: 'oneCell'
+                        });
+                        stats.ok++;
+                    }).catch(function () { stats.fail++; });
+                });
+            });
+        }
+
+        return jobs.then(function () {
+            var now = new Date();
+            var stamp = String(now.getDate()).padStart(2, '0') + String(now.getMonth() + 1).padStart(2, '0') + now.getFullYear();
+            var cust = txt($('quoteCustomerName')).replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, '_').slice(0, 30);
+            return {
+                wb: wb, stats: stats,
+                fileName: 'BaoGia_IDECO' + (cust ? '_' + cust : '') + '_' + stamp + '.xlsx'
+            };
+        });
+    }
+
+    /* ---------- Xuất file ---------- */
+    function saveBlob(blob, fileName) {
+        if (typeof saveAs === 'function') { saveAs(blob, fileName); return; }
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url; a.download = fileName;
+        document.body.appendChild(a); a.click();
+        setTimeout(function () { a.remove(); URL.revokeObjectURL(url); }, 1500);
+    }
+
+    function exportExcel() {
+        var btn = $('quoteExcelBtn');
+        var chk = $('quoteExcelWithImg');
+        var withImages = chk ? chk.checked : true;
+        if (!document.querySelector('#quoteTableContainer table')) { alert('Không tìm thấy bảng dữ liệu báo giá.'); return; }
+        var oldTxt = btn ? btn.textContent : '';
+        if (btn) { btn.disabled = true; btn.textContent = 'Đang xuất...'; }
+
+        buildWorkbook({
+            withImages: withImages,
+            onProgress: function (i, n) { if (btn) btn.textContent = 'Đang xử lý ảnh ' + i + '/' + n + '...'; }
+        }).then(function (res) {
+            if (btn) btn.textContent = 'Đang tạo file...';
+            return res.wb.xlsx.writeBuffer().then(function (buf) {
+                var blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                saveBlob(blob, res.fileName);
+                var mb = (blob.size / 1048576);
+                var msg = '📗 Đã xuất <b>' + res.fileName + '</b> (' + (mb < 1 ? (blob.size / 1024).toFixed(0) + ' KB' : mb.toFixed(2) + ' MB') + ')';
+                if (res.stats.withImages) {
+                    msg += '<br>🖼 Nhúng <b>' + res.stats.ok + '/' + res.stats.total + '</b> hình sản phẩm vào file.';
+                    if (res.stats.fail) msg += ' ⚠️ ' + res.stats.fail + ' hình không tải được (server chặn tải ảnh) — ô đó để trống.';
+                } else if (withImages) {
+                    msg += '<br>ℹ️ Báo giá này chưa có hình sản phẩm nên xuất bản không hình.';
+                }
+                toast(msg, 8000);
+            });
+        }).catch(function (err) {
+            console.error('Lỗi xuất Excel:', err);
+            alert('Xuất Excel thất bại: ' + (err && err.message || err));
+        }).then(function () {
+            if (btn) { btn.disabled = false; btn.textContent = oldTxt || 'Xuất Excel'; }
+        });
+    }
+
+    /* ---------- Gắn vào giao diện ---------- */
+    function start() {
+        var st = document.createElement('style');
+        st.textContent =
+            '.qx-imgopt{display:inline-flex;align-items:center;gap:6px;background:#e8f5e9;border:1px solid #a5d6a7;color:#1b5e20;' +
+            'padding:8px 12px;border-radius:5px;font-size:13px;font-weight:600;margin-right:10px;cursor:pointer;vertical-align:middle}' +
+            '.qx-imgopt input{width:16px;height:16px;cursor:pointer;margin:0}' +
+            '@media print{.qx-imgopt{display:none!important}}';
+        document.head.appendChild(st);
+
+        var old = $('quoteExcelBtn');
+        if (!old) return;
+        // Nhân bản nút để gỡ handler cũ (bản cũ bỏ cột hình), giữ nguyên giao diện
+        var nw = old.cloneNode(true);
+        old.parentNode.replaceChild(nw, old);
+        nw.addEventListener('click', exportExcel);
+        nw.title = 'Xuất file Excel chuẩn công ty — có thể kèm hình sản phẩm nhúng sẵn trong file';
+
+        var lb = document.createElement('label');
+        lb.className = 'qx-imgopt';
+        lb.title = 'Nhúng hình sản phẩm thật vào file Excel (khách mở không cần mạng). Bỏ tick nếu muốn file nhẹ.';
+        lb.innerHTML = '<input type="checkbox" id="quoteExcelWithImg" checked /> 🖼 Kèm hình SP';
+        nw.parentNode.insertBefore(lb, nw);
+
+        window.IDECO_ExcelExport = { run: exportExcel, build: buildWorkbook, prepareImage: prepareImage, readTable: readQuoteTable };
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+    else start();
+})();
+
+</script>
 </body>
 </html>
