@@ -3610,12 +3610,34 @@
         });
     }
 
+    // [VÁ v2] Firebase RTDB trả về OBJECT thay vì mảng khi dữ liệu bị khuyết (ô rỗng bị lược bỏ).
+    // Nếu không chuẩn hóa, chỉ số dòng/cột sẽ lệch → sửa/xóa sai dòng.
+    function fbToArray(v){
+        if(Array.isArray(v)) return v;
+        if(v && typeof v === 'object'){
+            const keys = Object.keys(v).filter(k => /^\d+$/.test(k)).map(Number).sort((a,b) => a - b);
+            if(keys.length){
+                const max = keys[keys.length - 1], out = new Array(max + 1);
+                for(let i = 0; i <= max; i++) out[i] = v[i];
+                return out;
+            }
+            return Object.values(v);
+        }
+        return [];
+    }
+    function normalizeFilesFromFirebase(files){
+        return fbToArray(files).filter(Boolean).map(f => ({
+            name: (f && f.name) || 'Dữ liệu',
+            data: Array.from(fbToArray(f && f.data), r => Array.from(fbToArray(r), c => (c == null ? '' : c)))
+        }));
+    }
+
     function loadDataFromFirebase(){
         loadingIndicator.style.display = 'block'; tableContainer.innerHTML = ''; filesList.innerHTML = '';
         return database.ref('priceData').once('value').then(snapshot=>{
             const data = snapshot.val();
             if(data && data.files){ 
-                uploadedFiles = data.files;
+                uploadedFiles = normalizeFilesFromFirebase(data.files);   // [VÁ v2] object → mảng, tránh lệch chỉ số dòng
                 // Tự động thêm cột Mã sp nếu data cũ chưa có
                 injectMaSpIfMissing(uploadedFiles);
                 filesList.innerHTML = '';
@@ -3973,9 +3995,16 @@
             const fullRow = [...currentData[idx]];
             const visibleIdx = visibleColumnIndexes();
             visibleIdx.forEach((origIdx, i) => fullRow[origIdx] = newRow[i]||'');
-            const map = rowIndexMap[idx];
-            if(map) uploadedFiles[map.fileIndex].data[map.rowIndexInFile] = fullRow;
-            saveDataToFirebase();
+            // [VÁ v2] Định vị theo tham chiếu dòng (rowIndexMap bị xóa trắng khi trộn nhóm nhiều file)
+            const loc = locateRowInFiles(currentData[idx]) || rowIndexMap[idx] || null;
+            if(loc && uploadedFiles[loc.fileIndex] && Array.isArray(uploadedFiles[loc.fileIndex].data)){
+                const target = uploadedFiles[loc.fileIndex].data[loc.rowIndexInFile];
+                if(Array.isArray(target)){ target.length = 0; fullRow.forEach(v => target.push(v)); } // ghi đè tại chỗ → currentData đồng bộ theo
+                else uploadedFiles[loc.fileIndex].data[loc.rowIndexInFile] = fullRow;
+                saveDataToFirebase();
+            } else {
+                alert('❌ Không định vị được hàng trong dữ liệu gốc nên chưa lưu được.\nVui lòng tải lại trang (F5) rồi sửa lại.');
+            }
             cells.forEach(td=>{ td.contentEditable='false'; td.classList.remove('editing-cell'); });
             editingRowState = {index:null, originalData:[]};
             btn.textContent = 'Sửa hàng đã chọn'; btn.style.background='#ffc107';
@@ -4002,19 +4031,101 @@
         }
         updateActionButtonsState();
     }
+    // ================= [VÁ v2] Định vị DÒNG THẬT trong uploadedFiles =================
+    // Nguyên nhân lỗi cũ: mergeByGroupAndRenumber() trộn lại currentData và đặt rowIndexMap = []
+    // khi có từ 2 file dữ liệu trở lên (ví dụ: file Bảng giá + "User Added Data").
+    // Khi đó hàm Xóa hàng không tìm được vị trí dòng → không xóa gì trong uploadedFiles
+    // → vẫn gọi saveDataToFirebase() nên server giữ nguyên dữ liệu cũ → mở lại app sản phẩm vẫn còn.
+    // Cách vá: định vị theo THAM CHIẾU dòng (và dự phòng theo nội dung), không dùng rowIndexMap nữa.
+    function rowSignature(row){
+        if(!row) return '';
+        return Array.from(row, c => String(c == null ? '' : c).normalize('NFC').replace(/\s+/g,' ').trim().toLowerCase()).join('\u0001');
+    }
+    function locateRowInFiles(rowRef){
+        if(!rowRef) return null;
+        // (1) So khớp theo tham chiếu — chính xác tuyệt đối, kể cả khi trùng tên sản phẩm
+        for(let fi = 0; fi < uploadedFiles.length; fi++){
+            const d = uploadedFiles[fi] && uploadedFiles[fi].data;
+            if(!Array.isArray(d)) continue;
+            const ri = d.indexOf(rowRef);
+            if(ri > 0) return { fileIndex: fi, rowIndexInFile: ri };   // > 0 → không bao giờ đụng dòng tiêu đề
+        }
+        // (2) Dự phòng: so khớp theo nội dung (khi dòng đã bị sao chép ở đâu đó)
+        const sig = rowSignature(rowRef);
+        if(!sig) return null;
+        for(let fi = 0; fi < uploadedFiles.length; fi++){
+            const d = uploadedFiles[fi] && uploadedFiles[fi].data;
+            if(!Array.isArray(d)) continue;
+            for(let ri = 1; ri < d.length; ri++) if(rowSignature(d[ri]) === sig) return { fileIndex: fi, rowIndexInFile: ri };
+        }
+        return null;
+    }
+
     async function handleDeleteRows() {
         if(!selectedRowIdx.size) return;
-        if(!confirm("Chắc chắn xóa?")) return;
-        const toDel = {};
+        // Lấy dòng thật từ currentData (bỏ qua dòng tiêu đề nhóm nếu lỡ được tick)
+        const picked = [];
         selectedRowIdx.forEach(idx => {
-            const m = rowIndexMap[idx];
-            if(m) { if(!toDel[m.fileIndex]) toDel[m.fileIndex]=[]; toDel[m.fileIndex].push(m.rowIndexInFile); }
+            const row = currentData[idx];
+            if(row && !isGroupHeaderRow(row)) picked.push(row);
         });
-        for(let fIdx in toDel){
-            toDel[fIdx].sort((a,b)=>b-a);
-            toDel[fIdx].forEach(rIdx => uploadedFiles[fIdx].data.splice(rIdx,1));
+        if(!picked.length){ alert('Không xác định được hàng cần xóa. Vui lòng chọn lại.'); return; }
+
+        const nameIdx = findProductNameColumnIndex();
+        const names = picked.map(r => (nameIdx !== -1 ? String(r[nameIdx] || '') : '')).filter(Boolean);
+        const preview = names.slice(0, 8).join('\n• ');
+        if(!confirm('Xóa vĩnh viễn ' + picked.length + ' sản phẩm khỏi dữ liệu công ty (đồng bộ mọi máy)?\n\n• '
+            + preview + (names.length > 8 ? '\n… và ' + (names.length - 8) + ' sản phẩm khác' : ''))) return;
+
+        const toDel = {}; const notFound = [];
+        picked.forEach(row => {
+            const loc = locateRowInFiles(row);
+            if(!loc){ notFound.push(row); return; }
+            if(!toDel[loc.fileIndex]) toDel[loc.fileIndex] = [];
+            toDel[loc.fileIndex].push(loc.rowIndexInFile);
+        });
+        let deleted = 0;
+        Object.keys(toDel).forEach(fIdx => {
+            const list = Array.from(new Set(toDel[fIdx])).sort((a,b) => b - a);   // xóa từ dưới lên, không trùng
+            list.forEach(rIdx => { uploadedFiles[fIdx].data.splice(rIdx, 1); deleted++; });
+        });
+        if(!deleted){
+            alert('❌ Không tìm thấy các dòng này trong dữ liệu gốc nên chưa xóa được.\nVui lòng tải lại trang (F5) rồi thử lại.');
+            return;
         }
-        selectedRowIdx.clear(); await saveDataToFirebase(); displayAllData();
+
+        // Giữ nguyên từ khóa tìm kiếm / nhóm đang lọc để thấy ngay kết quả
+        const keepTerm  = searchInput ? searchInput.value : '';
+        const keepGroup = groupFilter ? groupFilter.value : '';
+        selectedRowIdx.clear();
+        await saveDataToFirebase();
+        displayAllData();
+        if(searchInput) searchInput.value = keepTerm;
+        if(groupFilter) groupFilter.value = keepGroup;
+        if(keepTerm || keepGroup) applyFilters();
+
+        // Kiểm chứng lại trên Firebase — đảm bảo server đã xóa thật sự
+        let verified = '';
+        try {
+            const snap = await database.ref('priceData/files').once('value');
+            const raw = snap.val() || [];
+            const files = Array.isArray(raw) ? raw : Object.values(raw);
+            let total = 0, stillThere = 0;
+            const delSigs = new Set(picked.map(rowSignature));
+            files.forEach(f => {
+                const d = f && f.data ? (Array.isArray(f.data) ? f.data : Object.values(f.data)) : [];
+                for(let i = 1; i < d.length; i++){
+                    total++;
+                    if(delSigs.has(rowSignature(d[i]))) stillThere++;
+                }
+            });
+            verified = ' — server còn ' + total + ' dòng'
+                     + (stillThere ? ', ⚠ vẫn còn ' + stillThere + ' dòng trùng nội dung (SP bị lặp ở file khác)' : ', đã xác nhận xóa sạch') + '.';
+        } catch(e){}
+
+        const msg = '🗑 Đã xóa ' + deleted + ' sản phẩm và lưu lên server' + verified
+                  + (notFound.length ? ' (⚠ ' + notFound.length + ' dòng không định vị được trong file gốc)' : '');
+        if (typeof zaloToast === 'function') zaloToast(msg, 7000); else alert(msg);
     }
     
     // Image Manager
