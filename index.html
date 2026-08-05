@@ -3139,6 +3139,13 @@
         if (saveBtn) saveBtn.disabled = !ckDirty;
         if (resetBtn) resetBtn.disabled = !ckDirty;
     }
+    // ===== HIỂN THỊ CHIẾT KHẤU KÈM DẤU % NGAY TRÊN BẢNG (15 → 15%) =====
+    // Giá trị LƯU TRỮ/TÍNH TOÁN vẫn là số trần (15) — chỉ phần nhìn thấy mới có dấu %.
+    function ckStripPct(v){ return String(v == null ? '' : v).replace(/%/g,'').trim(); }
+    function ckWithPct(v){
+        const t = ckStripPct(v);
+        return (t === '' || isNaN(parseFloat(t.replace(',','.')))) ? t : t + '%';
+    }
     // Lưu toàn bộ chiết khấu hiện trên bảng vào Firebase (theo Mã sp) → mọi máy thấy
     async function saveCkDiscounts(){
         const table = document.querySelector('.price-table');
@@ -3362,6 +3369,7 @@
                             if (!isNaN(cv) && cv > capNow){ inp.value = capNow; if(!ckDiscount[rowIdx]) ckDiscount[rowIdx]={}; ckDiscount[rowIdx][mark]=String(capNow); }
                         }
                     }
+                    inp.value = ckWithPct(inp.value);   // hiển thị "15%" thay vì "15"
                     // Tooltip hiển thị trần cho phép
                     const applyCapUI = () => {
                         const cap = ckCapFor(rowIdx, mark);
@@ -3377,7 +3385,7 @@
                         if (cap === null) return;
                         let v = parseFloat(String(inp.value).replace(',','.'));
                         if (!isNaN(v) && v > cap) {
-                            inp.value = cap;
+                            inp.value = (document.activeElement === inp) ? String(cap) : ckWithPct(cap);
                             if (!silent) zaloFlashCap(inp, cap);
                         }
                     };
@@ -3389,7 +3397,8 @@
                         applyCapUI();
                         recomputeGiaMuaForRow(tr, rowData, rowIdx, gmIdxs);
                     });
-                    inp.addEventListener('blur', ()=>{ clampToCap(true); applyCapUI(); });
+                    inp.addEventListener('focus', ()=>{ inp.value = ckStripPct(inp.value); });   // gõ số thuần
+                    inp.addEventListener('blur', ()=>{ clampToCap(true); inp.value = ckWithPct(inp.value); applyCapUI(); });
                     // Không cho click ô nhập lan sang chọn hàng
                     inp.addEventListener('click', e=> e.stopPropagation());
                     inp.dataset.ckmark = mark;
@@ -3406,9 +3415,13 @@
                     return;
                 }
 
-                td.textContent = (typeof cell === 'string' && cell.includes('%')) ? cell : (cell || '');
-                // Gán class căn chỉnh theo kiểu cột
                 const kind = colKind[colIdx];
+                if (kind === 'pct'){
+                    td.textContent = ckWithPct(cell);     // cột % chỉ đọc: 15 → 15%
+                } else {
+                    td.textContent = (typeof cell === 'string' && cell.includes('%')) ? cell : (cell || '');
+                }
+                // Gán class căn chỉnh theo kiểu cột
                 if(kind === 'price' && String(cell).trim()!=='') td.className += ' cell-price';
                 else if(kind === 'pct' && String(cell).trim()!=='') td.className += ' cell-pct';
                 else if(kind === 'num') td.className += ' cell-num';
@@ -3649,19 +3662,143 @@
             loadingIndicator.style.display = 'none';
         }).catch(error=>{ console.error('Lỗi khi tải dữ liệu:', error); loadingIndicator.style.display = 'none'; tableContainer.innerHTML = '<p>Lỗi khi tải dữ liệu từ server. Vui lòng thử lại sau.</p>'; });
     }
-    // ========== XUẤT EXCEL VIEW ==========
+    // ========== XUẤT EXCEL VIEW (v2 — GIỮ ĐỦ CỘT CHIẾT KHẤU) ==========
+    // LỖI CŨ: ô chiết khấu được render bằng <input class="ck-input"> nên td.textContent = ''
+    //         → file Excel xuất ra bị TRỐNG TRẮNG cột chiết khấu.
+    // CÁCH SỬA: đọc đúng .value của mọi input/select/textarea trong ô, xuất y hệt những gì đang thấy trên bảng.
+    function xlReadCellText(td){
+        if (!td) return '';
+        const ctrl = td.querySelector('input, select, textarea');
+        if (ctrl){
+            if (ctrl.type === 'checkbox' || ctrl.type === 'radio') return '';   // cột "Chọn" — không xuất
+            let v = String(ctrl.value == null ? '' : ctrl.value).replace(/\u00A0/g,' ').trim();
+            if (v !== '' && ctrl.classList.contains('ck-input')) v = v.replace(/%/g,'').trim() + '%';
+            return v;
+        }
+        return String(td.textContent == null ? '' : td.textContent).replace(/\u00A0/g,' ').trim();
+    }
+    // Phân loại kiểu dữ liệu cột theo tên tiêu đề → ghi ĐÚNG KIỂU SỐ vào Excel (tính toán được, không phải chữ)
+    function xlColKind(h){
+        const s = String(h||'').normalize('NFC').toLowerCase().trim();
+        if (s.includes('chiết khấu') || /\bck\b/.test(s) || s.startsWith('ck') || s.includes('%')) return 'pct';
+        if (s.includes('đơn giá') || s.includes('giá mua') || s.includes('giá bán') || s.includes('giá vốn') || s.includes('thành tiền')) return 'price';
+        if (s === 'stt' || s.replace(/\s+/g,'') === 'sốthứtự') return 'num';
+        return 'text';
+    }
+    function xlToNumber(v, kind){
+        let s = String(v == null ? '' : v).replace(/[^\d.,\-]/g,'').trim();
+        if (!s) return NaN;
+        if (kind === 'pct'){                                   // "15" / "12,5" / "12.5%" → 15 / 12.5
+            s = s.replace(/\.(?=\d{3}\b)/g,'').replace(',', '.');
+            const n = parseFloat(s); return isNaN(n) ? NaN : n;
+        }
+        const n = parseFloat(s.replace(/[.,]/g,''));           // tiền VNĐ: "1.200.000" → 1200000
+        return isNaN(n) ? NaN : n;
+    }
+    // Dựng 1 sheet chuẩn: đúng kiểu số, có định dạng, độ rộng cột, auto filter
+    function xlBuildSheet(aoa){
+        const ws = XLSX.utils.aoa_to_sheet(aoa);
+        const head = aoa[0] || [];
+        const kinds = head.map(xlColKind);
+        const range = XLSX.utils.decode_range(ws['!ref']);
+        for (let c = range.s.c; c <= range.e.c; c++){
+            const kind = kinds[c] || 'text';
+            if (kind === 'text') continue;
+            for (let r = 1; r <= range.e.r; r++){
+                const cell = ws[XLSX.utils.encode_cell({r:r, c:c})];
+                if (!cell || cell.v === '' || cell.v == null) continue;
+                const n = xlToNumber(cell.v, kind);
+                if (isNaN(n)) continue;                        // ô ghi chữ ("Liên hệ"…) thì giữ nguyên chữ
+                cell.t = 'n';
+                if (kind === 'pct'){
+                    // Ghi PHẦN TRĂM THẬT của Excel: giá trị 0.15 + định dạng % → hiển thị "15%"
+                    // Dùng mã định dạng CÓ SẴN (0% / 0.00%) để mọi phần mềm (Excel, WPS, Google Sheet…) đều hiện đúng.
+                    cell.v = n / 100;
+                    cell.z = (Math.abs(n * 100 - Math.round(n * 100)) < 1e-9 && Math.abs(n - Math.round(n)) < 1e-9) ? '0%' : '0.00%';
+                } else {
+                    cell.v = n;
+                    cell.z = (kind === 'price') ? '#,##0' : '0';
+                }
+                delete cell.w;
+            }
+        }
+        ws['!cols'] = head.map((h, c) => {
+            let w = String(h == null ? '' : h).length;
+            for (let r = 1; r < aoa.length; r++){
+                const v = aoa[r] && aoa[r][c];
+                if (v != null) w = Math.max(w, String(v).length);
+            }
+            return { wch: Math.min(Math.max(w + 2, 8), 45) };
+        });
+        if (aoa.length > 1){
+            ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s:{r:0,c:0}, e:{r:0, c: Math.max(0, head.length - 1)} }) };
+        }
+        return ws;
+    }
     function exportCurrentViewToExcel(){
-        const table = document.querySelector('.price-table'); if(!table){ alert('Không có dữ liệu để xuất.'); return; }
-        const aoa = [];
-        const headerCells = table.querySelectorAll('thead tr th');
-        const headerRow = Array.from(headerCells).map(th => th.textContent.trim()).slice(0,-1);
-        aoa.push(headerRow);
-        const bodyRows = table.querySelectorAll('tbody tr');
-        bodyRows.forEach(tr => { const row = Array.from(tr.querySelectorAll('td')).map(td => td.textContent.replace(/\u00A0/g,' ').trim()).slice(0,-1); aoa.push(row); });
-        const ws = XLSX.utils.aoa_to_sheet(aoa); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'BangGia');
+        const table = document.querySelector('.price-table');
+        if(!table){ alert('Không có dữ liệu để xuất.'); return; }
+
+        // 1) Tiêu đề: lấy đúng các cột đang hiển thị, chỉ bỏ cột "Chọn" (checkbox)
+        const ths = Array.from(table.querySelectorAll('thead tr th'));
+        if (!ths.length){ alert('Không có dữ liệu để xuất.'); return; }
+        let keep = ths.map((th, i) => i);
+        const chooseIdx = ths.findIndex(th => String(th.textContent||'').trim().toLowerCase() === 'chọn');
+        if (chooseIdx !== -1) keep = keep.filter(i => i !== chooseIdx); else keep = keep.slice(0, -1);
+        const headerRow = keep.map(i => String(ths[i].textContent||'').replace(/\s*✓\s*$/,'').trim());
+
+        // 2) Dữ liệu: đọc value của ô CK thay vì textContent
+        const aoa = [headerRow];
+        let ckCount = 0;
+        table.querySelectorAll('tbody tr').forEach(tr => {
+            const tds = Array.from(tr.children).filter(el => el.tagName === 'TD');
+            if (!tds.length) return;
+            if (tr.classList.contains('group-row') || (tds.length === 1 && tds[0].colSpan > 1)){
+                const row = new Array(headerRow.length).fill('');
+                row[0] = xlReadCellText(tds[0]);               // hàng tiêu đề nhóm
+                aoa.push(row); return;
+            }
+            const row = keep.map(i => {
+                const td = tds[i];
+                const val = xlReadCellText(td);
+                if (td && td.querySelector('input.ck-input') && val !== '') ckCount++;
+                return val;
+            });
+            aoa.push(row);
+        });
+        if (aoa.length <= 1){ alert('Không có dòng dữ liệu để xuất.'); return; }
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, xlBuildSheet(aoa), 'BangGia');
+
+        // 3) Nếu đang ẨN cột → xuất thêm sheet TOÀN BỘ dữ liệu (kèm chiết khấu đang áp dụng) để đối chiếu
+        try{
+            if (typeof hiddenColumns !== 'undefined' && hiddenColumns.size > 0 &&
+                typeof currentData !== 'undefined' && Array.isArray(currentData) && currentData.length > 1){
+                const ckPairs = [[getCkColIdx(6), 6], [getCkColIdx(12), 12]];
+                const full = currentData.map((r, i) => {
+                    const row = Array.from(r || [], c => (c == null ? '' : c));
+                    if (i > 0){
+                        ckPairs.forEach(pair => {
+                            const ci = pair[0], mark = pair[1];
+                            if (ci === -1) return;
+                            const v = (ckDiscount[i] && ckDiscount[i][mark] !== undefined) ? ckDiscount[i][mark] : '';
+                            if (String(v).trim() !== '') row[ci] = String(v).replace(/%/g,'').trim() + '%';
+                        });
+                    }
+                    return row;
+                });
+                XLSX.utils.book_append_sheet(wb, xlBuildSheet(full), 'ToanBo_KemCotAn');
+            }
+        }catch(e){ console.warn('Không tạo được sheet toàn bộ:', e); }
+
         const now = new Date(); const pad = (n)=> String(n).padStart(2,'0');
         const fileName = `BangGia_HienThi_${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}.xlsx`;
         XLSX.writeFile(wb, fileName);
+        if (typeof zaloToast === 'function'){
+            zaloToast('📊 Đã xuất <b>' + (aoa.length - 1) + '</b> dòng · <b>' + headerRow.length + '</b> cột' +
+                      (ckCount ? ' · kèm <b>' + ckCount + '</b> ô chiết khấu' : ' · <b>không thấy ô chiết khấu nào</b>'), 4500);
+        }
     }
     // ========== TẠO BÁO GIÁ ==========
     function clearQuoteForm() {
