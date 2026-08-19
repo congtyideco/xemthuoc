@@ -2772,19 +2772,258 @@
     }
 
     // ========== XỬ LÝ FILE & DỮ LIỆU ==========
+    // ===== VÁ AN TOÀN IMPORT EXCEL 2026-08 =====
+    // Mục tiêu: Excel vừa upload là NGUỒN SỰ THẬT cho các Mã SP có trong file.
+    // Không để: (1) dòng cũ trùng mã, (2) CK tạm theo rowIdx, (3) CK Firebase cũ ghi đè lên Excel mới.
+    function importHeaderText(v){ return String(v == null ? '' : v).normalize('NFC').toLowerCase().trim(); }
+    function importMaSpColIdx(header){
+        return (header || []).findIndex(h => {
+            const s = importHeaderText(h).replace(/\s+/g,'');
+            return s === 'mãsp' || s === 'masp' || s === 'mãsảnphẩm' || s === 'masanpham' || s === 'sku' || s === 'code';
+        });
+    }
+    function importCkColIdx(header, mark){
+        const tags = mark === 6 ? ['6 hộp','6hộp'] : ['12 hộp','12hộp'];
+        const other = mark === 6 ? ['12 hộp','12hộp'] : ['6 hộp','6hộp'];
+        return (header || []).findIndex(h => {
+            const s = importHeaderText(h);
+            const isCk = s.includes('chiết khấu') || /\bck\b/.test(s) || s.startsWith('ck');
+            return isCk && tags.some(t => s.includes(t)) && !other.some(t => s.includes(t));
+        });
+    }
+    function importParsePct(v){
+        if (v === null || v === undefined || String(v).trim() === '') return null;
+        const n = parseFloat(String(v).replace(/%/g,'').replace(',','.').trim());
+        return isNaN(n) ? null : n;
+    }
+    // Chuẩn hóa cột CK từ giá trị số thật của Excel + number format.
+    // Ví dụ ô Excel lưu 0.20 với format 0% -> đưa vào app thành "20%".
+    function normalizeExcelDiscountColumns(worksheet, formattedData){
+        if (!formattedData || !formattedData.length) return formattedData;
+        const rawData = XLSX.utils.sheet_to_json(worksheet, { header:1, defval:"", raw:true });
+        const header = formattedData[0] || [];
+        [6,12].forEach(mark => {
+            const c = importCkColIdx(header, mark);
+            if (c === -1) return;
+            for(let r=1; r<formattedData.length; r++){
+                const raw = rawData[r] ? rawData[r][c] : '';
+                const shown = formattedData[r] ? formattedData[r][c] : '';
+                if (typeof raw === 'number' && isFinite(raw)){
+                    const addr = XLSX.utils.encode_cell({r:r, c:c});
+                    const fmt = String((worksheet[addr] && worksheet[addr].z) || '');
+                    let pct = /%/.test(fmt) ? raw * 100 : raw;
+                    if (Math.abs(pct - Math.round(pct)) < 1e-10) pct = Math.round(pct);
+                    formattedData[r][c] = String(pct) + '%';
+                } else if (String(shown).includes('%')){
+                    const p = importParsePct(shown);
+                    if (p !== null) formattedData[r][c] = String(p) + '%';
+                }
+            }
+        });
+        return formattedData;
+    }
+    function collectImportInfo(batch){
+        const codeToRaw = new Map();
+        const expected = new Map(); // canonical code -> {rawMa, 6, 12}
+        const duplicateCodes = new Set();
+        batch.forEach(item => {
+            const d = item.data || [], header = d[0] || [];
+            const maIdx = importMaSpColIdx(header);
+            const c6 = importCkColIdx(header, 6), c12 = importCkColIdx(header, 12);
+            if ((c6 !== -1 || c12 !== -1) && maIdx === -1){
+                throw new Error('File "' + item.name + '" có cột chiết khấu nhưng không có cột Mã sp. Đã chặn import để tránh ghép nhầm dữ liệu.');
+            }
+            for(let r=1; r<d.length; r++){
+                const row = d[r] || [];
+                const rawMa = maIdx === -1 ? '' : String(row[maIdx] == null ? '' : row[maIdx]).trim();
+                if (!rawMa) continue;
+                const key = ckMaKey(rawMa);
+                if (!key) continue;
+                if (codeToRaw.has(key)) duplicateCodes.add(rawMa);
+                else codeToRaw.set(key, rawMa);
+                const rec = { rawMa: rawMa };
+                if (c6 !== -1) rec[6] = importParsePct(row[c6]);
+                if (c12 !== -1) rec[12] = importParsePct(row[c12]);
+                expected.set(key, rec);
+            }
+        });
+        if (duplicateCodes.size){
+            throw new Error('Phát hiện Mã sp trùng ngay trong các file đang upload: ' + Array.from(duplicateCodes).slice(0,12).join(', ') + '. Đã chặn import để không tạo dữ liệu mơ hồ.');
+        }
+        return { expected, rawCodes: Array.from(codeToRaw.values()), codeKeys: new Set(codeToRaw.keys()) };
+    }
+    function dropExistingRowsByImportedCodes(codeKeys, incomingNames){
+        // File trùng tên = thay phiên bản cũ bằng file mới.
+        uploadedFiles = uploadedFiles.filter(f => !incomingNames.has(String(f && f.name || '')));
+        uploadedFiles.forEach(f => {
+            const d = f && f.data;
+            if (!Array.isArray(d) || d.length < 2) return;
+            const maIdx = importMaSpColIdx(d[0] || []);
+            if (maIdx === -1) return;
+            f.data = d.filter((row, idx) => {
+                if (idx === 0) return true;
+                const rawMa = String((row || [])[maIdx] == null ? '' : (row || [])[maIdx]).trim();
+                return !rawMa || !codeKeys.has(ckMaKey(rawMa));
+            });
+        });
+    }
+    function resetCkRuntimeForDataChange(){
+        ckDiscount = {};
+        ckBase = {};
+        ckDirty = false;
+        if (typeof updateCkSaveBar === 'function') updateCkSaveBar();
+    }
+    function purgeLocalSavedCk(rawCodes){
+        rawCodes.forEach(rawMa => {
+            const k1 = ckMaKey(rawMa), k2 = ckMaKeyLegacy(rawMa);
+            if (k1) delete ckSaved[k1];
+            if (k2) delete ckSaved[k2];
+        });
+    }
+    async function purgeRemoteSavedCkVerified(rawCodes){
+        const updates = {};
+        rawCodes.forEach(rawMa => {
+            const k1 = ckMaKey(rawMa), k2 = ckMaKeyLegacy(rawMa);
+            if (k1 && ckKeyIsValid(k1)) updates['ckSavedDiscounts/' + k1] = null;
+            if (k2 && k2 !== k1 && ckKeyIsValid(k2)) updates['ckSavedDiscounts/' + k2] = null;
+        });
+        if (Object.keys(updates).length) await database.ref().update(updates);
+        const snap = await database.ref('ckSavedDiscounts').once('value');
+        const latest = snap.val() || {};
+        for (const rawMa of rawCodes){
+            const k1 = ckMaKey(rawMa), k2 = ckMaKeyLegacy(rawMa);
+            if ((k1 && latest[k1]) || (k2 && latest[k2])){
+                throw new Error('Không xóa được chiết khấu cũ đã lưu của Mã sp ' + rawMa);
+            }
+        }
+        ckSaved = latest;
+        return true;
+    }
+    function verifyImportedDiscountsInCurrentData(expected){
+        if (!expected || !expected.size) return {ok:true, errors:[]};
+        const maIdx = getMaSpColIdx();
+        const c6 = getCkColIdx(6), c12 = getCkColIdx(12);
+        const found = new Map();
+        const errors = [];
+        if (maIdx === -1) return {ok:false, errors:['Bảng sau import không nhận diện được cột Mã sp.']};
+        for(let i=1;i<currentData.length;i++){
+            const row = currentData[i] || [];
+            const rawMa = String(row[maIdx] == null ? '' : row[maIdx]).trim();
+            if (!rawMa) continue;
+            const key = ckMaKey(rawMa);
+            if (!expected.has(key)) continue;
+            found.set(key, (found.get(key) || 0) + 1);
+            const exp = expected.get(key);
+            [[6,c6],[12,c12]].forEach(([mark,c]) => {
+                if (c === -1 || exp[mark] === undefined || exp[mark] === null) return;
+                const got = importParsePct(row[c]);
+                if (got === null || Math.abs(got - exp[mark]) > 1e-9){
+                    errors.push(rawMa + ' CK ' + mark + ' hộp: Excel=' + exp[mark] + '% nhưng dữ liệu sau import=' + got + '%');
+                }
+            });
+        }
+        expected.forEach((rec,key) => {
+            const n = found.get(key) || 0;
+            if (n === 0) errors.push(rec.rawMa + ': không tìm thấy sau import.');
+            if (n > 1) errors.push(rec.rawMa + ': còn ' + n + ' dòng trùng Mã sp sau import.');
+        });
+        return {ok: errors.length === 0, errors};
+    }
+
     async function handleFileSelect(event){
         const files = event.target.files; if(!files.length) return;
         loadingIndicator.style.display = "block"; tableContainer.innerHTML = "";
-        for(let i=0;i<files.length;i++){
-            const file = files[i];
-            try{
+        const backupFiles = JSON.parse(JSON.stringify(uploadedFiles || []));
+        const batch = [];
+        let remotePriceBackup = null;
+        let remoteCkRollback = null;
+        let remoteBackupReady = false;
+        let remoteTouched = false;
+        try{
+            // 1) Đọc + chuẩn hóa TOÀN BỘ file trước. Có lỗi ở 1 file thì không ghi nửa chừng.
+            for(let i=0;i<files.length;i++){
+                const file = files[i];
                 const data = await readExcelFile(file);
-                autoFillStt(data); // Tự động điền số thứ tự nối tiếp
-                uploadedFiles.push({ name: file.name, data });
-                addFileToList(file.name, uploadedFiles.length - 1);
-            }catch(error){ console.error("Lỗi khi đọc file:", file.name, error); alert(`Lỗi khi đọc file ${file.name}: ${error.message}`); }
+                autoFillStt(data);
+                batch.push({ name:file.name, data:data });
+            }
+
+            // 2) Mã SP là khóa duy nhất. Chặn mã trùng trong batch; file mới thắng dữ liệu cũ cùng mã.
+            const info = collectImportInfo(batch);
+
+            // Chụp trạng thái server TRƯỚC KHI đụng dữ liệu để có thể rollback nếu bước xác minh sau đó thất bại.
+            const [priceSnapBefore, ckSnapBefore] = await Promise.all([
+                database.ref('priceData').once('value'),
+                database.ref('ckSavedDiscounts').once('value')
+            ]);
+            remotePriceBackup = priceSnapBefore.val();
+            const ckBefore = ckSnapBefore.val() || {};
+            remoteCkRollback = {};
+            info.rawCodes.forEach(rawMa => {
+                const k1 = ckMaKey(rawMa), k2 = ckMaKeyLegacy(rawMa);
+                if (k1 && ckKeyIsValid(k1)) remoteCkRollback['ckSavedDiscounts/' + k1] = (ckBefore[k1] === undefined ? null : ckBefore[k1]);
+                if (k2 && k2 !== k1 && ckKeyIsValid(k2)) remoteCkRollback['ckSavedDiscounts/' + k2] = (ckBefore[k2] === undefined ? null : ckBefore[k2]);
+            });
+            remoteBackupReady = true;
+
+            dropExistingRowsByImportedCodes(info.codeKeys, new Set(batch.map(x=>x.name)));
+            batch.forEach(item => uploadedFiles.push(item));
+
+            // 3) Xóa mọi cache CK theo số dòng + xóa override Firebase CŨ của đúng các mã vừa upload.
+            //    Nhờ vậy Excel mới không bao giờ bị 22% cũ đè lên 20% mới.
+            resetCkRuntimeForDataChange();
+            purgeLocalSavedCk(info.rawCodes);
+
+            filesList.innerHTML = "";
+            uploadedFiles.forEach((f,i)=>addFileToList(f.name,i));
+            updateFileNameDisplay();
+            displayAllData();
+
+            // 4) Kiểm tra nội bộ trước khi ghi server: đúng CK và KHÔNG còn trùng Mã SP.
+            const check = verifyImportedDiscountsInCurrentData(info.expected);
+            if (!check.ok) throw new Error('KIỂM TRA IMPORT THẤT BẠI:\n- ' + check.errors.join('\n- '));
+
+            // 5) Ghi Firebase rồi ĐỌC NGƯỢC xác minh priceData.
+            remoteTouched = true;
+            const savedOk = await saveDataToFirebase(true);
+            if (!savedOk) throw new Error('Không xác minh được dữ liệu priceData sau khi lưu.');
+
+            // 6) Xóa CK override cũ trên Firebase và đọc ngược xác minh đã sạch.
+            await purgeRemoteSavedCkVerified(info.rawCodes);
+            resetCkRuntimeForDataChange();
+            displayAllData();
+
+            const check2 = verifyImportedDiscountsInCurrentData(info.expected);
+            if (!check2.ok) throw new Error('KIỂM TRA SAU ĐỒNG BỘ THẤT BẠI:\n- ' + check2.errors.join('\n- '));
+
+            if (typeof zaloToast === 'function') zaloToast('✅ Upload đã kiểm tra 2 lớp: dữ liệu Excel khớp, không còn CK cũ ghi đè.', 5500);
+        }catch(error){
+            console.error('IMPORT SAFETY:', error);
+
+            // Nếu server đã bị chạm tới mà bước xác minh sau đó thất bại -> phục hồi server về trạng thái trước upload.
+            if (remoteTouched && remoteBackupReady){
+                try{
+                    await database.ref('priceData').set(remotePriceBackup === undefined ? null : remotePriceBackup);
+                    if (remoteCkRollback && Object.keys(remoteCkRollback).length) await database.ref().update(remoteCkRollback);
+                    console.warn('IMPORT SAFETY: đã rollback Firebase về trạng thái trước upload.');
+                }catch(rollbackErr){
+                    console.error('IMPORT SAFETY ROLLBACK FAILED:', rollbackErr);
+                    alert('⚠️ LỖI NGHIÊM TRỌNG: Upload thất bại và rollback server cũng thất bại. Vui lòng KHÔNG tiếp tục báo giá trước khi kiểm tra dữ liệu.');
+                }
+            }
+
+            uploadedFiles = backupFiles;
+            resetCkRuntimeForDataChange();
+            filesList.innerHTML = "";
+            uploadedFiles.forEach((f,i)=>addFileToList(f.name,i));
+            updateFileNameDisplay();
+            if (uploadedFiles.length) displayAllData();
+            else tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị. Import đã được hoàn tác vì không vượt qua kiểm tra an toàn.</p>';
+            alert('⛔ ĐÃ CHẶN / HOÀN TÁC UPLOAD ĐỂ BẢO VỆ DỮ LIỆU.\n\n' + (error && error.message ? error.message : error));
+        }finally{
+            loadingIndicator.style.display = "none";
+            try{ event.target.value = ''; }catch(e){}
         }
-        updateFileNameDisplay(); displayAllData(); saveDataToFirebase(); loadingIndicator.style.display = "none";
     }
     function readExcelFile(file){
         return new Promise((resolve,reject)=>{
@@ -2796,6 +3035,7 @@
                     const firstSheetName = workbook.SheetNames[0];
                     const worksheet = workbook.Sheets[firstSheetName];
                     let jsonData = XLSX.utils.sheet_to_json(worksheet, { header:1, defval:"", raw:false });
+                    jsonData = normalizeExcelDiscountColumns(worksheet, jsonData);
                     jsonData = jsonData.filter(row => row.some(cell => String(cell).trim().length > 0));
                     if(jsonData.length>0){
                         const columnsToKeep = [];
@@ -2809,6 +3049,7 @@
                         }
                         jsonData = jsonData.map(row => row.filter((_,index)=> columnsToKeep.includes(index)));
                     }
+                    if (!jsonData.length) throw new Error('File Excel không có dữ liệu.');
                     resolve(jsonData);
                 }catch(error){ reject(error); }
             };
@@ -3584,7 +3825,13 @@
         applyFilters();
     }
     // ========== LƯU/TẢI FIREBASE ==========
-    async function saveDataToFirebase(){
+    function canonicalFilesForVerify(files){
+        return (files || []).filter(Boolean).map(f => ({
+            name: (f && f.name) || 'Dữ liệu',
+            data: Array.from((f && f.data) || [], r => Array.from(r || [], c => (c == null ? '' : c)))
+        }));
+    }
+    async function saveDataToFirebase(verifyAfterWrite){
         const userAddedFile = uploadedFiles.find(f => f.name === "User Added Data");
         if(userAddedFile){
             userAddedFile.data = userAddedFile.data.filter((row, index) => {
@@ -3595,10 +3842,22 @@
         const dataToSave = { files: uploadedFiles, lastUpdated: new Date().toISOString() };
         try {
             await database.ref("priceData").set(dataToSave);
-            console.log("Đã lưu Firebase");
+            if (verifyAfterWrite){
+                const snap = await database.ref("priceData").once('value');
+                const remote = snap.val();
+                if (!remote || !remote.files) throw new Error('Firebase không trả lại priceData vừa ghi.');
+                const localCanon = canonicalFilesForVerify(uploadedFiles);
+                const remoteCanon = canonicalFilesForVerify(normalizeFilesFromFirebase(remote.files));
+                if (JSON.stringify(localCanon) !== JSON.stringify(remoteCanon)){
+                    throw new Error('Dữ liệu đọc ngược từ Firebase KHÔNG khớp dữ liệu vừa upload.');
+                }
+            }
+            console.log("Đã lưu Firebase" + (verifyAfterWrite ? " và xác minh đọc ngược OK" : ""));
+            return true;
         } catch (err) {
-            console.error("Lỗi khi lưu dữ liệu:", err);
-            alert("Lỗi khi lưu dữ liệu lên server. Vui lòng kiểm tra kết nối mạng.");
+            console.error("Lỗi khi lưu/xác minh dữ liệu:", err);
+            alert("Lỗi khi lưu hoặc xác minh dữ liệu trên server. Hệ thống không coi lần upload này là thành công.");
+            return false;
         }
     }
     // ========== TỰ ĐỘNG THÊM CỘT MÃ SP NẾU THIẾU (tương thích ngược data cũ) ==========
