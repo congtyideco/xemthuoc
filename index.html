@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Xem Giá Thuốc — Hệ Thống Báo Giá Pro</title>
+    <title>Xem Giá Thuốc — Hệ Thống Báo Giá Pro · SP mới 7 ngày</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -1215,6 +1215,33 @@
 @media(max-width:760px){.ideco-img-smart-box{flex-direction:column;align-items:stretch}.ideco-img-smart-btn{width:100%}.ideco-mf-sub{display:none}.ideco-mf-badge{display:none}.ideco-mf-head{gap:6px;padding:7px}.ideco-mf-btn{padding:8px 9px;font-size:10.5px}}
 </style>
 
+
+<style id="ideco-product-change-7d-style">
+/* ===== IDECO: SẢN PHẨM MỚI / CẬP NHẬT TRONG 7 NGÀY ===== */
+#productChange7dBar{display:none;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 10px;padding:9px 12px;border:1px solid #cfe0ff;border-radius:10px;background:linear-gradient(90deg,#f7fbff,#f7fff9);box-shadow:0 4px 14px rgba(32,79,140,.06);font-size:12px;color:#334155}
+#productChange7dBar .pc7-title{font-weight:900;color:#12305f;margin-right:3px}
+#productChange7dBar .pc7-chip{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:5px 9px;font-weight:800;white-space:nowrap;border:1px solid transparent}
+#productChange7dBar .pc7-new{background:#e9fbef;color:#15733d;border-color:#b8e7c6}
+#productChange7dBar .pc7-wait{background:#fff5df;color:#9a5a00;border-color:#f3d38d}
+#productChange7dBar .pc7-upd{background:#fff0e8;color:#a84212;border-color:#f3c3a9}
+#productChange7dBar .pc7-btn{border:none;border-radius:8px;padding:6px 9px;cursor:pointer;font-size:11px;font-weight:800;background:#eef4ff;color:#2458a6;transition:.15s}
+#productChange7dBar .pc7-btn:hover{background:#dce9ff;transform:translateY(-1px)}
+#productChange7dBar .pc7-btn.primary{background:#0f9d58;color:white}
+#productChange7dBar .pc7-btn.primary:hover{background:#0b8248}
+#productChange7dBar .pc7-note{margin-left:auto;color:#7b8798;font-size:10.5px;white-space:nowrap}
+.price-table tr.pc7-row-new > td{background:#f0fff5 !important}
+.price-table tr.pc7-row-updated > td{background:#fff8f0 !important}
+.price-table tr.pc7-row-quoted > td{box-shadow:inset 3px 0 0 #38a169}
+.pc7-badge{display:inline-flex;align-items:center;margin-left:7px;padding:2px 6px;border-radius:999px;font-size:9.5px;font-weight:900;line-height:1.4;vertical-align:middle;white-space:nowrap}
+.pc7-badge.new{background:#dcfce7;color:#166534;border:1px solid #86efac}
+.pc7-badge.updated{background:#ffedd5;color:#9a3412;border:1px solid #fdba74}
+.pc7-badge.quoted{background:#e8eef8;color:#355477;border:1px solid #c6d4e8}
+#productChange7dToast{position:fixed;right:20px;top:20px;z-index:2147482500;width:min(430px,calc(100vw - 40px));display:none;background:#fff;border:1px solid #d8e2f0;border-left:5px solid #0f9d58;border-radius:12px;box-shadow:0 18px 45px rgba(15,35,70,.22);padding:14px 16px;color:#26364d;font:13px/1.55 "Segoe UI",Arial,sans-serif}
+#productChange7dToast strong{color:#12305f} #productChange7dToast .t-actions{margin-top:9px;display:flex;gap:7px;flex-wrap:wrap}
+#productChange7dToast button{border:0;border-radius:7px;padding:6px 9px;font-weight:800;font-size:11px;cursor:pointer;background:#eaf1ff;color:#2458a6}
+@media(max-width:800px){#productChange7dBar .pc7-note{width:100%;margin-left:0}.pc7-badge{display:inline-flex;margin:4px 0 0 4px}}
+</style>
+
 </head>
 <body>
     <!-- ============ CỔNG ĐĂNG NHẬP BẢO MẬT ============ -->
@@ -1364,6 +1391,7 @@
         </div>
     </div>
 </div>
+    <div id="productChange7dToast"></div>
     <div class="popup-overlay" id="popupOverlay">
         <div class="popup-content modern-layout">
             
@@ -1392,6 +1420,21 @@
                 </div>
             </div>
             
+
+            <!-- ===== SẢN PHẨM MỚI / CẬP NHẬT 7 NGÀY ===== -->
+            <div id="productChange7dBar" aria-live="polite">
+                <span class="pc7-title">📣 THAY ĐỔI 7 NGÀY</span>
+                <span class="pc7-chip pc7-new" id="pc7NewCount">🆕 Mới: 0</span>
+                <span class="pc7-chip pc7-wait" id="pc7UnquotedCount">⏳ Chưa báo giá: 0</span>
+                <span class="pc7-chip pc7-upd" id="pc7UpdatedCount">🔄 Cập nhật: 0</span>
+                <button class="pc7-btn" id="pc7ShowNewBtn" type="button">Xem SP mới</button>
+                <button class="pc7-btn" id="pc7ShowUnquotedBtn" type="button">Chưa báo giá</button>
+                <button class="pc7-btn" id="pc7ShowUpdatedBtn" type="button">Xem thay đổi</button>
+                <button class="pc7-btn" id="pc7ShowAllBtn" type="button">Tất cả</button>
+                <button class="pc7-btn primary" id="pc7SelectQuoteBtn" type="button">✓ Chọn SP chưa BG</button>
+                <span class="pc7-note">Tự hết nổi bật sau 7 ngày · lịch sử vẫn được giữ</span>
+            </div>
+
             <!-- MENU THẢ - CHỨA CÁC CÔNG CỤ -->
             <div class="pro-tools-menu" id="proToolsMenu">
                 <div class="pro-tools-inner">
@@ -2047,6 +2090,220 @@
     }
     let currentImageFile = null;   
     let originalImageFile = null;  
+
+
+    // ============================================================
+    // ===== THEO DÕI SẢN PHẨM MỚI / CẬP NHẬT TỪ EXCEL PHỤ — 7 NGÀY =====
+    // - Chỉ file được tải qua "Thêm file Excel phụ" mới tạo sự kiện.
+    // - SP mới: 🆕 MỚI. SP đã có nhưng dữ liệu thay đổi: 🔄 CẬP NHẬT.
+    // - Sau 7 ngày nhãn tự tắt, nhưng bản ghi lịch sử vẫn giữ trên Firebase.
+    // - Upload lại đúng SP không đổi: KHÔNG báo lại.
+    // - Nếu SP thay đổi lại: reset 7 ngày và trạng thái "chưa báo giá".
+    // ============================================================
+    const PRICE_CHANGE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+    const PRICE_CHANGE_FB_PATH = 'priceProductChangeTrackerV1';
+    let productChangeTracker = {};
+    let pc7FilterMode = '';
+
+    function pc7Norm(s){
+        s = String(s == null ? '' : s).normalize ? String(s == null ? '' : s).normalize('NFD') : String(s == null ? '' : s);
+        return s.replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D')
+            .toLowerCase().replace(/[^a-z0-9%+.-]+/g,' ').replace(/\s+/g,' ').trim();
+    }
+    function pc7HeaderKey(s){ return pc7Norm(s).replace(/\s+/g,''); }
+    function pc7FindCol(header, kind){
+        const hs=(header||[]).map(pc7HeaderKey);
+        if(kind==='code') return hs.findIndex(h => h==='masp'||h==='masanpham'||h==='mahang'||h==='mahhoa'||h==='sku'||h==='productcode');
+        if(kind==='name') return hs.findIndex(h => h.includes('tensanpham')||h==='tenthuoc'||h==='tenhang'||h==='hanghoa'||h==='productname'||h==='name'||(h.includes('ten')&&h.length<18));
+        return -1;
+    }
+    function pc7IsGroupRow(row){
+        if(!row) return false;
+        const non=(row||[]).filter(c=>String(c==null?'':c).trim()!=='');
+        const first=String((row||[]).find(c=>String(c==null?'':c).trim()!=='')||'');
+        return non.length===1 && (first.toUpperCase().includes('NHÓM') || /^[◆▲■►]/.test(first.trim()));
+    }
+    function pc7Identity(row, header){
+        if(!row || pc7IsGroupRow(row)) return null;
+        const ci=pc7FindCol(header,'code'), ni=pc7FindCol(header,'name');
+        const code=ci>=0?String(row[ci]||'').trim():'';
+        const name=ni>=0?String(row[ni]||'').trim():'';
+        if(!code && !name) return null;
+        const key = code ? ('m:'+pc7Norm(code)) : ('n:'+pc7Norm(name));
+        return { key, code, name: name || code };
+    }
+    function pc7Hash(str){
+        // FNV-1a 32-bit + độ dài: khoá Firebase ngắn, ổn định và không chứa ký tự cấm
+        let h=2166136261>>>0; str=String(str||'');
+        for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619)>>>0; }
+        return 'p_'+h.toString(36)+'_'+str.length.toString(36);
+    }
+    function pc7RowObject(row, header){
+        const o={};
+        (header||[]).forEach((h,i)=>{
+            const k=pc7HeaderKey(h); if(!k || k==='stt'||k==='sothutu') return;
+            o[k]=pc7Norm((row||[])[i]);
+        });
+        return o;
+    }
+    function pc7RowsDiffer(oldRec, newRow, newHeader){
+        if(!oldRec) return false;
+        const a=oldRec.obj||{}, b=pc7RowObject(newRow,newHeader);
+        let compared=0, diff=0;
+        Object.keys(b).forEach(k=>{
+            if(!(k in a)) return;
+            compared++;
+            if(String(a[k]||'') !== String(b[k]||'')) diff++;
+        });
+        return compared>0 && diff>0;
+    }
+    function pc7AddFileToBaseline(file, map){
+        if(!file || !file.data || file.data.length<2) return;
+        const header=file.data[0]||[];
+        for(let i=1;i<file.data.length;i++){
+            const row=file.data[i]||[], id=pc7Identity(row,header); if(!id) continue;
+            if(!map.has(id.key)) map.set(id.key,{ obj:pc7RowObject(row,header), fileName:file.name||'', id });
+        }
+    }
+    function pc7BuildBaseline(){
+        const m=new Map(); (uploadedFiles||[]).forEach(f=>pc7AddFileToBaseline(f,m)); return m;
+    }
+    function pc7GetByKey(productKey){
+        const r=productChangeTracker[pc7Hash(productKey)];
+        return r && r.productKey===productKey ? r : null;
+    }
+    function pc7IsActive(rec){
+        const t=Number(rec && rec.lastChangedAt || 0);
+        return !!t && (Date.now()-t) < PRICE_CHANGE_TTL_MS;
+    }
+    function pc7ChangeForRow(row, header){
+        const id=pc7Identity(row,header); if(!id) return null;
+        const rec=pc7GetByKey(id.key); return rec && pc7IsActive(rec) ? rec : null;
+    }
+    async function pc7TrackAuxFile(fileName, data, baseline){
+        const now=Date.now(), header=(data&&data[0])||[];
+        let added=0, updated=0, same=0;
+        const updates={};
+        for(let i=1;i<(data||[]).length;i++){
+            const row=data[i]||[], id=pc7Identity(row,header); if(!id) continue;
+            const old=baseline.get(id.key), hash=pc7Hash(id.key), prev=pc7GetByKey(id.key);
+            let type='';
+            if(!old) type='new';
+            else if(pc7RowsDiffer(old,row,header)) type='updated';
+            else { same++; continue; }
+            if(type==='new') added++; else updated++;
+            const rec={
+                productKey:id.key, productName:id.name||'', productCode:id.code||'',
+                type:type,
+                firstSeenAt:(prev&&prev.firstSeenAt)||now,
+                lastChangedAt:now,
+                lastSourceFile:String(fileName||''),
+                quoteAt:null,
+                lastQuotedSource:(prev&&prev.lastQuotedSource)||''
+            };
+            productChangeTracker[hash]=rec;
+            updates[hash]=rec;
+        }
+        if(Object.keys(updates).length){
+            try{ await database.ref(PRICE_CHANGE_FB_PATH).update(updates); }
+            catch(e){ console.warn('Không lưu được trạng thái SP mới lên Firebase:',e); }
+        }
+        return {newCount:added,updatedCount:updated,sameCount:same,fileName:String(fileName||'')};
+    }
+    function pc7CollectActive(){
+        const out=new Map(), header=currentData[0]||[];
+        for(let i=1;i<currentData.length;i++){
+            const row=currentData[i]||[], id=pc7Identity(row,header); if(!id) continue;
+            const rec=pc7GetByKey(id.key); if(!rec || !pc7IsActive(rec)) continue;
+            if(!out.has(id.key)) out.set(id.key,{rec,rowIdx:i,id});
+        }
+        return Array.from(out.values());
+    }
+    function pc7RenderBar(){
+        const bar=document.getElementById('productChange7dBar'); if(!bar) return;
+        const list=pc7CollectActive();
+        const nNew=list.filter(x=>x.rec.type==='new').length;
+        const nUpd=list.filter(x=>x.rec.type==='updated').length;
+        const nWait=list.filter(x=>!x.rec.quoteAt).length;
+        bar.style.display=list.length?'flex':'none';
+        const a=document.getElementById('pc7NewCount'), b=document.getElementById('pc7UnquotedCount'), c=document.getElementById('pc7UpdatedCount');
+        if(a)a.textContent='🆕 Mới: '+nNew; if(b)b.textContent='⏳ Chưa báo giá: '+nWait; if(c)c.textContent='🔄 Cập nhật: '+nUpd;
+    }
+    function pc7DecorateTable(){
+        const table=tableContainer && tableContainer.querySelector('table.price-table'); if(!table) return;
+        const header=currentData[0]||[], nameIdx=pc7FindCol(header,'name'), vis=visibleColumnIndexes(), namePos=vis.indexOf(nameIdx);
+        table.querySelectorAll('tbody tr[data-row-index]').forEach(tr=>{
+            tr.classList.remove('pc7-row-new','pc7-row-updated','pc7-row-quoted');
+            tr.querySelectorAll('.pc7-badge').forEach(x=>x.remove());
+            const idx=parseInt(tr.dataset.rowIndex,10), row=currentData[idx]; if(!row) return;
+            const rec=pc7ChangeForRow(row,header); if(!rec) return;
+            tr.classList.add(rec.type==='updated'?'pc7-row-updated':'pc7-row-new');
+            if(rec.quoteAt) tr.classList.add('pc7-row-quoted');
+            if(namePos>=0 && tr.children[namePos]){
+                const badge=document.createElement('span');
+                badge.className='pc7-badge '+(rec.quoteAt?'quoted':(rec.type==='updated'?'updated':'new'));
+                badge.textContent=rec.quoteAt ? '✅ ĐÃ BÁO GIÁ' : (rec.type==='updated'?'🔄 CẬP NHẬT':'🆕 MỚI');
+                badge.title=(rec.lastSourceFile?'Nguồn: '+rec.lastSourceFile+' · ':'')+'Ngày ghi nhận: '+new Date(Number(rec.lastChangedAt)||Date.now()).toLocaleString('vi-VN');
+                tr.children[namePos].appendChild(badge);
+            }
+        });
+        pc7RenderBar();
+    }
+    function pc7RenderFiltered(mode){
+        pc7FilterMode=mode||'';
+        if(!mode){ showingOnlySelected=false; searchInput.value=''; if(groupFilter)groupFilter.value=''; createTable(currentData); pc7DecorateTable(); return; }
+        const header=currentData[0]||[], aoa=[header], source=[];
+        for(let i=1;i<currentData.length;i++){
+            const row=currentData[i]||[], rec=pc7ChangeForRow(row,header); if(!rec) continue;
+            let ok= mode==='all' || (mode==='new'&&rec.type==='new') || (mode==='updated'&&rec.type==='updated') || (mode==='unquoted'&&!rec.quoteAt);
+            if(ok){ aoa.push(row); source.push(i); }
+        }
+        showingOnlySelected=false; searchInput.value=''; if(groupFilter)groupFilter.value='';
+        createTable(aoa,source); pc7DecorateTable();
+    }
+    function pc7SelectUnquotedForQuote(){
+        const list=pc7CollectActive().filter(x=>!x.rec.quoteAt);
+        if(!list.length){ alert('Không còn sản phẩm mới/cập nhật nào trong 7 ngày chưa làm báo giá.'); return; }
+        selectedRowIdx.clear(); list.forEach(x=>selectedRowIdx.add(x.rowIdx));
+        showingOnlySelected=true; renderSelectedOnly(); pc7DecorateTable(); updateActionButtonsState(); updateFilteredSection();
+        const msg='✅ Đã chọn '+list.length+' sản phẩm mới/cập nhật CHƯA BÁO GIÁ.\n\nBấm "Tạo Báo Giá ▾" để tiếp tục.';
+        setTimeout(()=>alert(msg),80);
+    }
+    function pc7MarkSelectedQuoted(){
+        const now=Date.now(), header=currentData[0]||[], updates={}; let n=0;
+        selectedRowIdx.forEach(idx=>{
+            const row=currentData[idx]||[], id=pc7Identity(row,header); if(!id)return;
+            const hash=pc7Hash(id.key), rec=productChangeTracker[hash];
+            if(!rec || rec.productKey!==id.key || !pc7IsActive(rec)) return;
+            rec.quoteAt=now; rec.lastQuotedSource=rec.lastSourceFile||''; productChangeTracker[hash]=rec; updates[hash+'/quoteAt']=now; updates[hash+'/lastQuotedSource']=rec.lastQuotedSource; n++;
+        });
+        if(n){ database.ref(PRICE_CHANGE_FB_PATH).update(updates).catch(e=>console.warn('Lưu trạng thái đã báo giá:',e)); setTimeout(()=>{pc7RenderBar();pc7DecorateTable();},50); }
+    }
+    function pc7ShowUploadToast(sum){
+        const el=document.getElementById('productChange7dToast'); if(!el||!sum) return;
+        const n=sum.newCount||0,u=sum.updatedCount||0,same=sum.sameCount||0;
+        if(!n&&!u) return;
+        el.innerHTML='<strong>📣 '+pc7Esc(sum.fileName||'Excel phụ')+'</strong><br>'+ (n?'🆕 <b>'+n+'</b> sản phẩm mới. ': '') + (u?'🔄 <b>'+u+'</b> sản phẩm có thay đổi. ':'') + (same?'✓ '+same+' sản phẩm đã có và không đổi.':'') + '<div class="t-actions"><button type="button" data-pc7="unquoted">Xem chưa báo giá</button><button type="button" data-pc7="close">Đóng</button></div>';
+        el.style.display='block'; clearTimeout(el._tm); el._tm=setTimeout(()=>el.style.display='none',10000);
+    }
+    function pc7Esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+    function pc7WireUI(){
+        const by=id=>document.getElementById(id);
+        if(by('pc7ShowNewBtn'))by('pc7ShowNewBtn').onclick=()=>pc7RenderFiltered('new');
+        if(by('pc7ShowUnquotedBtn'))by('pc7ShowUnquotedBtn').onclick=()=>pc7RenderFiltered('unquoted');
+        if(by('pc7ShowUpdatedBtn'))by('pc7ShowUpdatedBtn').onclick=()=>pc7RenderFiltered('updated');
+        if(by('pc7ShowAllBtn'))by('pc7ShowAllBtn').onclick=()=>pc7RenderFiltered('');
+        if(by('pc7SelectQuoteBtn'))by('pc7SelectQuoteBtn').onclick=pc7SelectUnquotedForQuote;
+        const toast=by('productChange7dToast'); if(toast)toast.addEventListener('click',e=>{const b=e.target.closest('button[data-pc7]');if(!b)return;if(b.dataset.pc7==='close')toast.style.display='none';else if(b.dataset.pc7==='unquoted'){toast.style.display='none';pc7RenderFiltered('unquoted');}});
+    }
+    function pc7InitRealtime(){
+        try{
+            database.ref(PRICE_CHANGE_FB_PATH).on('value',snap=>{
+                productChangeTracker=snap.val()||{}; pc7RenderBar(); pc7DecorateTable();
+            });
+        }catch(e){ console.warn('Tracker 7 ngày:',e); }
+        setInterval(()=>{ pc7RenderBar(); pc7DecorateTable(); },60*60*1000);
+    }
     // CRUD
     let rowIndexMap = []; 
     let editingRowState = { index: null, originalData: [] }; 
@@ -2835,16 +3092,26 @@
     async function handleFileSelect(event){
         const files = event.target.files; if(!files.length) return;
         loadingIndicator.style.display = "block"; tableContainer.innerHTML = "";
+        // Baseline được chụp TRƯỚC khi nạp file phụ: dùng để biết SP nào thật sự mới / đã thay đổi.
+        const pc7Baseline = pc7BuildBaseline();
+        const pc7Totals = {newCount:0,updatedCount:0,sameCount:0,fileName:''};
         for(let i=0;i<files.length;i++){
             const file = files[i];
             try{
                 const data = await readExcelFile(file);
                 autoFillStt(data); // Tự động điền số thứ tự nối tiếp
+                // Ghi trạng thái 7 ngày TRƯỚC khi đưa file vào baseline.
+                const sm = await pc7TrackAuxFile(file.name, data, pc7Baseline);
+                pc7Totals.newCount += sm.newCount; pc7Totals.updatedCount += sm.updatedCount; pc7Totals.sameCount += sm.sameCount;
+                pc7Totals.fileName = files.length>1 ? (files.length+' file Excel phụ') : file.name;
                 uploadedFiles.push({ name: file.name, data });
                 addFileToList(file.name, uploadedFiles.length - 1);
+                pc7AddFileToBaseline({name:file.name,data:data}, pc7Baseline);
             }catch(error){ console.error("Lỗi khi đọc file:", file.name, error); alert(`Lỗi khi đọc file ${file.name}: ${error.message}`); }
         }
-        updateFileNameDisplay(); displayAllData(); saveDataToFirebase(); loadingIndicator.style.display = "none";
+        updateFileNameDisplay(); displayAllData(); await saveDataToFirebase(); loadingIndicator.style.display = "none";
+        pc7RenderBar(); pc7DecorateTable(); pc7ShowUploadToast(pc7Totals);
+        event.target.value = ''; // cho phép chọn lại chính file đó để kiểm tra/cập nhật
     }
     function readExcelFile(file){
         return new Promise((resolve,reject)=>{
@@ -3529,6 +3796,8 @@
         }
         
         updateFilteredSection();
+        // Bổ sung nhãn MỚI/CẬP NHẬT 7 ngày sau khi bảng render xong.
+        try { pc7DecorateTable(); } catch(e) {}
     }
     function renderSelectedOnly(){
         const indices = Array.from(selectedRowIdx).sort((a,b)=>a-b);
@@ -3901,6 +4170,8 @@
         quoteDateYear.textContent = year;
         
         createQuoteTable();
+        // Những SP mới/cập nhật vừa được đưa vào báo giá -> đánh dấu ĐÃ BÁO GIÁ (vẫn giữ nhãn 7 ngày).
+        try { pc7MarkSelectedQuoted(); } catch(e) {}
         // Reset khách hàng đã chọn nếu báo giá mới không khai sẵn KH
         if (!customerName) zaloSelectedPhone = null;
         else zaloSelectedPhone = zaloNormalizePhone(customerPhone) || null;
@@ -5884,6 +6155,8 @@
 
     document.addEventListener('DOMContentLoaded', ()=>{ 
         loadNotification(); 
+        pc7WireUI();
+        pc7InitRealtime();
         loadDataFromFirebase(); 
         loadProductImages(); 
         loadCustomerDataFromFirebase(); 
