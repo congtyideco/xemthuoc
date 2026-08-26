@@ -2036,8 +2036,15 @@
     // Hàng được chọn
     const selectedRowIdx = new Set(); 
     let showingOnlySelected = false;  
-    // Hình ảnh
-    let productImages = {};        
+    // Hình ảnh — CHỈ dùng cho phiên báo giá hiện tại, không tự mang ảnh từ báo giá cũ sang
+    let productImages = {};
+    let quoteImageSessionActive = false;
+    function resetQuoteImageSession(){
+        productImages = {};
+        quoteImageSessionActive = true;
+        try { localStorage.removeItem('productImages'); } catch(e) {}
+        try { if (window.IDECO_MED_FINDER && window.IDECO_MED_FINDER.refreshStatus) window.IDECO_MED_FINDER.refreshStatus(); } catch(e) {}
+    }
     let currentImageFile = null;   
     let originalImageFile = null;  
     // CRUD
@@ -2367,6 +2374,8 @@
     
     function handleQuoteTypeSelection(quoteType) {
         currentQuoteType = quoteType;
+        // Mỗi lần bắt đầu một báo giá mới: ảnh phải là phiên mới, không kế thừa báo giá trước.
+        if (!quoteImageSessionActive) resetQuoteImageSession();
         
         // ƯU TIÊN 1: Nếu user đã chọn sản phẩm rồi → dùng selection đó cho mọi loại báo giá
         // (không tự động lọc, không xóa selection của user)
@@ -2464,6 +2473,9 @@
     quoteDialogCancel.addEventListener('click', () => {
         quoteDialog.style.display = 'none';
         clearQuoteForm();
+        quoteImageSessionActive = false;
+        productImages = {};
+        try { localStorage.removeItem('productImages'); } catch(e) {}
     });
     quoteDialogCreate.addEventListener('click', () => {
         const radios = document.querySelectorAll('input[name="paperOrientation"]');
@@ -2479,6 +2491,7 @@
     quoteBackBtn.addEventListener('click', () => {
         quotePage.style.display = 'none';
         popupOverlay.style.display = 'block';
+        quoteImageSessionActive = false;
     });
     quotePrintBtn.addEventListener('click', () => { window.print(); });
     
@@ -4368,9 +4381,13 @@
         } else if(imageUrlInput.value){
             productImages[n]=imageUrlInput.value; saveImg();
         }
-        function saveImg(){ localStorage.setItem("productImages", JSON.stringify(productImages)); alert("Đã lưu ảnh."); imageManager.style.display='none'; }
+        function saveImg(){ quoteImageSessionActive = true; alert("Đã gắn ảnh cho báo giá hiện tại."); imageManager.style.display='none'; try { if (window.IDECO_MED_FINDER && window.IDECO_MED_FINDER.refreshStatus) window.IDECO_MED_FINDER.refreshStatus(); } catch(e){} }
     }
-    function loadProductImages(){ try{ productImages=JSON.parse(localStorage.getItem("productImages")||"{}"); }catch(e){} }
+    function loadProductImages(){
+        // Không nạp ảnh của phiên/báo giá trước. Bắt đầu trang luôn là bộ ảnh trống.
+        productImages = {}; quoteImageSessionActive = false;
+        try { localStorage.removeItem('productImages'); } catch(e){}
+    }
     // ===== THÔNG BÁO 2 KHUNG + LỊCH PHÁT =====
     let _notiData = null;
 
@@ -5380,11 +5397,21 @@
                     sendQuoteViaZalo(sendEl.dataset.phone, sendEl.dataset.name, sendEl);
                 }
             };
+            // V3: popup BGĐ là một bước chắc chắn trong đúng luồng gửi Zalo.
+            // Chỉ sau khi bấm ✓ ĐÃ XEM mới tiếp tục copy/xuất và mở Zalo, nên popup không bị Zalo che mất.
+            const doPraiseThenSend = () => {
+                const api = window.IDECO_ZALO_PRAISE_REALTIME;
+                if (api && typeof api.trigger === 'function') {
+                    api.trigger({ name: cust.tenKhachHang || sendEl.dataset.name || 'Khách hàng', phone: cust.dienThoai || sendEl.dataset.phone || '' }, doSend);
+                } else {
+                    doSend();
+                }
+            };
             if (zaloNormalizePhone(sendEl.dataset.phone || '') !== zaloSelectedPhone) {
                 loadCustomerToQuote(cust);
-                setTimeout(doSend, 300); // chờ DOM cập nhật xong mới chụp ảnh/xuất PDF
+                setTimeout(doPraiseThenSend, 300); // chờ DOM cập nhật xong rồi hiện popup
             } else {
-                doSend();
+                doPraiseThenSend();
             }
             return;
         }
@@ -7002,8 +7029,10 @@
     }
 
     function saveProductImagesSafe(){
-        try{ localStorage.setItem('productImages', JSON.stringify(productImages || {})); return true; }
-        catch(e){ console.warn('[IDECO MED FINDER] localStorage đầy, ảnh vẫn giữ trong phiên hiện tại.', e); return false; }
+        // V3: ảnh chỉ thuộc báo giá hiện tại. Không lưu localStorage để tránh báo giá sau dùng nhầm ảnh cũ.
+        quoteImageSessionActive = true;
+        try { localStorage.removeItem('productImages'); } catch(e){}
+        return true;
     }
 
     function updateQuoteImageCell(productName, imageData){
@@ -7083,9 +7112,407 @@
     });
 
     updateStatus();
-    window.IDECO_MED_FINDER = { open: openFinder, sync: ()=>sendProducts(false), close: closeFinder };
+    window.IDECO_MED_FINDER = { open: openFinder, sync: ()=>sendProducts(false), close: closeFinder, refreshStatus: updateStatus };
 })();
 </script>
 
+
+<!-- IDECO_ZALO_PRAISE_REALTIME_V3 -->
+<script>
+/*
+ * IDECO ZALO PRAISE REALTIME V1
+ * Module doc lap: Shadow DOM + Firebase RTDB + event delegation.
+ * - Khong tao ID trong DOM.
+ * - CSS nam tron trong Shadow DOM, khong ro ri ra website.
+ * - Khong preventDefault/stopPropagation click gui Zalo => khong doi hanh vi app goc.
+ * - May vua bam: popup ngay.
+ * - May khac: realtime; neu vua mo app thi cho du 10 giay moi hien.
+ * - Chi nut "DA XEM" moi dong popup.
+ *
+ * Tu dong nhan:
+ *   .zalo-phone-link
+ *   [data-ideco-zalo-praise]
+ *   [data-zalo-phone]
+ *   a[href*="zalo.me/"]
+ *   a[href^="zalo://conversation"]
+ *
+ * De dung o app khac, nen gan:
+ *   data-ideco-zalo-praise
+ *   data-phone="090..."
+ *   data-name="TEN KHACH HANG"
+ */
+(function IDECO_ZALO_PRAISE_REALTIME_V3(){
+  'use strict';
+
+  if (window.__IDECO_ZALO_PRAISE_REALTIME_V3__) return;
+  try { Object.defineProperty(window, '__IDECO_ZALO_PRAISE_REALTIME_V3__', { value:true, configurable:false }); }
+  catch (_) { window.__IDECO_ZALO_PRAISE_REALTIME_V3__ = true; }
+
+  var CFG = {
+    firebase: {
+      apiKey: 'AIzaSyBuXjYpTuKpNyZY6ZIfUSA-m4NWBwPWcU0',
+      authDomain: 'baica-dae2b.firebaseapp.com',
+      databaseURL: 'https://baica-dae2b-default-rtdb.firebaseio.com',
+      projectId: 'baica-dae2b',
+      storageBucket: 'baica-dae2b.appspot.com',
+      messagingSenderId: '61139094665',
+      appId: '1:61139094665:web:13ebec976cec24e53f8a58'
+    },
+    firebaseAppName: 'ideco-zalo-praise-v3',
+    path: 'idecoSharedPraise/zaloContactEvents',
+    startupDelayMs: 10000,
+    eventTtlMs: 24 * 60 * 60 * 1000,
+    listenLast: 50,
+    seenLimit: 300,
+    selector: [
+      '[data-ideco-zalo-praise]',
+      '[data-zalo-phone]',
+      'a[href*="zalo.me/"]',
+      'a[href^="zalo://conversation"]'
+    ].join(',')
+  };
+
+  var LS_DEVICE = 'idecoZaloPraiseDevice_v1';
+  var LS_SEEN = 'idecoZaloPraiseSeen_v1';
+  var deviceId = getDeviceId();
+  var seen = loadSeen();
+  var queuedKeys = new Set();
+  var queue = [];
+  var current = null;
+  var db = null;
+  var eventsRef = null;
+  var startupReady = false;
+  var host = null, shadow = null, ui = null;
+
+  function safeJsonParse(s, fallback){
+    try { return JSON.parse(s); } catch (_) { return fallback; }
+  }
+
+  function getDeviceId(){
+    var v = '';
+    try { v = localStorage.getItem(LS_DEVICE) || ''; } catch (_) {}
+    if (v) return v;
+    v = 'dev_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,10);
+    try { localStorage.setItem(LS_DEVICE, v); } catch (_) {}
+    return v;
+  }
+
+  function loadSeen(){
+    var obj = {};
+    try { obj = safeJsonParse(localStorage.getItem(LS_SEEN) || '{}', {}); } catch (_) {}
+    return (obj && typeof obj === 'object') ? obj : {};
+  }
+
+  function saveSeen(key){
+    if (!key) return;
+    seen[key] = Date.now();
+    var keys = Object.keys(seen).sort(function(a,b){ return (seen[b]||0) - (seen[a]||0); });
+    if (keys.length > CFG.seenLimit) keys.slice(CFG.seenLimit).forEach(function(k){ delete seen[k]; });
+    try { localStorage.setItem(LS_SEEN, JSON.stringify(seen)); } catch (_) {}
+  }
+
+  function normalizePhone(v){
+    var s = String(v || '').trim();
+    if (!s) return '';
+    s = s.replace(/[^0-9+]/g, '');
+    if (s.indexOf('+84') === 0) return '0' + s.slice(3);
+    if (s.indexOf('84') === 0 && s.length >= 10) return '0' + s.slice(2);
+    return s;
+  }
+
+  function phoneFromHref(href){
+    href = String(href || '');
+    var m = href.match(/(?:phone=|zalo\.me\/|tel:)(\+?\d[\d\s.()-]{7,})/i);
+    return m ? normalizePhone(m[1]) : '';
+  }
+
+  function pickTextPhone(s){
+    var m = String(s || '').match(/(?:\+?84|0)[\s.()-]*\d(?:[\s.()-]*\d){8,10}/);
+    return m ? normalizePhone(m[0]) : '';
+  }
+
+  function extractContact(el){
+    if (!el) return null;
+    var ds = el.dataset || {};
+    var phone = normalizePhone(ds.phone || ds.zaloPhone || ds.customerPhone || '');
+    if (!phone && el.getAttribute) phone = phoneFromHref(el.getAttribute('href'));
+    if (!phone) phone = pickTextPhone(el.textContent || '');
+
+    var name = String(ds.name || ds.customerName || ds.custName || '').trim();
+    if (!name) {
+      var parent = el.closest && el.closest('[data-customer-name],[data-cust-name]');
+      if (parent && parent.dataset) name = String(parent.dataset.customerName || parent.dataset.custName || '').trim();
+    }
+    if (!name) {
+      var row = el.closest && el.closest('tr');
+      if (row) {
+        var named = row.querySelector('[data-name],[data-customer-name],[data-cust-name]');
+        if (named && named.dataset) name = String(named.dataset.name || named.dataset.customerName || named.dataset.custName || '').trim();
+      }
+    }
+    if (!name) name = 'Khách hàng';
+    if (!phone) return null;
+    return { name:name, phone:phone };
+  }
+
+  function isEligibleTrigger(target){
+    if (!target || !target.closest) return null;
+    var el;
+    try { el = target.closest(CFG.selector); } catch (_) { return null; }
+    if (!el) return null;
+
+    // data-zalo-phone va explicit marker luon duoc chap nhan.
+    if (el.hasAttribute('data-ideco-zalo-praise') || el.hasAttribute('data-zalo-phone')) return el;
+    // Link Zalo ro rang.
+    var href = String(el.getAttribute && el.getAttribute('href') || '');
+    if (/zalo\.me\/|^zalo:\/\/conversation/i.test(href)) return el;
+    return null;
+  }
+
+  function ensureUi(){
+    if (host) return;
+    host = document.createElement('div');
+    // Khong dung id/class cua website ngoai Shadow DOM.
+    host.setAttribute('data-ideco-shadow-module', 'zalo-praise-v3');
+    host.style.cssText = 'display:none;position:fixed;inset:0;z-index:2147483647;';
+    document.documentElement.appendChild(host);
+    shadow = host.attachShadow({ mode:'open' });
+
+    var style = document.createElement('style');
+    style.textContent = [
+      ':host{all:initial}',
+      '*{box-sizing:border-box}',
+      '.ov{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(5,16,36,.72);backdrop-filter:blur(5px);font-family:"Segoe UI",Arial,sans-serif;color:#172033}',
+      '.card{width:min(720px,94vw);background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 30px 90px rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.7);animation:idecoPraiseIn .24s ease-out}',
+      '@keyframes idecoPraiseIn{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:none}}',
+      '.head{padding:22px 26px;background:linear-gradient(135deg,#123a7a,#0a5a8f 58%,#008d79);color:white;display:flex;gap:14px;align-items:center}',
+      '.ico{width:54px;height:54px;border-radius:17px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font-size:29px;flex:0 0 auto;border:1px solid rgba(255,255,255,.22)}',
+      '.ttl{font-size:19px;font-weight:900;line-height:1.25;letter-spacing:.2px}',
+      '.sub{font-size:12.5px;opacity:.82;margin-top:4px;font-weight:600}',
+      '.body{padding:25px 28px 22px}',
+      '.msg{font-size:17px;line-height:1.68;font-weight:800;color:#18345e;text-align:center}',
+      '.msg strong{color:#b42318}',
+      '.cust{margin-top:18px;background:#f2f7ff;border:1px solid #d8e6fb;border-radius:14px;padding:14px 16px;text-align:left}',
+      '.custRow{display:flex;gap:9px;align-items:flex-start;font-size:14px;line-height:1.45;margin:3px 0}',
+      '.lab{min-width:92px;color:#65758d;font-weight:700}',
+      '.val{color:#132f59;font-weight:900;word-break:break-word}',
+      '.foot{padding:0 28px 26px;display:flex;justify-content:center}',
+      '.ok{appearance:none;border:0;border-radius:13px;background:linear-gradient(135deg,#16a34a,#059669);color:white;font-size:15px;font-weight:900;padding:13px 34px;cursor:pointer;box-shadow:0 10px 24px rgba(5,150,105,.28);min-width:180px}',
+      '.ok:hover{filter:brightness(1.04);transform:translateY(-1px)}',
+      '.ok:active{transform:translateY(0)}',
+      '@media(max-width:520px){.body{padding:20px 18px 18px}.head{padding:18px}.msg{font-size:15px}.foot{padding:0 18px 20px}.lab{min-width:78px}}'
+    ].join('');
+
+    var ov = document.createElement('div'); ov.className = 'ov';
+    var card = document.createElement('div'); card.className = 'card'; card.setAttribute('role','dialog'); card.setAttribute('aria-modal','true');
+    var head = document.createElement('div'); head.className = 'head';
+    var ico = document.createElement('div'); ico.className = 'ico'; ico.textContent = '🏆';
+    var ht = document.createElement('div');
+    var ttl = document.createElement('div'); ttl.className = 'ttl'; ttl.textContent = 'THÔNG ĐIỆP TỪ BAN GIÁM ĐỐC';
+    var sub = document.createElement('div'); sub.className = 'sub'; sub.textContent = 'Ghi nhận nỗ lực mở rộng cơ hội khách hàng';
+    ht.appendChild(ttl); ht.appendChild(sub); head.appendChild(ico); head.appendChild(ht);
+
+    var body = document.createElement('div'); body.className = 'body';
+    var msg = document.createElement('div'); msg.className = 'msg';
+    msg.innerHTML = '<strong>BAN GIÁM ĐỐC KHEN BẠN ĐÃ NỖ LỰC CHÀO MỜI KHÁCH HÀNG</strong><br>' +
+      'CHÚNG TA ĐỪNG BAO GIỜ PHỤ THUỘC 1 KHÁCH HÀNG - BÁN CHỈ 1 SẢN PHẨM.<br>' +
+      'HÃY LIÊN TỤC TÌM CÁCH MỞ RỘNG CƠ HỘI - NHƯNG PHẢI CÓ KẾ HOẠCH THEO DÕI - KHAI BÁO GIAO DỊCH TỐT.';
+    var cust = document.createElement('div'); cust.className = 'cust';
+    var r1 = document.createElement('div'); r1.className = 'custRow';
+    var l1 = document.createElement('div'); l1.className = 'lab'; l1.textContent = 'LIÊN HỆ:';
+    var v1 = document.createElement('div'); v1.className = 'val';
+    var r2 = document.createElement('div'); r2.className = 'custRow';
+    var l2 = document.createElement('div'); l2.className = 'lab'; l2.textContent = 'ĐIỆN THOẠI:';
+    var v2 = document.createElement('div'); v2.className = 'val';
+    r1.appendChild(l1); r1.appendChild(v1); r2.appendChild(l2); r2.appendChild(v2); cust.appendChild(r1); cust.appendChild(r2);
+    body.appendChild(msg); body.appendChild(cust);
+
+    var foot = document.createElement('div'); foot.className = 'foot';
+    var ok = document.createElement('button'); ok.className = 'ok'; ok.type = 'button'; ok.textContent = '✓ ĐÃ XEM';
+    foot.appendChild(ok);
+    card.appendChild(head); card.appendChild(body); card.appendChild(foot); ov.appendChild(card);
+    shadow.appendChild(style); shadow.appendChild(ov);
+    ui = { name:v1, phone:v2, ok:ok, card:card };
+
+    // Click nen KHONG dong. Chi nut DA XEM dong.
+    ov.addEventListener('click', function(e){ if (e.target === ov) { e.preventDefault(); e.stopPropagation(); } });
+    ok.addEventListener('click', acknowledgeCurrent);
+  }
+
+  function enqueue(evt, front){
+    if (!evt || !evt.key || seen[evt.key] || queuedKeys.has(evt.key)) return;
+    var at = Number(evt.at || 0);
+    if (at && Date.now() - at > CFG.eventTtlMs) return;
+    queuedKeys.add(evt.key);
+    if (front) queue.unshift(evt); else queue.push(evt);
+    pump();
+  }
+
+  function pump(){
+    if (current || !queue.length) return;
+    current = queue.shift();
+    queuedKeys.delete(current.key);
+    ensureUi();
+    ui.name.textContent = current.name || 'Khách hàng';
+    ui.phone.textContent = current.phone || '—';
+    host.style.display = 'block';
+    try { ui.ok.focus({preventScroll:true}); } catch (_) { try { ui.ok.focus(); } catch(__){} }
+  }
+
+  function acknowledgeCurrent(){
+    if (!current) return;
+    var done = current.onAck;
+    saveSeen(current.key);
+    current = null;
+    if (host) host.style.display = 'none';
+    // Chạy hành động gửi Zalo sau khi popup thực sự đã được xác nhận.
+    if (typeof done === 'function') setTimeout(function(){ try { done(); } catch(e){ console.error('[IDECO PRAISE] onAck:', e); } }, 60);
+    setTimeout(pump, 80);
+  }
+
+  function showLocal(contact, onAck){
+    var key = 'local_' + deviceId + '_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
+    enqueue({ key:key, name:contact.name, phone:contact.phone, at:Date.now(), source:deviceId, onAck:onAck }, true);
+    return key;
+  }
+
+  function publish(contact){
+    if (!eventsRef) return Promise.resolve(null);
+    var ref = eventsRef.push();
+    var payload = {
+      name: String(contact.name || 'Khách hàng').slice(0,160),
+      phone: String(contact.phone || '').slice(0,40),
+      source: deviceId,
+      at: window.firebase && firebase.database && firebase.database.ServerValue ? firebase.database.ServerValue.TIMESTAMP : Date.now()
+    };
+    return ref.set(payload).then(function(){ pruneOld(); return ref.key; }).catch(function(err){
+      console.warn('[IDECO PRAISE] Firebase publish:', err);
+      return null;
+    });
+  }
+
+  var lastLocalClickSig = '';
+  var lastLocalClickAt = 0;
+  document.addEventListener('click', function(e){
+    var el = isEligibleTrigger(e.target);
+    if (!el) return;
+    var c = extractContact(el);
+    if (!c) return;
+
+    // Chong double event trong 1 thao tac click/render.
+    var sig = c.name + '|' + c.phone;
+    var now = Date.now();
+    if (sig === lastLocalClickSig && now - lastLocalClickAt < 1200) return;
+    lastLocalClickSig = sig; lastLocalClickAt = now;
+
+    showLocal(c);
+    publish(c);
+  }, true);
+
+  window.addEventListener('keydown', function(e){
+    // Popup chi dong bang nut DA XEM. Chan ESC khi popup dang mo de khong dong modal nen.
+    if (current && e.key === 'Escape') {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    }
+  }, true);
+
+  function scriptLoad(src){
+    return new Promise(function(resolve, reject){
+      var s = document.createElement('script');
+      s.src = src; s.async = true;
+      s.onload = resolve; s.onerror = reject;
+      (document.head || document.documentElement).appendChild(s);
+    });
+  }
+
+  async function ensureFirebase(){
+    if (!window.firebase || !window.firebase.initializeApp) {
+      await scriptLoad('https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js');
+    }
+    if (!window.firebase.database) {
+      await scriptLoad('https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js');
+    }
+    var app = null;
+    try { app = firebase.app(CFG.firebaseAppName); } catch (_) {}
+    if (!app) app = firebase.initializeApp(CFG.firebase, CFG.firebaseAppName);
+    db = app.database();
+    eventsRef = db.ref(CFG.path);
+  }
+
+  function onRemoteAdded(snap){
+    var v = snap && snap.val ? (snap.val() || {}) : {};
+    var key = snap && snap.key;
+    if (!key || seen[key]) return;
+    if (v.source && v.source === deviceId) return;
+    var evt = { key:key, name:v.name || 'Khách hàng', phone:v.phone || '', at:Number(v.at || 0), source:v.source || '' };
+    if (evt.at && Date.now() - evt.at > CFG.eventTtlMs) return;
+    if (!startupReady) {
+      if (!queuedKeys.has(evt.key)) { queuedKeys.add(evt.key); queue.push(evt); }
+    } else {
+      enqueue(evt, false);
+    }
+  }
+
+  function startRealtime(){
+    eventsRef.limitToLast(CFG.listenLast).on('child_added', onRemoteAdded, function(err){
+      console.warn('[IDECO PRAISE] Firebase listener:', err);
+    });
+    setTimeout(function(){
+      startupReady = true;
+      // child_added da nap cac su kien gan nhat vao queue; gio moi cho hien.
+      // Loai cac event da seen/het han truoc khi pump.
+      var clean = [];
+      queuedKeys.clear();
+      queue.forEach(function(evt){
+        if (!evt || !evt.key || seen[evt.key]) return;
+        if (evt.at && Date.now() - evt.at > CFG.eventTtlMs) return;
+        if (!queuedKeys.has(evt.key)) { queuedKeys.add(evt.key); clean.push(evt); }
+      });
+      queue = clean.sort(function(a,b){ return (a.at||0) - (b.at||0); });
+      pump();
+    }, CFG.startupDelayMs);
+  }
+
+  function pruneOld(){
+    if (!eventsRef) return;
+    var cutoff = Date.now() - CFG.eventTtlMs;
+    try {
+      eventsRef.orderByChild('at').endAt(cutoff).limitToFirst(30).once('value').then(function(s){
+        var ops = [];
+        s.forEach(function(ch){ ops.push(ch.ref.remove().catch(function(){})); });
+        return Promise.all(ops);
+      }).catch(function(){});
+    } catch (_) {}
+  }
+
+  function boot(){
+    ensureUi();
+    ensureFirebase().then(startRealtime).catch(function(err){
+      console.warn('[IDECO PRAISE] Khong khoi tao duoc Firebase; popup cuc bo van hoat dong:', err);
+      setTimeout(function(){ startupReady = true; pump(); }, CFG.startupDelayMs);
+    });
+  }
+
+  // API công khai để app gốc gọi trực tiếp đúng lúc chuẩn bị gửi Zalo.
+  // trigger(contact, onAck): hiện ngay máy hiện tại + publish Firebase; onAck chỉ chạy sau nút ✓ ĐÃ XEM.
+  window.IDECO_ZALO_PRAISE_REALTIME = {
+    trigger: function(contact, onAck){
+      contact = contact || {};
+      var c = { name:String(contact.name || 'Khách hàng').trim() || 'Khách hàng', phone:normalizePhone(contact.phone || '') };
+      if (!c.phone) { if (typeof onAck === 'function') onAck(); return false; }
+      showLocal(c, onAck);
+      publish(c);
+      return true;
+    },
+    isOpen: function(){ return !!current; }
+  };
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once:true });
+  else boot();
+})();
+
+</script>
+<!-- /IDECO_ZALO_PRAISE_REALTIME_V3 -->
 </body>
 </html>
