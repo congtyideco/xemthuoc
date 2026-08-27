@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Xem Giá Thuốc — Hệ Thống Báo Giá Pro · SP mới 7 ngày</title>
+    <title>Xem Giá Thuốc — Hệ Thống Báo Giá Pro · V7 đồng bộ file/thông báo 7 ngày</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -1217,18 +1217,52 @@
 
 
 <style id="ideco-product-change-7d-style">
-/* ===== IDECO: SẢN PHẨM MỚI / CẬP NHẬT TRONG 7 NGÀY ===== */
-#productChange7dBar{display:none;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 10px;padding:9px 12px;border:1px solid #cfe0ff;border-radius:10px;background:linear-gradient(90deg,#f7fbff,#f7fff9);box-shadow:0 4px 14px rgba(32,79,140,.06);font-size:12px;color:#334155}
+/* ===== IDECO V8: KHÔI PHỤC SP MỚI/CẬP NHẬT 7 NGÀY · FILE↔THÔNG BÁO ĐỒNG BỘ CHẶT ===== */
+#productChange7dBar{
+    display:none; margin:0 0 10px; padding:10px 12px;
+    border:1px solid #cfe0ff; border-radius:12px;
+    background:linear-gradient(90deg,#f7fbff,#f7fff9);
+    box-shadow:0 4px 14px rgba(32,79,140,.06);
+    font-size:12px; color:#334155;
+}
+#productChange7dBar .pc7-summary-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 #productChange7dBar .pc7-title{font-weight:900;color:#12305f;margin-right:3px}
 #productChange7dBar .pc7-chip{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:5px 9px;font-weight:800;white-space:nowrap;border:1px solid transparent}
+#productChange7dBar .pc7-total{background:#e8f5e9;color:#1b5e20;border-color:#a5d6a7}
 #productChange7dBar .pc7-new{background:#e9fbef;color:#15733d;border-color:#b8e7c6}
 #productChange7dBar .pc7-wait{background:#fff5df;color:#9a5a00;border-color:#f3d38d}
 #productChange7dBar .pc7-upd{background:#fff0e8;color:#a84212;border-color:#f3c3a9}
+#productChange7dBar .pc7-batches{background:#eef4ff;color:#2458a6;border-color:#c9daf8}
 #productChange7dBar .pc7-btn{border:none;border-radius:8px;padding:6px 9px;cursor:pointer;font-size:11px;font-weight:800;background:#eef4ff;color:#2458a6;transition:.15s}
 #productChange7dBar .pc7-btn:hover{background:#dce9ff;transform:translateY(-1px)}
 #productChange7dBar .pc7-btn.primary{background:#0f9d58;color:white}
 #productChange7dBar .pc7-btn.primary:hover{background:#0b8248}
 #productChange7dBar .pc7-note{margin-left:auto;color:#7b8798;font-size:10.5px;white-space:nowrap}
+
+/* Danh sách từng đợt cập nhật — mỗi đợt có đồng hồ 7 ngày riêng */
+#pc7BatchList{display:none;margin-top:9px;padding-top:9px;border-top:1px dashed #cddcf2}
+#pc7BatchList .pc7-batch-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;color:#345274;font-size:11px;font-weight:800}
+#pc7BatchList .pc7-batch-head small{font-weight:600;color:#7b8798}
+#pc7BatchList .pc7-batch-items{display:flex;flex-direction:column;gap:6px;max-height:205px;overflow:auto;padding-right:2px}
+#pc7BatchList .pc7-batch-item{
+    display:flex;align-items:center;gap:7px;flex-wrap:wrap;
+    background:#fff;border:1px solid #dde7f4;border-left:4px solid #4285f4;
+    border-radius:9px;padding:7px 9px;box-shadow:0 2px 7px rgba(28,67,120,.05)
+}
+#pc7BatchList .pc7-batch-item.newest{border-left-color:#0f9d58;background:#fbfffc}
+#pc7BatchList .pc7-batch-main{min-width:230px;flex:1 1 330px}
+#pc7BatchList .pc7-batch-name{font-size:11.5px;font-weight:900;color:#12305f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#pc7BatchList .pc7-batch-meta{font-size:10px;color:#7b8798;margin-top:2px}
+#pc7BatchList .pc7-mini{display:inline-flex;align-items:center;border-radius:999px;padding:3px 7px;font-size:10px;font-weight:900;border:1px solid transparent;white-space:nowrap}
+#pc7BatchList .pc7-mini.total{background:#e8f5e9;color:#1b5e20;border-color:#a5d6a7}
+#pc7BatchList .pc7-mini.same{background:#f3f4f6;color:#5f6b7a;border-color:#d8dde5}
+#pc7BatchList .pc7-mini.new{background:#e9fbef;color:#15733d;border-color:#b8e7c6}
+#pc7BatchList .pc7-mini.upd{background:#fff0e8;color:#a84212;border-color:#f3c3a9}
+#pc7BatchList .pc7-mini.ttl{background:#eef4ff;color:#2458a6;border-color:#c9daf8}
+#pc7BatchList .pc7-batch-view{border:0;border-radius:7px;padding:5px 9px;background:#2458a6;color:#fff;font-size:10px;font-weight:900;cursor:pointer}
+#pc7BatchList .pc7-batch-view:hover{background:#174784}
+#pc7BatchList .pc7-batch-empty{font-size:11px;color:#7b8798;padding:3px 0}
+
 .price-table tr.pc7-row-new > td{background:#f0fff5 !important}
 .price-table tr.pc7-row-updated > td{background:#fff8f0 !important}
 .price-table tr.pc7-row-quoted > td{box-shadow:inset 3px 0 0 #38a169}
@@ -1239,7 +1273,11 @@
 #productChange7dToast{position:fixed;right:20px;top:20px;z-index:2147482500;width:min(430px,calc(100vw - 40px));display:none;background:#fff;border:1px solid #d8e2f0;border-left:5px solid #0f9d58;border-radius:12px;box-shadow:0 18px 45px rgba(15,35,70,.22);padding:14px 16px;color:#26364d;font:13px/1.55 "Segoe UI",Arial,sans-serif}
 #productChange7dToast strong{color:#12305f} #productChange7dToast .t-actions{margin-top:9px;display:flex;gap:7px;flex-wrap:wrap}
 #productChange7dToast button{border:0;border-radius:7px;padding:6px 9px;font-weight:800;font-size:11px;cursor:pointer;background:#eaf1ff;color:#2458a6}
-@media(max-width:800px){#productChange7dBar .pc7-note{width:100%;margin-left:0}.pc7-badge{display:inline-flex;margin:4px 0 0 4px}}
+@media(max-width:800px){
+    #productChange7dBar .pc7-note{width:100%;margin-left:0}
+    .pc7-badge{display:inline-flex;margin:4px 0 0 4px}
+    #pc7BatchList .pc7-batch-main{min-width:180px;flex-basis:100%}
+}
 </style>
 
 </head>
@@ -1421,18 +1459,23 @@
             </div>
             
 
-            <!-- ===== SẢN PHẨM MỚI / CẬP NHẬT 7 NGÀY ===== -->
+            <!-- ===== SẢN PHẨM MỚI / CẬP NHẬT — THEO DÕI TỪNG ĐỢT 7 NGÀY RIÊNG ===== -->
             <div id="productChange7dBar" aria-live="polite">
-                <span class="pc7-title">📣 THAY ĐỔI 7 NGÀY</span>
-                <span class="pc7-chip pc7-new" id="pc7NewCount">🆕 Mới: 0</span>
-                <span class="pc7-chip pc7-wait" id="pc7UnquotedCount">⏳ Chưa báo giá: 0</span>
-                <span class="pc7-chip pc7-upd" id="pc7UpdatedCount">🔄 Cập nhật: 0</span>
-                <button class="pc7-btn" id="pc7ShowNewBtn" type="button">Xem SP mới</button>
-                <button class="pc7-btn" id="pc7ShowUnquotedBtn" type="button">Chưa báo giá</button>
-                <button class="pc7-btn" id="pc7ShowUpdatedBtn" type="button">Xem thay đổi</button>
-                <button class="pc7-btn" id="pc7ShowAllBtn" type="button">Tất cả</button>
-                <button class="pc7-btn primary" id="pc7SelectQuoteBtn" type="button">✓ Chọn SP chưa BG</button>
-                <span class="pc7-note">Tự hết nổi bật sau 7 ngày · lịch sử vẫn được giữ</span>
+                <div class="pc7-summary-row">
+                    <span class="pc7-title">📣 THAY ĐỔI 7 NGÀY</span>
+                    <span class="pc7-chip pc7-total" id="pc7TrackedCount">📦 Trong đợt: 0</span>
+                    <span class="pc7-chip pc7-new" id="pc7NewCount">🆕 Mới thêm: 0</span>
+                    <span class="pc7-chip pc7-wait" id="pc7UnquotedCount">⏳ Chưa báo giá: 0</span>
+                    <span class="pc7-chip pc7-upd" id="pc7UpdatedCount">🔄 Cập nhật: 0</span>
+                    <span class="pc7-chip pc7-batches" id="pc7BatchCount">📚 Đợt: 0</span>
+                    <button class="pc7-btn" id="pc7ShowNewBtn" type="button">Xem SP mới</button>
+                    <button class="pc7-btn" id="pc7ShowUnquotedBtn" type="button">Chưa báo giá</button>
+                    <button class="pc7-btn" id="pc7ShowUpdatedBtn" type="button">Xem thay đổi</button>
+                    <button class="pc7-btn" id="pc7ShowAllBtn" type="button">Tất cả</button>
+                    <button class="pc7-btn primary" id="pc7SelectQuoteBtn" type="button">✓ Chọn SP chưa BG</button>
+                    <span class="pc7-note">Excel mới là nguồn chuẩn · xóa file = xóa ngay đợt thông báo · mỗi đợt tự tắt sau 7 ngày</span>
+                </div>
+                <div id="pc7BatchList" aria-label="Danh sách các đợt cập nhật đang còn hiệu lực"></div>
             </div>
 
             <!-- MENU THẢ - CHỨA CÁC CÔNG CỤ -->
@@ -1897,6 +1940,37 @@
         const a = pick(k1);
         return (a !== undefined) ? a : pick(k2);
     }
+    function ckGetSavedAt(rawMa){
+        const k1=ckMaKey(rawMa), k2=ckMaKeyLegacy(rawMa);
+        const a=(k1&&ckSaved[k1]&&Number(ckSaved[k1]._savedAt||0))||0;
+        const b=(k2&&ckSaved[k2]&&Number(ckSaved[k2]._savedAt||0))||0;
+        return Math.max(a,b);
+    }
+    function pc7SourceImportedAt(row, header){
+        try{
+            const id=pc7Identity(row,header||headersCache||[]); if(!id) return 0;
+            const m=currentProductSourceMeta && currentProductSourceMeta.get(id.key);
+            return Number(m && m.importedAt || 0);
+        }catch(e){ return 0; }
+    }
+    // Khi Excel mới có mã SP, dọn lớp CK Firebase cũ của chính các mã đó.
+    // Đây là hàng rào an toàn: dữ liệu Excel mới là nguồn chuẩn, không bị 20% cũ đè lên 24% mới.
+    async function ckPurgeSavedOverridesForExcel(data){
+        try{
+            if(!Array.isArray(data)||data.length<2) return 0;
+            const header=data[0]||[], maIdx=pc7FindCol(header,'code');
+            if(maIdx<0) return 0;
+            const updates={}; let n=0;
+            for(let i=1;i<data.length;i++){
+                const raw=(data[i]||[])[maIdx]; if(raw==null||String(raw).trim()==='') continue;
+                const k=ckMaKey(raw), legacy=ckMaKeyLegacy(raw);
+                if(k&&ckKeyIsValid(k)){ updates[k]=null; if(ckSaved[k]) delete ckSaved[k]; n++; }
+                if(legacy&&legacy!==k&&ckKeyIsValid(legacy)){ updates[legacy]=null; if(ckSaved[legacy]) delete ckSaved[legacy]; }
+            }
+            if(Object.keys(updates).length) await database.ref('ckSavedDiscounts').update(updates);
+            return n;
+        }catch(e){ console.warn('Dọn CK Firebase cũ khi nhập Excel:',e); return 0; }
+    }
     try {
         database.ref('ckSavedDiscounts').on('value', snap => {
             ckSaved = snap.val() || {};
@@ -2093,17 +2167,34 @@
 
 
     // ============================================================
-    // ===== THEO DÕI SẢN PHẨM MỚI / CẬP NHẬT TỪ EXCEL PHỤ — 7 NGÀY =====
-    // - Chỉ file được tải qua "Thêm file Excel phụ" mới tạo sự kiện.
-    // - SP mới: 🆕 MỚI. SP đã có nhưng dữ liệu thay đổi: 🔄 CẬP NHẬT.
-    // - Sau 7 ngày nhãn tự tắt, nhưng bản ghi lịch sử vẫn giữ trên Firebase.
-    // - Upload lại đúng SP không đổi: KHÔNG báo lại.
-    // - Nếu SP thay đổi lại: reset 7 ngày và trạng thái "chưa báo giá".
+    // ===== V8: THEO DÕI SẢN PHẨM MỚI / CẬP NHẬT TỪ EXCEL PHỤ — 7 NGÀY =====
+    // - MỖI LẦN upload Excel phụ có thay đổi = 1 "đợt cập nhật" độc lập.
+    // - Mỗi đợt có createdAt/expiresAt riêng, đủ 7 ngày thì chỉ đợt đó tự tắt.
+    // - Đợt hôm qua vẫn chạy đủ 7 ngày; đợt hôm nay bắt đầu 7 ngày mới.
+    // - Lịch sử đợt vẫn giữ trên Firebase; giao diện chỉ hiện các đợt còn hạn.
+    // - Upload lại đúng SP không đổi: KHÔNG tạo đợt giả.
+    // - Nếu SP thay đổi lại: tạo đợt mới + reset trạng thái SP hiện hành.
+    // - Có vá "Excel không có dòng tiêu đề": tự nhận diện và chèn header thông minh.
     // ============================================================
     const PRICE_CHANGE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
-    const PRICE_CHANGE_FB_PATH = 'priceProductChangeTrackerV1';
+    const PRICE_CHANGE_FB_PATH = 'priceProductChangeTrackerV1';       // trạng thái mới nhất theo từng SP (giữ tương thích)
+    const PRICE_CHANGE_BATCH_FB_PATH = 'priceProductChangeBatchesV2'; // lịch sử từng đợt upload độc lập
     let productChangeTracker = {};
+    let productChangeBatches = {};
     let pc7FilterMode = '';
+    let pc7BatchFilterId = '';
+    let pc7MigrationTimer = null;
+    let pc7PriceDataReady = false;      // chỉ đối chiếu batch sau khi priceData đã nạp xong
+    let pc7PruneBusy = false;           // chống listener Firebase gọi dọn orphan lặp nhau
+    let pc7ImportBusy = false;          // V8: khóa dọn orphan trong lúc đang tạo batch + gắn file để tránh batch mới bị xóa do race condition
+    // V6: metadata nguồn của từng SP đang hiển thị. File upload sau cùng thắng file cũ.
+    // Dùng để bảo đảm Excel mới luôn thắng CK Firebase cũ, nhưng vẫn cho phép người dùng lưu CK thủ công SAU lần import.
+    let currentProductSourceMeta = new Map();
+
+    const PC7_DEFAULT_HEADERS_15 = [
+        'STT','Mã SP','Tên thuốc','Hoạt chất','Hàm lượng','Công dụng chính','Quy cách',
+        'NSX','Xuất xứ','Đơn giá','CK ≥6 hộp','Giá ≥6 hộp','CK ≥12 hộp','Giá ≥12 hộp','Loại điều trị'
+    ];
 
     function pc7Norm(s){
         s = String(s == null ? '' : s).normalize ? String(s == null ? '' : s).normalize('NFD') : String(s == null ? '' : s);
@@ -2117,6 +2208,76 @@
         if(kind==='name') return hs.findIndex(h => h.includes('tensanpham')||h==='tenthuoc'||h==='tenhang'||h==='hanghoa'||h==='productname'||h==='name'||(h.includes('ten')&&h.length<18));
         return -1;
     }
+
+    // ===== NHẬN DIỆN HEADER THÔNG MINH =====
+    function pc7LooksLikeHeader(row){
+        if(!row || !row.length) return false;
+        const hs=row.map(pc7HeaderKey);
+        const strong=[
+            'stt','sothutu','masp','masanpham','mahang','sku','tenthuoc','tensanpham','tenhang',
+            'hoatchat','hamluong','congdung','congdungchinh','quycach','nsx','nhasanxuat','xuatxu',
+            'dongia','giaban','chietkhau','ck6hop','ck12hop','giamua','giavon','loaidieutri','nhomdieutri'
+        ];
+        let score=0;
+        hs.forEach(h=>{
+            if(!h) return;
+            if(strong.some(k=>h===k || h.includes(k))) score++;
+        });
+        if(pc7FindCol(row,'code')>=0) score+=2;
+        if(pc7FindCol(row,'name')>=0) score+=2;
+        return score>=3;
+    }
+    function pc7PickMasterHeader(colCount){
+        const candidates=[];
+        try{ if(currentData && currentData[0]) candidates.push(currentData[0]); }catch(e){}
+        try{
+            (uploadedFiles||[]).forEach(f=>{ if(f&&f.data&&f.data[0]) candidates.push(f.data[0]); });
+        }catch(e){}
+        for(const h of candidates){
+            if(pc7LooksLikeHeader(h) && h.length===colCount) return h.slice();
+        }
+        // Chấp nhận header chính dài hơn 1 cột nếu file mới thiếu STT.
+        for(const h of candidates){
+            if(!pc7LooksLikeHeader(h)) continue;
+            if(h.length===colCount+1 && pc7HeaderKey(h[0])==='stt') return h.slice(1);
+        }
+        if(colCount===PC7_DEFAULT_HEADERS_15.length) return PC7_DEFAULT_HEADERS_15.slice();
+        if(colCount===PC7_DEFAULT_HEADERS_15.length-1) return PC7_DEFAULT_HEADERS_15.slice(1);
+        return null;
+    }
+    function pc7EnsureSmartHeader(jsonData, fileName){
+        if(!Array.isArray(jsonData) || !jsonData.length) return jsonData;
+        if(pc7LooksLikeHeader(jsonData[0])) return jsonData;
+
+        const first=jsonData[0]||[];
+        const first0=String(first[0]==null?'':first[0]).trim();
+        const second=String(first[1]==null?'':first[1]).trim();
+        const likelyData=/^\d+(?:[.,]\d+)?$/.test(first0) || /^TH[_-]/i.test(second) ||
+            first.some(c=>/^TH[_-][A-Z0-9]/i.test(String(c==null?'':c).trim()));
+
+        // Nếu không đủ dấu hiệu là dòng dữ liệu thì không ép header.
+        if(!likelyData) return jsonData;
+
+        let header=pc7PickMasterHeader(first.length);
+        if(!header){
+            header=new Array(first.length).fill('').map((_,i)=>'Cột '+(i+1));
+            if(first.length>0 && /^\d+(?:[.,]\d+)?$/.test(first0)) header[0]='STT';
+            if(first.length>1 && (/^TH[_-]/i.test(second) || /^[A-Z]{2,}[A-Z0-9_-]*\d*/.test(second))){
+                header[1]='Mã SP';
+                if(first.length>2) header[2]='Tên thuốc';
+            }else if(first.length>1){
+                header[1]='Tên thuốc';
+            }
+        }
+
+        // Bảo đảm tracker luôn có ít nhất cột tên/mã khi cấu trúc giống danh sách thuốc.
+        if(pc7FindCol(header,'code')<0 && first.length>1 && /^TH[_-]/i.test(second)) header[1]='Mã SP';
+        if(pc7FindCol(header,'name')<0 && first.length>2) header[2]='Tên thuốc';
+
+        console.info('[IDECO V5] Tự chèn dòng tiêu đề cho Excel phụ:', fileName||'', header);
+        return [header, ...jsonData];
+    }
+
     function pc7IsGroupRow(row){
         if(!row) return false;
         const non=(row||[]).filter(c=>String(c==null?'':c).trim()!=='');
@@ -2133,7 +2294,6 @@
         return { key, code, name: name || code };
     }
     function pc7Hash(str){
-        // FNV-1a 32-bit + độ dài: khoá Firebase ngắn, ổn định và không chứa ký tự cấm
         let h=2166136261>>>0; str=String(str||'');
         for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619)>>>0; }
         return 'p_'+h.toString(36)+'_'+str.length.toString(36);
@@ -2162,7 +2322,7 @@
         const header=file.data[0]||[];
         for(let i=1;i<file.data.length;i++){
             const row=file.data[i]||[], id=pc7Identity(row,header); if(!id) continue;
-            if(!map.has(id.key)) map.set(id.key,{ obj:pc7RowObject(row,header), fileName:file.name||'', id });
+            map.set(id.key,{ obj:pc7RowObject(row,header), fileName:file.name||'', id, importedAt:Number(file.importedAt||0) }); // V6: file sau cùng thắng
         }
     }
     function pc7BuildBaseline(){
@@ -2177,20 +2337,35 @@
         return !!t && (Date.now()-t) < PRICE_CHANGE_TTL_MS;
     }
     function pc7ChangeForRow(row, header){
-        const id=pc7Identity(row,header); if(!id) return null;
+        const id=pc7Identity(row,header); if(!id || !pc7PriceDataReady) return null;
+        // V7: badge/cập nhật chỉ hợp lệ nếu sản phẩm thuộc ít nhất một đợt còn gắn với file đang tồn tại.
+        const linked=pc7CollectActiveBatches().some(b=>pc7BatchEntries(b).some(it=>it&&it.productKey===id.key));
+        if(!linked) return null;
         const rec=pc7GetByKey(id.key); return rec && pc7IsActive(rec) ? rec : null;
     }
+
+    // ===== GHI TRACKER SP + TRẢ VỀ ITEMS ĐỂ TẠO 1 ĐỢT RIÊNG =====
     async function pc7TrackAuxFile(fileName, data, baseline){
         const now=Date.now(), header=(data&&data[0])||[];
-        let added=0, updated=0, same=0;
-        const updates={};
+        let added=0, updated=0, same=0, inputCount=0;
+        const updates={}, items={}, seenInput=new Set();
         for(let i=1;i<(data||[]).length;i++){
             const row=data[i]||[], id=pc7Identity(row,header); if(!id) continue;
-            const old=baseline.get(id.key), hash=pc7Hash(id.key), prev=pc7GetByKey(id.key);
+            const hash=pc7Hash(id.key);
+            if(!seenInput.has(id.key)){ seenInput.add(id.key); inputCount++; }
+            const old=baseline.get(id.key), prev=pc7GetByKey(id.key);
             let type='';
             if(!old) type='new';
             else if(pc7RowsDiffer(old,row,header)) type='updated';
-            else { same++; continue; }
+            else type='same';
+
+            // V6: batch lưu CẢ danh sách file (mới + cập nhật + không đổi), để thông báo phản ánh đúng số SP Excel đã nhập.
+            items[hash]={
+                productKey:id.key, productName:id.name||'', productCode:id.code||'',
+                type:type, changedAt:now
+            };
+
+            if(type==='same'){ same++; continue; }
             if(type==='new') added++; else updated++;
             const rec={
                 productKey:id.key, productName:id.name||'', productCode:id.code||'',
@@ -2208,26 +2383,415 @@
             try{ await database.ref(PRICE_CHANGE_FB_PATH).update(updates); }
             catch(e){ console.warn('Không lưu được trạng thái SP mới lên Firebase:',e); }
         }
-        return {newCount:added,updatedCount:updated,sameCount:same,fileName:String(fileName||'')};
+        return {
+            newCount:added, updatedCount:updated, sameCount:same, inputCount:inputCount,
+            fileName:String(fileName||''), changedAt:now, items:items
+        };
+    }
+
+    // ===== MỖI LẦN UPLOAD = 1 BATCH CÓ HẠN 7 NGÀY RIÊNG =====
+    function pc7BatchIsActive(batch){
+        const exp=Number(batch && (batch.expiresAt || (Number(batch.createdAt||0)+PRICE_CHANGE_TTL_MS)) || 0);
+        return !!exp && Date.now() < exp;
+    }
+    function pc7BatchEntries(batch){
+        const items=batch && batch.items || {};
+        return Array.isArray(items) ? items.filter(Boolean) : Object.values(items).filter(Boolean);
+    }
+    // V8: hàm này bị thiếu ở V7 khiến pc7RenderBar/pc7DecorateTable ném ReferenceError
+    // và toàn bộ chức năng “SP mới/cập nhật 7 ngày” biến mất. Chỉ trả batch còn hạn VÀ còn file nguồn thực tế.
+    function pc7CollectActiveBatches(){
+        if(!pc7PriceDataReady) return [];
+        return Object.keys(productChangeBatches||{})
+            .map(k=>{
+                const b=productChangeBatches[k]||{};
+                if(!b.batchId) b.batchId=k;
+                return b;
+            })
+            .filter(pc7BatchIsActive)
+            .filter(pc7BatchLinkedToCurrentFile)
+            .sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0));
+    }
+
+    // ===== V8: QUAN HỆ 1-1 GIỮA FILE EXCEL PHỤ VÀ ĐỢT THÔNG BÁO =====
+    // Thông báo 7 ngày KHÔNG được tồn tại độc lập với file nguồn.
+    // File còn -> batch còn (nếu chưa đủ 7 ngày). File bị xóa -> batch phải biến mất ngay.
+    function pc7NormFileName(name){
+        return String(name||'').normalize ? String(name||'').normalize('NFC').trim().toLowerCase() : String(name||'').trim().toLowerCase();
+    }
+    function pc7IsRealTrackedFile(f){
+        if(!f || !Array.isArray(f.data)) return false;
+        if(String(f.name||'')==='User Added Data') return false;
+        if(String(f.sourceType||'')==='main' || String(f.sourceType||'')==='manual') return false;
+        // File V6/V7 có uploadId u_* hoặc pc7BatchId là Excel phụ chắc chắn.
+        if(String(f.sourceType||'')==='aux' || /^u_/i.test(String(f.uploadId||'')) || f.pc7BatchId) return true;
+        // Tương thích file phụ cũ: chỉ coi là file theo dõi khi đang có batch cùng tên.
+        const fn=pc7NormFileName(f.name);
+        return !!fn && Object.values(productChangeBatches||{}).some(b=>pc7NormFileName(b&&b.fileName)===fn);
+    }
+    function pc7CurrentTrackedFiles(){
+        return (uploadedFiles||[]).filter(pc7IsRealTrackedFile);
+    }
+    function pc7BatchLinkedToCurrentFile(batch){
+        if(!batch) return false;
+        if(!pc7PriceDataReady) return false; // tránh hiện batch cũ trước khi biết file nào đang thật sự còn trên bảng
+        const files=pc7CurrentTrackedFiles();
+        if(!files.length) return false;
+        const srcId=String(batch.sourceUploadId||'');
+        const bid=String(batch.batchId||'');
+        // Batch V7 có sourceUploadId: bắt buộc đúng CHÍNH file đó; không được cứu bằng tên file trùng.
+        if(srcId) return files.some(f=>String(f.uploadId||'')===srcId);
+        if(bid && files.some(f=>String(f.pc7BatchId||'')===bid)) return true;
+        // Batch V5/V6 cũ chưa có sourceUploadId: nối lại bằng tên file; chỉ dùng cho tương thích ngược.
+        const fn=pc7NormFileName(batch.fileName);
+        return !!fn && files.some(f=>pc7NormFileName(f.name)===fn);
+    }
+    function pc7FindBatchIdsForFile(file){
+        if(!file) return [];
+        const all=Object.keys(productChangeBatches||{});
+        const exact=[];
+        const uploadId=String(file.uploadId||'');
+        const batchId=String(file.pc7BatchId||'');
+        const fn=pc7NormFileName(file.name);
+        if(batchId && productChangeBatches[batchId]) exact.push(batchId);
+        all.forEach(id=>{
+            const b=productChangeBatches[id]||{};
+            if(uploadId && String(b.sourceUploadId||'')===uploadId && !exact.includes(id)) exact.push(id);
+        });
+        if(exact.length) return exact;
+
+        // Tương thích batch cũ không có ID liên kết: chọn batch cùng tên gần thời điểm import nhất.
+        const candidates=all.filter(id=>pc7NormFileName((productChangeBatches[id]||{}).fileName)===fn);
+        if(!candidates.length) return [];
+        const importedAt=Number(file.importedAt||0);
+        if(importedAt){
+            candidates.sort((a,b)=>Math.abs(Number((productChangeBatches[a]||{}).createdAt||0)-importedAt)-Math.abs(Number((productChangeBatches[b]||{}).createdAt||0)-importedAt));
+            return [candidates[0]];
+        }
+        // Nếu chỉ có 1 batch cùng tên thì liên kết chắc chắn; nhiều batch legacy thì lấy mới nhất để tránh xóa nhầm hàng loạt.
+        candidates.sort((a,b)=>Number((productChangeBatches[b]||{}).createdAt||0)-Number((productChangeBatches[a]||{}).createdAt||0));
+        return [candidates[0]];
+    }
+    async function pc7DeleteBatchesAndRebuild(batchIds){
+        const ids=Array.from(new Set((batchIds||[]).filter(id=>productChangeBatches && productChangeBatches[id])));
+        if(!ids.length) return 0;
+        const affected=new Set(), batchUpdates={};
+        ids.forEach(id=>{
+            const b=productChangeBatches[id];
+            pc7BatchEntries(b).forEach(it=>{ if(it&&it.productKey) affected.add(it.productKey); });
+            delete productChangeBatches[id];
+            batchUpdates[id]=null;
+        });
+        try{ await database.ref(PRICE_CHANGE_BATCH_FB_PATH).update(batchUpdates); }
+        catch(e){ console.warn('[V7] Không xóa được batch Firebase:',e); }
+
+        // Dựng lại tracker hiện hành CHỈ từ các batch còn gắn với file đang tồn tại.
+        const trackerUpdates={};
+        const remaining=pc7CollectActiveBatches();
+        affected.forEach(key=>{
+            let best=null, bestBatch=null, bestTs=0;
+            remaining.forEach(b=>{
+                pc7BatchEntries(b).forEach(it=>{
+                    if(!it || it.productKey!==key || it.type==='same') return;
+                    const ts=Number(it.changedAt||b.createdAt||0);
+                    if(ts>bestTs){ best=it; bestBatch=b; bestTs=ts; }
+                });
+            });
+            const h=pc7Hash(key);
+            if(best && bestBatch){
+                const prev=productChangeTracker[h]||{};
+                const rec={
+                    productKey:key, productName:best.productName||prev.productName||'', productCode:best.productCode||prev.productCode||'',
+                    type:best.type==='updated'?'updated':'new',
+                    firstSeenAt:Number(prev.firstSeenAt||bestTs||Date.now()), lastChangedAt:bestTs||Date.now(),
+                    lastSourceFile:String(bestBatch.fileName||''), quoteAt:null, lastQuotedSource:''
+                };
+                productChangeTracker[h]=rec; trackerUpdates[h]=rec;
+            }else{
+                delete productChangeTracker[h]; trackerUpdates[h]=null;
+            }
+        });
+        if(Object.keys(trackerUpdates).length){
+            try{ await database.ref(PRICE_CHANGE_FB_PATH).update(trackerUpdates); }
+            catch(e){ console.warn('[V7] Không cập nhật lại tracker sau xóa file:',e); }
+        }
+        return ids.length;
+    }
+    async function pc7PruneOrphanBatches(){
+        if(!pc7PriceDataReady || pc7PruneBusy || pc7ImportBusy) return 0;
+        pc7PruneBusy=true;
+        try{
+            const removeIds=[];
+            Object.keys(productChangeBatches||{}).forEach(id=>{
+                const b=productChangeBatches[id]||{};
+                // Chỉ dọn batch còn hạn; batch hết hạn không hiển thị và có thể giữ làm lịch sử.
+                if(pc7BatchIsActive(b) && !pc7BatchLinkedToCurrentFile(b)) removeIds.push(id);
+            });
+            if(!removeIds.length) return 0;
+            const n=await pc7DeleteBatchesAndRebuild(removeIds);
+            pc7RenderBar(); pc7DecorateTable();
+            console.info('[IDECO V7] Đã dọn',n,'đợt thông báo mồ côi không còn file nguồn.');
+            return n;
+        } finally { pc7PruneBusy=false; }
+    }
+    async function pc7CreateBatch(fileName, sum, sourceMeta){
+        if(!sum || !(Number(sum.newCount||0)+Number(sum.updatedCount||0))) return null;
+        const createdAt=Number(sum.changedAt)||Number(sourceMeta&&sourceMeta.importedAt)||Date.now();
+        const rec={
+            fileName:String(fileName||sum.fileName||'Excel phụ'),
+            sourceUploadId:String(sourceMeta&&sourceMeta.uploadId||''),
+            sourceType:'aux',
+            createdAt:createdAt,
+            expiresAt:createdAt + PRICE_CHANGE_TTL_MS,
+            newCount:Number(sum.newCount||0),
+            updatedCount:Number(sum.updatedCount||0),
+            sameCount:Number(sum.sameCount||0),
+            inputCount:Number(sum.inputCount||pc7BatchEntries({items:sum.items||{}}).length||0),
+            totalChanged:Number(sum.newCount||0)+Number(sum.updatedCount||0),
+            items:sum.items||{}
+        };
+        let batchId='';
+        try{
+            const ref=database.ref(PRICE_CHANGE_BATCH_FB_PATH).push();
+            batchId=ref.key || ('b_'+createdAt.toString(36)+'_'+Math.random().toString(36).slice(2,8));
+            rec.batchId=batchId;
+            productChangeBatches[batchId]=rec;
+            await ref.set(rec);
+        }catch(e){
+            console.warn('Không lưu được đợt cập nhật 7 ngày:',e);
+            batchId='local_'+createdAt.toString(36)+'_'+Math.random().toString(36).slice(2,8);
+            rec.batchId=batchId;
+            productChangeBatches[batchId]=rec;
+        }
+        return rec;
     }
     function pc7CollectActive(){
+        if(!pc7PriceDataReady) return [];
+        const allowed=new Set();
+        pc7CollectActiveBatches().forEach(b=>pc7BatchEntries(b).forEach(it=>{ if(it&&it.productKey&&it.type!=='same') allowed.add(it.productKey); }));
+        if(!allowed.size) return [];
         const out=new Map(), header=currentData[0]||[];
         for(let i=1;i<currentData.length;i++){
-            const row=currentData[i]||[], id=pc7Identity(row,header); if(!id) continue;
+            const row=currentData[i]||[], id=pc7Identity(row,header); if(!id || !allowed.has(id.key)) continue;
             const rec=pc7GetByKey(id.key); if(!rec || !pc7IsActive(rec)) continue;
             if(!out.has(id.key)) out.set(id.key,{rec,rowIdx:i,id});
         }
         return Array.from(out.values());
     }
+    function pc7DateLabel(ts){
+        const d=new Date(Number(ts)||Date.now());
+        return d.toLocaleString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    }
+    function pc7RemainingLabel(batch){
+        const exp=Number(batch && (batch.expiresAt || (Number(batch.createdAt||0)+PRICE_CHANGE_TTL_MS)) || 0);
+        let ms=exp-Date.now();
+        if(ms<=0) return 'Đã đủ 7 ngày';
+        const day=24*60*60*1000, hour=60*60*1000;
+        const d=Math.floor(ms/day);
+        const h=Math.floor((ms%day)/hour);
+        if(d>=1) return 'Còn '+d+' ngày '+h+' giờ';
+        const hh=Math.max(1,Math.ceil(ms/hour));
+        return 'Còn '+hh+' giờ';
+    }
+    function pc7RenderBatchList(){
+        const wrap=document.getElementById('pc7BatchList'); if(!wrap) return;
+        const batches=pc7CollectActiveBatches();
+        if(!batches.length){ wrap.style.display='none'; wrap.innerHTML=''; return; }
+        const rows=batches.map((b,i)=>{
+            const exp=Number(b.expiresAt || (Number(b.createdAt||0)+PRICE_CHANGE_TTL_MS));
+            return '<div class="pc7-batch-item '+(i===0?'newest':'')+'">'+
+                '<div class="pc7-batch-main">'+
+                    '<div class="pc7-batch-name">📄 '+pc7Esc(b.fileName||'Excel phụ')+'</div>'+
+                    '<div class="pc7-batch-meta">Bắt đầu: '+pc7Esc(pc7DateLabel(b.createdAt))+' · Tự tắt: '+pc7Esc(pc7DateLabel(exp))+'</div>'+
+                '</div>'+
+                '<span class="pc7-mini total">📦 '+Number(b.inputCount||pc7BatchEntries(b).length||0)+' SP</span>'+
+                '<span class="pc7-mini new">🆕 '+Number(b.newCount||0)+'</span>'+
+                '<span class="pc7-mini upd">🔄 '+Number(b.updatedCount||0)+'</span>'+
+                '<span class="pc7-mini same">✓ '+Number(b.sameCount||0)+'</span>'+
+                '<span class="pc7-mini ttl">⏱ '+pc7Esc(pc7RemainingLabel(b))+'</span>'+
+                '<button type="button" class="pc7-batch-view" data-pc7-batch="'+pc7Esc(b.batchId||'')+'">Xem đợt</button>'+
+            '</div>';
+        }).join('');
+        wrap.innerHTML='<div class="pc7-batch-head">📚 CÁC ĐỢT ĐANG THEO DÕI <small>mỗi đợt gắn với 1 file · xóa file là tắt đợt ngay</small></div>'+
+            '<div class="pc7-batch-items">'+rows+'</div>';
+        wrap.style.display='block';
+    }
+    function pc7RenderBatch(batchId){
+        const b=productChangeBatches && productChangeBatches[batchId];
+        if(!b || !pc7BatchIsActive(b)){ alert('Đợt cập nhật này đã đủ 7 ngày hoặc không còn tồn tại.'); pc7RenderBar(); return; }
+        const keys=new Set(pc7BatchEntries(b).map(it=>it&&it.productKey).filter(Boolean));
+        const header=currentData[0]||[], aoa=[header], source=[];
+        for(let i=1;i<currentData.length;i++){
+            const row=currentData[i]||[], id=pc7Identity(row,header);
+            if(id && keys.has(id.key)){ aoa.push(row); source.push(i); }
+        }
+        pc7BatchFilterId=batchId; pc7FilterMode='batch';
+        showingOnlySelected=false; searchInput.value=''; if(groupFilter)groupFilter.value='';
+        createTable(aoa,source); pc7DecorateTable();
+        if(aoa.length===1) alert('Đợt này còn hiệu lực nhưng các sản phẩm không còn trong dữ liệu bảng hiện tại.');
+    }
+
+    // ===== GIỮ LẠI ĐỢT CŨ CỦA V4 KHI NÂNG LÊN V5 =====
+    function pc7DayKey(ts){
+        const d=new Date(Number(ts)||0);
+        return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    }
+    async function pc7MigrateLegacyTrackerToBatches(){
+        try{
+            if(!pc7PriceDataReady) return;
+            const trackedFiles=pc7CurrentTrackedFiles();
+            const byName=new Map();
+            trackedFiles.forEach(f=>{
+                const k=pc7NormFileName(f.name); if(!k)return;
+                if(!byName.has(k)) byName.set(k,[]); byName.get(k).push(f);
+            });
+            const trackers=Object.values(productChangeTracker||{}).filter(r=>r&&r.productKey&&pc7IsActive(r));
+            if(!trackers.length) return;
+
+            const covered=new Set();
+            Object.values(productChangeBatches||{}).forEach(b=>{
+                const day=pc7DayKey(b && b.createdAt);
+                pc7BatchEntries(b).forEach(it=>{ if(it&&it.productKey) covered.add(it.productKey+'|'+day); });
+            });
+
+            const groups={};
+            trackers.forEach(r=>{
+                const day=pc7DayKey(r.lastChangedAt);
+                if(covered.has(r.productKey+'|'+day)) return;
+                const file=String(r.lastSourceFile||'');
+                const matches=byName.get(pc7NormFileName(file))||[];
+                // Không còn file nguồn -> tuyệt đối không dựng lại thông báo "ma".
+                if(!matches.length) return;
+                const gk=file+'|'+day;
+                if(!groups[gk]) groups[gk]={fileName:file,createdAt:0,newCount:0,updatedCount:0,sameCount:0,items:{},sourceUploadId:String(matches[0].uploadId||''),sourceType:'aux'};
+                const g=groups[gk];
+                g.createdAt=Math.max(Number(g.createdAt||0),Number(r.lastChangedAt||0));
+                if(r.type==='updated') g.updatedCount++; else g.newCount++;
+                g.items[pc7Hash(r.productKey)]={
+                    productKey:r.productKey,productName:r.productName||'',productCode:r.productCode||'',
+                    type:r.type||'new',changedAt:Number(r.lastChangedAt||0)
+                };
+            });
+
+            const writes={};
+            Object.keys(groups).forEach(gk=>{
+                const g=groups[gk], id='legacy_'+pc7Hash(gk).replace(/^p_/,'');
+                if(productChangeBatches[id]) return;
+                g.batchId=id;
+                g.totalChanged=g.newCount+g.updatedCount;
+                g.inputCount=pc7BatchEntries(g).length;
+                g.expiresAt=Number(g.createdAt||Date.now())+PRICE_CHANGE_TTL_MS;
+                productChangeBatches[id]=g;
+                writes[id]=g;
+            });
+            if(Object.keys(writes).length) await database.ref(PRICE_CHANGE_BATCH_FB_PATH).update(writes);
+        }catch(e){ console.warn('Chuyển lịch sử cũ sang danh sách đợt V7:',e); }
+    }
+    // V8: tự phục hồi batch bị V7 xóa nhầm do race-condition.
+    // Chỉ phục hồi file Excel phụ có metadata importedAt/uploadId còn trong 7 ngày và vẫn tồn tại trong priceData.
+    async function pc7RecoverMissingBatchesFromFiles(){
+        if(!pc7PriceDataReady || pc7ImportBusy) return 0;
+        let recovered=0, metaChanged=false;
+        const now=Date.now(), baseline=new Map(), trackerUpdates={};
+        pc7ImportBusy=true;
+        try{
+            // Đọc snapshot mới nhất để không tạo trùng nếu listener realtime chưa kịp chạy.
+            try{
+                const snaps=await Promise.all([
+                    database.ref(PRICE_CHANGE_BATCH_FB_PATH).once('value'),
+                    database.ref(PRICE_CHANGE_FB_PATH).once('value')
+                ]);
+                productChangeBatches=snaps[0].val()||{};
+                productChangeTracker=snaps[1].val()||{};
+            }catch(e){ console.warn('[V8] Không đọc được snapshot tracker để phục hồi:',e); }
+
+            for(const f of (uploadedFiles||[])){
+                if(!f || !Array.isArray(f.data) || f.data.length<2) continue;
+                const isAux=String(f.sourceType||'')==='aux' || /^u_/i.test(String(f.uploadId||'')) || !!f.pc7BatchId;
+                const importedAt=Number(f.importedAt||0);
+
+                if(isAux && importedAt && (now-importedAt)<PRICE_CHANGE_TTL_MS){
+                    const linked=pc7FindBatchIdsForFile(f).some(id=>productChangeBatches[id] && pc7BatchIsActive(productChangeBatches[id]));
+                    if(!linked){
+                        const header=f.data[0]||[], items={}, seen=new Set();
+                        let newCount=0, updatedCount=0, sameCount=0;
+                        for(let i=1;i<f.data.length;i++){
+                            const row=f.data[i]||[], id=pc7Identity(row,header); if(!id || seen.has(id.key)) continue;
+                            seen.add(id.key);
+                            const old=baseline.get(id.key);
+                            const type=!old ? 'new' : (pc7RowsDiffer(old,row,header) ? 'updated' : 'same');
+                            const h=pc7Hash(id.key);
+                            items[h]={productKey:id.key,productName:id.name||'',productCode:id.code||'',type,changedAt:importedAt};
+                            if(type==='new') newCount++; else if(type==='updated') updatedCount++; else sameCount++;
+                            if(type!=='same'){
+                                const prev=productChangeTracker[h]||{};
+                                if(!prev.lastChangedAt || Number(prev.lastChangedAt)<=importedAt){
+                                    const rec={
+                                        productKey:id.key, productName:id.name||prev.productName||'', productCode:id.code||prev.productCode||'',
+                                        type:type, firstSeenAt:Number(prev.firstSeenAt||importedAt), lastChangedAt:importedAt,
+                                        lastSourceFile:String(f.name||''), quoteAt:prev.quoteAt||null, lastQuotedSource:prev.lastQuotedSource||''
+                                    };
+                                    productChangeTracker[h]=rec; trackerUpdates[h]=rec;
+                                }
+                            }
+                        }
+                        if(newCount+updatedCount){
+                            const sum={newCount,updatedCount,sameCount,inputCount:seen.size,fileName:String(f.name||''),changedAt:importedAt,items};
+                            const b=await pc7CreateBatch(f.name,sum,{uploadId:String(f.uploadId||''),importedAt,sourceType:'aux'});
+                            if(b){ f.pc7BatchId=b.batchId||''; recovered++; metaChanged=true; }
+                        }
+                    }
+                }
+                // Dù có phục hồi hay không, file hiện tại trở thành baseline cho file sau.
+                pc7AddFileToBaseline(f,baseline);
+            }
+            if(Object.keys(trackerUpdates).length){
+                try{ await database.ref(PRICE_CHANGE_FB_PATH).update(trackerUpdates); }
+                catch(e){ console.warn('[V8] Không ghi lại tracker khi phục hồi:',e); }
+            }
+            if(metaChanged){
+                try{ await saveDataToFirebase(); }
+                catch(e){ console.warn('[V8] Không lưu pc7BatchId phục hồi vào priceData:',e); }
+            }
+        } finally { pc7ImportBusy=false; }
+        if(recovered) console.info('[IDECO V8] Đã phục hồi',recovered,'đợt 7 ngày bị V7 làm mất.');
+        return recovered;
+    }
+
+    function pc7ScheduleMigration(){
+        clearTimeout(pc7MigrationTimer);
+        if(!pc7PriceDataReady) return;
+        pc7MigrationTimer=setTimeout(()=>{
+            pc7PruneOrphanBatches()
+                .then(()=>pc7MigrateLegacyTrackerToBatches())
+                .then(()=>pc7RecoverMissingBatchesFromFiles())
+                .then(()=>pc7RenderBar())
+                .catch(e=>console.warn('[V8] Đồng bộ tracker:',e));
+        },900);
+    }
+
+    // V8: đã bỏ bản pc7CollectActive cũ ở đây vì nó ghi đè hàm strict ở phía trên
+    // và có thể làm tracker “ma” hiện dù batch/file nguồn đã bị xóa.
     function pc7RenderBar(){
         const bar=document.getElementById('productChange7dBar'); if(!bar) return;
         const list=pc7CollectActive();
+        const batches=pc7CollectActiveBatches();
         const nNew=list.filter(x=>x.rec.type==='new').length;
         const nUpd=list.filter(x=>x.rec.type==='updated').length;
         const nWait=list.filter(x=>!x.rec.quoteAt).length;
-        bar.style.display=list.length?'flex':'none';
-        const a=document.getElementById('pc7NewCount'), b=document.getElementById('pc7UnquotedCount'), c=document.getElementById('pc7UpdatedCount');
-        if(a)a.textContent='🆕 Mới: '+nNew; if(b)b.textContent='⏳ Chưa báo giá: '+nWait; if(c)c.textContent='🔄 Cập nhật: '+nUpd;
+        const trackedKeys=new Set();
+        batches.forEach(bt=>pc7BatchEntries(bt).forEach(it=>{ if(it&&it.productKey) trackedKeys.add(it.productKey); }));
+        const nTracked=trackedKeys.size;
+        bar.style.display=(list.length||batches.length)?'block':'none';
+        const t=document.getElementById('pc7TrackedCount'),
+              a=document.getElementById('pc7NewCount'), b=document.getElementById('pc7UnquotedCount'),
+              c=document.getElementById('pc7UpdatedCount'), d=document.getElementById('pc7BatchCount');
+        if(t)t.textContent='📦 Trong đợt: '+nTracked;
+        if(a)a.textContent='🆕 Mới thêm: '+nNew;
+        if(b)b.textContent='⏳ Chưa báo giá: '+nWait;
+        if(c)c.textContent='🔄 Cập nhật: '+nUpd;
+        if(d)d.textContent='📚 Đợt: '+batches.length;
+        pc7RenderBatchList();
     }
     function pc7DecorateTable(){
         const table=tableContainer && tableContainer.querySelector('table.price-table'); if(!table) return;
@@ -2243,19 +2807,21 @@
                 const badge=document.createElement('span');
                 badge.className='pc7-badge '+(rec.quoteAt?'quoted':(rec.type==='updated'?'updated':'new'));
                 badge.textContent=rec.quoteAt ? '✅ ĐÃ BÁO GIÁ' : (rec.type==='updated'?'🔄 CẬP NHẬT':'🆕 MỚI');
-                badge.title=(rec.lastSourceFile?'Nguồn: '+rec.lastSourceFile+' · ':'')+'Ngày ghi nhận: '+new Date(Number(rec.lastChangedAt)||Date.now()).toLocaleString('vi-VN');
+                badge.title=(rec.lastSourceFile?'Nguồn: '+rec.lastSourceFile+' · ':'')+
+                    'Ngày ghi nhận: '+new Date(Number(rec.lastChangedAt)||Date.now()).toLocaleString('vi-VN')+
+                    ' · Tự tắt sau 7 ngày kể từ lần thay đổi này';
                 tr.children[namePos].appendChild(badge);
             }
         });
         pc7RenderBar();
     }
     function pc7RenderFiltered(mode){
-        pc7FilterMode=mode||'';
+        pc7FilterMode=mode||''; pc7BatchFilterId='';
         if(!mode){ showingOnlySelected=false; searchInput.value=''; if(groupFilter)groupFilter.value=''; createTable(currentData); pc7DecorateTable(); return; }
         const header=currentData[0]||[], aoa=[header], source=[];
         for(let i=1;i<currentData.length;i++){
             const row=currentData[i]||[], rec=pc7ChangeForRow(row,header); if(!rec) continue;
-            let ok= mode==='all' || (mode==='new'&&rec.type==='new') || (mode==='updated'&&rec.type==='updated') || (mode==='unquoted'&&!rec.quoteAt);
+            const ok= mode==='all' || (mode==='new'&&rec.type==='new') || (mode==='updated'&&rec.type==='updated') || (mode==='unquoted'&&!rec.quoteAt);
             if(ok){ aoa.push(row); source.push(i); }
         }
         showingOnlySelected=false; searchInput.value=''; if(groupFilter)groupFilter.value='';
@@ -2275,16 +2841,28 @@
             const row=currentData[idx]||[], id=pc7Identity(row,header); if(!id)return;
             const hash=pc7Hash(id.key), rec=productChangeTracker[hash];
             if(!rec || rec.productKey!==id.key || !pc7IsActive(rec)) return;
-            rec.quoteAt=now; rec.lastQuotedSource=rec.lastSourceFile||''; productChangeTracker[hash]=rec; updates[hash+'/quoteAt']=now; updates[hash+'/lastQuotedSource']=rec.lastQuotedSource; n++;
+            rec.quoteAt=now; rec.lastQuotedSource=rec.lastSourceFile||'';
+            productChangeTracker[hash]=rec;
+            updates[hash+'/quoteAt']=now; updates[hash+'/lastQuotedSource']=rec.lastQuotedSource; n++;
         });
-        if(n){ database.ref(PRICE_CHANGE_FB_PATH).update(updates).catch(e=>console.warn('Lưu trạng thái đã báo giá:',e)); setTimeout(()=>{pc7RenderBar();pc7DecorateTable();},50); }
+        if(n){
+            database.ref(PRICE_CHANGE_FB_PATH).update(updates).catch(e=>console.warn('Lưu trạng thái đã báo giá:',e));
+            setTimeout(()=>{pc7RenderBar();pc7DecorateTable();},50);
+        }
     }
     function pc7ShowUploadToast(sum){
         const el=document.getElementById('productChange7dToast'); if(!el||!sum) return;
-        const n=sum.newCount||0,u=sum.updatedCount||0,same=sum.sameCount||0;
+        const n=Number(sum.newCount||0),u=Number(sum.updatedCount||0),same=Number(sum.sameCount||0), total=Number(sum.inputCount||0);
         if(!n&&!u) return;
-        el.innerHTML='<strong>📣 '+pc7Esc(sum.fileName||'Excel phụ')+'</strong><br>'+ (n?'🆕 <b>'+n+'</b> sản phẩm mới. ': '') + (u?'🔄 <b>'+u+'</b> sản phẩm có thay đổi. ':'') + (same?'✓ '+same+' sản phẩm đã có và không đổi.':'') + '<div class="t-actions"><button type="button" data-pc7="unquoted">Xem chưa báo giá</button><button type="button" data-pc7="close">Đóng</button></div>';
-        el.style.display='block'; clearTimeout(el._tm); el._tm=setTimeout(()=>el.style.display='none',10000);
+        const batchBtn=sum.batchId ? '<button type="button" data-pc7="batch" data-batch-id="'+pc7Esc(sum.batchId)+'">Xem đợt này</button>' : '';
+        el.innerHTML='<strong>📣 '+pc7Esc(sum.fileName||'Excel phụ')+'</strong><br>'+
+            (total?'📦 <b>'+total+'</b> sản phẩm trong file. ':'')+
+            (n?'🆕 <b>'+n+'</b> sản phẩm mới. ':'')+
+            (u?'🔄 <b>'+u+'</b> sản phẩm có thay đổi. ':'')+
+            (same?'✓ '+same+' sản phẩm đã có và không đổi.':'')+
+            '<br><span style="font-size:11px;color:#63758d">Đợt này được theo dõi đủ 7 ngày riêng, không làm mất đợt trước.</span>'+
+            '<div class="t-actions">'+batchBtn+'<button type="button" data-pc7="unquoted">Xem chưa báo giá</button><button type="button" data-pc7="close">Đóng</button></div>';
+        el.style.display='block'; clearTimeout(el._tm); el._tm=setTimeout(()=>el.style.display='none',12000);
     }
     function pc7Esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
     function pc7WireUI(){
@@ -2294,15 +2872,34 @@
         if(by('pc7ShowUpdatedBtn'))by('pc7ShowUpdatedBtn').onclick=()=>pc7RenderFiltered('updated');
         if(by('pc7ShowAllBtn'))by('pc7ShowAllBtn').onclick=()=>pc7RenderFiltered('');
         if(by('pc7SelectQuoteBtn'))by('pc7SelectQuoteBtn').onclick=pc7SelectUnquotedForQuote;
-        const toast=by('productChange7dToast'); if(toast)toast.addEventListener('click',e=>{const b=e.target.closest('button[data-pc7]');if(!b)return;if(b.dataset.pc7==='close')toast.style.display='none';else if(b.dataset.pc7==='unquoted'){toast.style.display='none';pc7RenderFiltered('unquoted');}});
+
+        const toast=by('productChange7dToast');
+        if(toast)toast.addEventListener('click',e=>{
+            const b=e.target.closest('button[data-pc7]'); if(!b)return;
+            if(b.dataset.pc7==='close') toast.style.display='none';
+            else if(b.dataset.pc7==='unquoted'){ toast.style.display='none'; pc7RenderFiltered('unquoted'); }
+            else if(b.dataset.pc7==='batch'){ toast.style.display='none'; pc7RenderBatch(b.dataset.batchId||''); }
+        });
+
+        const batchList=by('pc7BatchList');
+        if(batchList)batchList.addEventListener('click',e=>{
+            const b=e.target.closest('button[data-pc7-batch]'); if(!b)return;
+            pc7RenderBatch(b.dataset.pc7Batch||'');
+        });
     }
     function pc7InitRealtime(){
         try{
             database.ref(PRICE_CHANGE_FB_PATH).on('value',snap=>{
-                productChangeTracker=snap.val()||{}; pc7RenderBar(); pc7DecorateTable();
+                productChangeTracker=snap.val()||{};
+                pc7RenderBar(); pc7DecorateTable(); pc7ScheduleMigration();
+            });
+            database.ref(PRICE_CHANGE_BATCH_FB_PATH).on('value',snap=>{
+                productChangeBatches=snap.val()||{};
+                pc7RenderBar();
+                if(pc7PriceDataReady) pc7PruneOrphanBatches().then(()=>pc7ScheduleMigration()).catch(e=>console.warn('[V7] prune realtime:',e));
             });
         }catch(e){ console.warn('Tracker 7 ngày:',e); }
-        setInterval(()=>{ pc7RenderBar(); pc7DecorateTable(); },60*60*1000);
+        setInterval(()=>{ pc7RenderBar(); pc7DecorateTable(); if(pc7PriceDataReady) pc7PruneOrphanBatches(); },60*1000);
     }
     // CRUD
     let rowIndexMap = []; 
@@ -2472,17 +3069,20 @@
                     return;
                 }
             }
+            // V6: Excel bảng giá chính là nguồn chuẩn tuyệt đối — dọn CK Firebase cũ cho các mã trong file.
+            await ckPurgeSavedOverridesForExcel(newData);
+            const importedAt = Date.now();
             // Xóa tất cả file BangGia cũ, giữ lại "User Added Data"
             uploadedFiles = uploadedFiles.filter(f => f.name === "User Added Data");
             // Thêm file mới vào đầu
-            uploadedFiles.unshift({ name: file.name, data: newData });
+            uploadedFiles.unshift({ name: file.name, data: newData, importedAt, uploadId:'main_'+importedAt.toString(36), sourceType:'main' });
             // Rebuild danh sách file
             filesList.innerHTML = "";
             uploadedFiles.forEach((f, i) => addFileToList(f.name, i));
             updateFileNameDisplay();
             displayAllData();
             await saveDataToFirebase();
-            updateGiabanStatus.textContent = `✅ Đã cập nhật ${newData.length - 1} sản phẩm!`;
+            updateGiabanStatus.textContent = `✅ Đã cập nhật ${pc7CountUniqueProductsInData(newData)} sản phẩm từ Excel!`;
             updateGiabanStatus.style.color = "#2e7d32";
             // Reset input để có thể chọn lại cùng file
             updateGiabanInput.value = "";
@@ -2497,10 +3097,10 @@
         applyFilters(); 
     });
     passwordDialogCancel.addEventListener("click", () => { passwordDialog.style.display = "none"; passwordInput.value = ""; fileIndexToRemove = null; });
-    passwordDialogConfirm.addEventListener("click", () => {
+    passwordDialogConfirm.addEventListener("click", async () => {
         const enteredPassword = passwordInput.value;
         if (enteredPassword === CORRECT_PASSWORD) {
-            if (fileIndexToRemove !== null) removeFile(fileIndexToRemove);
+            if (fileIndexToRemove !== null) await removeFile(fileIndexToRemove);
             passwordDialog.style.display = "none"; passwordInput.value = ""; fileIndexToRemove = null;
         } else { alert("Password không đúng. Vui lòng thử lại."); passwordInput.value = ""; }
     });
@@ -3092,26 +3692,67 @@
     async function handleFileSelect(event){
         const files = event.target.files; if(!files.length) return;
         loadingIndicator.style.display = "block"; tableContainer.innerHTML = "";
-        // Baseline được chụp TRƯỚC khi nạp file phụ: dùng để biết SP nào thật sự mới / đã thay đổi.
-        const pc7Baseline = pc7BuildBaseline();
-        const pc7Totals = {newCount:0,updatedCount:0,sameCount:0,fileName:''};
-        for(let i=0;i<files.length;i++){
-            const file = files[i];
-            try{
-                const data = await readExcelFile(file);
-                autoFillStt(data); // Tự động điền số thứ tự nối tiếp
-                // Ghi trạng thái 7 ngày TRƯỚC khi đưa file vào baseline.
-                const sm = await pc7TrackAuxFile(file.name, data, pc7Baseline);
-                pc7Totals.newCount += sm.newCount; pc7Totals.updatedCount += sm.updatedCount; pc7Totals.sameCount += sm.sameCount;
-                pc7Totals.fileName = files.length>1 ? (files.length+' file Excel phụ') : file.name;
-                uploadedFiles.push({ name: file.name, data });
-                addFileToList(file.name, uploadedFiles.length - 1);
-                pc7AddFileToBaseline({name:file.name,data:data}, pc7Baseline);
-            }catch(error){ console.error("Lỗi khi đọc file:", file.name, error); alert(`Lỗi khi đọc file ${file.name}: ${error.message}`); }
+        pc7ImportBusy = true; // V8: chặn realtime-prune xóa batch vừa tạo trước khi file kịp được gắn uploadId
+
+        const pc7Totals = {newCount:0,updatedCount:0,sameCount:0,fileName:'',batchId:''};
+        let lastBatchSummary = null;
+        try{
+            // Giữ các thông báo cũ còn hạn trước khi tạo đợt hôm nay.
+            try { await pc7MigrateLegacyTrackerToBatches(); } catch(e) {}
+
+            // Baseline chụp trước upload đầu tiên. Sau mỗi file sẽ bổ sung vào baseline để file kế tiếp so sánh đúng.
+            const pc7Baseline = pc7BuildBaseline();
+
+            for(let i=0;i<files.length;i++){
+                const file = files[i];
+                try{
+                    const data = await readExcelFile(file);
+                    autoFillStt(data);
+                    const importedAt = Date.now();
+                    const uploadId='u_'+importedAt.toString(36)+'_'+Math.random().toString(36).slice(2,8);
+
+                    // Excel mới là nguồn chuẩn cho các mã có trong file: xóa override CK cũ trước khi render.
+                    await ckPurgeSavedOverridesForExcel(data);
+
+                    // So sánh + tracker sản phẩm.
+                    const sm = await pc7TrackAuxFile(file.name, data, pc7Baseline);
+
+                    // Tạo batch trong khi pc7ImportBusy=true để listener không thể dọn nhầm batch mới.
+                    const batch = await pc7CreateBatch(file.name, sm, {uploadId, importedAt, sourceType:'aux'});
+                    if(batch) sm.batchId = batch.batchId || '';
+
+                    // QUAN TRỌNG: gắn file vào uploadedFiles ngay trong cùng transaction import.
+                    const fileRec={ name:file.name, data, importedAt, uploadId, pc7BatchId:(sm.batchId||''), sourceType:'aux' };
+                    uploadedFiles.push(fileRec);
+                    addFileToList(file.name, uploadedFiles.length - 1);
+                    pc7AddFileToBaseline(fileRec, pc7Baseline);
+
+                    pc7Totals.newCount += sm.newCount;
+                    pc7Totals.updatedCount += sm.updatedCount;
+                    pc7Totals.sameCount += sm.sameCount;
+                    pc7Totals.fileName = files.length>1 ? (files.length+' file Excel phụ') : file.name;
+                    if(files.length===1) pc7Totals.batchId = sm.batchId || '';
+                    if(sm.newCount || sm.updatedCount) lastBatchSummary = sm;
+                }catch(error){
+                    console.error("Lỗi khi đọc file:", file.name, error);
+                    alert(`Lỗi khi đọc file ${file.name}: ${error.message}`);
+                }
+            }
+
+            // Chỉ khi file + uploadId + pc7BatchId đã đầy đủ mới ghi priceData lên Firebase.
+            updateFileNameDisplay();
+            displayAllData();
+            await saveDataToFirebase();
+        } finally {
+            pc7ImportBusy = false;
+            loadingIndicator.style.display = "none";
         }
-        updateFileNameDisplay(); displayAllData(); await saveDataToFirebase(); loadingIndicator.style.display = "none";
-        pc7RenderBar(); pc7DecorateTable(); pc7ShowUploadToast(pc7Totals);
-        event.target.value = ''; // cho phép chọn lại chính file đó để kiểm tra/cập nhật
+
+        // Sau khi transaction hoàn tất mới cho phép dọn batch mồ côi.
+        try { await pc7PruneOrphanBatches(); } catch(e) { console.warn('[V8] prune sau import:',e); }
+        pc7RenderBar(); pc7DecorateTable();
+        pc7ShowUploadToast(files.length===1 && lastBatchSummary ? lastBatchSummary : pc7Totals);
+        event.target.value = '';
     }
     function readExcelFile(file){
         return new Promise((resolve,reject)=>{
@@ -3136,6 +3777,9 @@
                         }
                         jsonData = jsonData.map(row => row.filter((_,index)=> columnsToKeep.includes(index)));
                     }
+                    // V5: Nếu Excel bắt đầu ngay bằng dòng sản phẩm (không có header),
+                    // tự chèn header từ bảng chính / mẫu 15 cột để tracker 7 ngày vẫn nhận diện đúng.
+                    jsonData = pc7EnsureSmartHeader(jsonData, file && file.name);
                     resolve(jsonData);
                 }catch(error){ reject(error); }
             };
@@ -3153,45 +3797,138 @@
             fileIndexToRemove = indexToRemove; passwordDialog.style.display = "flex"; passwordInput.focus();
         });
     }
-    function removeFile(index){
-        uploadedFiles.splice(index,1); filesList.innerHTML = "";
+    async function pc7RemoveTrackingForFile(file){
+        if(!file) return 0;
+        try{
+            const removeIds=pc7FindBatchIdsForFile(file);
+            if(!removeIds.length){
+                console.info('[IDECO V7] File không có batch 7 ngày liên kết:',file.name||'');
+                return 0;
+            }
+            return await pc7DeleteBatchesAndRebuild(removeIds);
+        }catch(e){ console.warn('Xóa tracker theo file:',e); return 0; }
+    }
+    async function removeFile(index){
+        if(index<0 || index>=uploadedFiles.length) return;
+        const removedFile=uploadedFiles[index];
+        const removedName=String(removedFile&&removedFile.name||'Excel phụ');
+
+        // V7: FILE là nguồn sự thật. Gỡ file khỏi danh sách trước để mọi phép render sau đó không thể giữ notification mồ côi.
+        uploadedFiles.splice(index,1);
+        filesList.innerHTML = '';
         uploadedFiles.forEach((file,i)=> addFileToList(file.name,i));
-        updateFileNameDisplay(); displayAllData(); saveDataToFirebase();
+        updateFileNameDisplay();
+        displayAllData();
+
+        // Lưu danh sách file mới lên Firebase trước, sau đó xóa batch/tracker gắn với file vừa xóa.
+        await saveDataToFirebase();
+        const nBatch=await pc7RemoveTrackingForFile(removedFile);
+        await pc7PruneOrphanBatches();
+
+        pc7RenderBar(); pc7DecorateTable();
+        const totalNow=(typeof pc7CurrentUniqueProductCount==='function') ? pc7CurrentUniqueProductCount() : Math.max(0,(currentData||[]).length-1);
+        setTimeout(()=>alert('✅ Đã xóa file: '+removedName+'\n'+
+            '• Dữ liệu bảng đã tính lại theo các file còn lại.\n'+
+            '• Đã xóa '+nBatch+' đợt thông báo 7 ngày liên quan.\n'+
+            '• Tổng sản phẩm hiện tại: '+totalNow+' SP.\n\n'+
+            'Thông báo của file đã xóa sẽ không còn xuất hiện lại.'),60);
     }
     function updateFileNameDisplay(){
         if(uploadedFiles.length===0) fileNameDisplay.textContent = "Chưa chọn file";
         else if(uploadedFiles.length===1) fileNameDisplay.textContent = uploadedFiles[0].name;
         else fileNameDisplay.textContent = `${uploadedFiles.length} file đã chọn`;
     }
+    function pc7CountUniqueProductsInData(data){
+        if(!Array.isArray(data)||data.length<2) return 0;
+        const header=data[0]||[], set=new Set();
+        for(let i=1;i<data.length;i++){
+            const id=pc7Identity(data[i]||[],header); if(id) set.add(id.key);
+        }
+        return set.size;
+    }
+    function pc7CurrentUniqueProductCount(){
+        const header=(currentData&&currentData[0])||[], set=new Set();
+        for(let i=1;i<(currentData||[]).length;i++){
+            const id=pc7Identity(currentData[i]||[],header); if(id) set.add(id.key);
+        }
+        return set.size;
+    }
+
+    function pc7MapRowToMaster(row, sourceHeader, masterHeader){
+        row=row||[]; sourceHeader=sourceHeader||[]; masterHeader=masterHeader||[];
+        // Cấu trúc cùng số cột: giữ NGUYÊN vị trí/giá trị Excel để tránh sai lệch CK, giá, hàm lượng.
+        if(sourceHeader.length===masterHeader.length){
+            const out=new Array(masterHeader.length).fill('');
+            for(let i=0;i<masterHeader.length;i++) out[i]=(row[i]===undefined||row[i]===null)?'':row[i];
+            return out;
+        }
+        const srcMap=new Map();
+        sourceHeader.forEach((h,i)=>{ const k=pc7HeaderKey(h); if(k&&!srcMap.has(k)) srcMap.set(k,i); });
+        const out=new Array(masterHeader.length).fill('');
+        masterHeader.forEach((h,i)=>{
+            const k=pc7HeaderKey(h); let si=srcMap.has(k)?srcMap.get(k):-1;
+            // alias quan trọng
+            if(si<0 && (k==='masp'||k==='masanpham')) si=pc7FindCol(sourceHeader,'code');
+            if(si<0 && (k==='tenthuoc'||k==='tensanpham'||k==='tenhang')) si=pc7FindCol(sourceHeader,'name');
+            if(si>=0) out[i]=(row[si]===undefined||row[si]===null)?'':row[si];
+        });
+        return out;
+    }
     function displayAllData(){
         if (editingRowState.index !== null) { handleEditRow(); }
-        if(uploadedFiles.length===0){ tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị. Vui lòng tải lên file Excel.</p>'; columnToolbar.style.display='none'; return; }
-        currentData = [];
-        rowIndexMap = [];
-        let isFirstFile = true;
-        uploadedFiles.forEach((file, fileIndex) => {
-            if (!file.data || file.data.length === 0) return;
-            let dataSlice = file.data;
-            if (isFirstFile && dataSlice.length > 0) {
-                currentData.push(dataSlice[0]);
-                rowIndexMap.push({ fileIndex: fileIndex, rowIndexInFile: 0 });
-                headersCache = dataSlice[0];
-                isFirstFile = false;
-            }
-            for (let i = 1; i < dataSlice.length; i++) {
-                if (dataSlice[i] && dataSlice[i].some(cell => String(cell).trim() !== '')) {
-                    currentData.push(dataSlice[i]);
-                    rowIndexMap.push({ fileIndex: fileIndex, rowIndexInFile: i });
+        if(uploadedFiles.length===0){
+            currentData=[]; headersCache=[]; currentProductSourceMeta=new Map();
+            tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị. Vui lòng tải lên file Excel.</p>';
+            columnToolbar.style.display='none';
+            if(rowCountBadge){ rowCountBadge.style.display='none'; rowCountBadge.textContent='0 SP'; }
+            pc7RenderBar();
+            return;
+        }
+
+        // V6: xây "bảng hợp nhất" theo Mã SP/Tên thuốc. File upload SAU CÙNG thắng file trước.
+        // Nhờ vậy: SP trùng không cộng đôi; SP mới làm tổng tăng; xóa file sẽ tự quay về dữ liệu lớp trước.
+        const validFiles=uploadedFiles.map((f,idx)=>({f,idx})).filter(x=>x.f&&Array.isArray(x.f.data)&&x.f.data.length>0);
+        if(!validFiles.length) return;
+        const masterHeader=(validFiles[0].f.data[0]||[]).slice();
+        headersCache=masterHeader;
+        const latest=new Map(), sourceMeta=new Map(), sequence=[], seenSeq=new Set();
+        let firstDataFile=true;
+
+        validFiles.forEach(({f,idx:fileIndex})=>{
+            const sourceHeader=f.data[0]||[];
+            const importedAt=Number(f.importedAt||0);
+            for(let ri=1;ri<f.data.length;ri++){
+                const raw=f.data[ri]||[];
+                if(!raw.some(c=>String(c==null?'':c).trim()!=='')) continue;
+                if(pc7IsGroupRow(raw)){
+                    if(firstDataFile) sequence.push({type:'group',row:pc7MapRowToMaster(raw,sourceHeader,masterHeader)});
+                    continue;
                 }
+                const mapped=pc7MapRowToMaster(raw,sourceHeader,masterHeader);
+                const id=pc7Identity(mapped,masterHeader);
+                if(!id) continue; // loại ghi chú/footer Excel, không tính là sản phẩm
+                if(!seenSeq.has(id.key)){ seenSeq.add(id.key); sequence.push({type:'product',key:id.key}); }
+                latest.set(id.key,mapped); // file sau ghi đè giá trị cũ
+                sourceMeta.set(id.key,{fileIndex,rowIndexInFile:ri,fileName:f.name||'',importedAt,uploadId:f.uploadId||'',pc7BatchId:f.pc7BatchId||''});
             }
+            firstDataFile=false;
         });
+
+        currentData=[masterHeader]; rowIndexMap=[{fileIndex:validFiles[0].idx,rowIndexInFile:0}];
+        sequence.forEach(token=>{
+            if(token.type==='group') currentData.push(token.row);
+            else if(latest.has(token.key)) currentData.push(latest.get(token.key));
+        });
+        currentProductSourceMeta=sourceMeta;
+
         selectedRowIdx.clear(); showingOnlySelected=false; searchInput.value='';
-        mergeByGroupAndRenumber();      // Trộn SP file phụ vào đúng nhóm + đánh lại STT liền mạch
-        populateGroupFilter();          // Nạp danh sách nhóm điều trị vào dropdown
+        ckBase={}; ckDiscount={}; // rowIdx thay đổi sau gộp → tuyệt đối không tái dùng cache cũ
+        mergeByGroupAndRenumber();
+        populateGroupFilter();
         if(groupFilter) groupFilter.value = '';
-        createTable(currentData); 
+        createTable(currentData);
         updateActionButtonsState();
-        updateFilteredSection(); // Cập nhật phần chọn tất cả danh sách đã lọc
+        updateFilteredSection();
     }
 
     // ===== TRỘN SẢN PHẨM THEO NHÓM + ĐÁNH LẠI STT LIỀN MẠCH =====
@@ -3481,6 +4218,7 @@
         if (!inputs.length){ if (typeof zaloToast==='function') zaloToast('Không có ô chiết khấu để lưu.',3000); return; }
         // Gộp theo Mã sp: { maKey: {6, 12} } — bỏ ô không có Mã sp
         const payload = {};
+        const ckSaveNow = Date.now();
         const cleared = {};                 // { maKey: { mark: true } } — ô bị xoá trắng → gỡ khỏi bản đã lưu
         const legacyToDrop = new Set();     // khoá kiểu cũ cần dọn sau khi chuyển sang khoá mới
         let noKeyCount = 0, badKeyCount = 0;
@@ -3496,6 +4234,7 @@
             const num = parseFloat(v); if (isNaN(num)) return;
             if (!payload[maKey]) payload[maKey] = {};
             payload[maKey][mark] = num;
+            payload[maKey]._savedAt = ckSaveNow;
         });
         // Hợp nhất với dữ liệu đã lưu trước đó cho các sản phẩm không hiển thị (giữ nguyên)
         const merged = {};
@@ -3676,14 +4415,19 @@
                     const rawMa = (maSpColIdx !== -1) ? rowData[maSpColIdx] : '';
                     const maKey = (maSpColIdx !== -1) ? ckMaKey(rawMa) : '';
                     let savedForCell = (maKey ? ckGetSaved(rawMa, mark) : undefined);
+                    const savedAt = maKey ? ckGetSavedAt(rawMa) : 0;
+                    const importedAt = pc7SourceImportedAt(rowData, headersCache);
                     const temp = (ckDiscount[rowIdx] && ckDiscount[rowIdx][mark] !== undefined) ? ckDiscount[rowIdx][mark] : '';
                     if (temp !== '') {
-                        inp.value = temp;                                   // đang có chỉnh tạm chưa lưu
+                        inp.value = temp;                                   // chỉnh tạm trong phiên
+                    } else if (!isNaN(baseVal) && importedAt >= savedAt) {
+                        inp.value = baseVal;                                // V6: Excel mới hơn (hoặc không có override) luôn là nguồn chuẩn
+                        if(!ckDiscount[rowIdx]) ckDiscount[rowIdx]={}; ckDiscount[rowIdx][mark]=String(baseVal);
                     } else if (savedForCell !== undefined) {
-                        inp.value = savedForCell;                           // dùng chiết khấu đã lưu
+                        inp.value = savedForCell;                           // chỉ dùng override nếu được lưu SAU lần import Excel gần nhất
                         if(!ckDiscount[rowIdx]) ckDiscount[rowIdx]={}; ckDiscount[rowIdx][mark]=String(savedForCell);
                     } else if (!isNaN(baseVal)) {
-                        inp.value = baseVal;                                // dùng mức gốc từ Excel
+                        inp.value = baseVal;
                         if(!ckDiscount[rowIdx]) ckDiscount[rowIdx]={}; ckDiscount[rowIdx][mark]=String(baseVal);
                     } else { inp.value = ''; }
                     inp.dataset.makey = maKey;
@@ -3970,26 +4714,42 @@
     function normalizeFilesFromFirebase(files){
         return fbToArray(files).filter(Boolean).map(f => ({
             name: (f && f.name) || 'Dữ liệu',
-            data: Array.from(fbToArray(f && f.data), r => Array.from(fbToArray(r), c => (c == null ? '' : c)))
+            data: Array.from(fbToArray(f && f.data), r => Array.from(fbToArray(r), c => (c == null ? '' : c))),
+            importedAt: Number(f && f.importedAt || 0),
+            uploadId: (f && f.uploadId) || '',
+            pc7BatchId: (f && f.pc7BatchId) || '',
+            sourceType: (f && f.sourceType) || ''
         }));
     }
 
     function loadDataFromFirebase(){
         loadingIndicator.style.display = 'block'; tableContainer.innerHTML = ''; filesList.innerHTML = '';
+        pc7PriceDataReady=false;
         return database.ref('priceData').once('value').then(snapshot=>{
             const data = snapshot.val();
-            if(data && data.files){ 
-                uploadedFiles = normalizeFilesFromFirebase(data.files);   // [VÁ v2] object → mảng, tránh lệch chỉ số dòng
-                // Tự động thêm cột Mã sp nếu data cũ chưa có
+            if(data && data.files){
+                uploadedFiles = normalizeFilesFromFirebase(data.files);
                 injectMaSpIfMissing(uploadedFiles);
                 filesList.innerHTML = '';
-                uploadedFiles.forEach((file,index)=> addFileToList(file.name,index)); 
-                updateFileNameDisplay(); 
-                displayAllData(); 
+                uploadedFiles.forEach((file,index)=> addFileToList(file.name,index));
+                updateFileNameDisplay();
+                displayAllData();
+            } else {
+                uploadedFiles=[];
+                tableContainer.innerHTML = '<p>Không có dữ liệu trên server. Vui lòng tải lên file Excel.</p>';
+                columnToolbar.style.display = 'none';
             }
-            else { tableContainer.innerHTML = '<p>Không có dữ liệu trên server. Vui lòng tải lên file Excel.</p>'; columnToolbar.style.display = 'none'; }
+            pc7PriceDataReady=true;
             loadingIndicator.style.display = 'none';
-        }).catch(error=>{ console.error('Lỗi khi tải dữ liệu:', error); loadingIndicator.style.display = 'none'; tableContainer.innerHTML = '<p>Lỗi khi tải dữ liệu từ server. Vui lòng thử lại sau.</p>'; });
+            // V7: vừa mở ứng dụng là đối chiếu ngay danh sách thông báo với file thực tế đang còn.
+            return pc7PruneOrphanBatches().then(()=>{ pc7RenderBar(); pc7DecorateTable(); pc7ScheduleMigration(); });
+        }).catch(error=>{
+            console.error('Lỗi khi tải dữ liệu:', error);
+            pc7PriceDataReady=false;
+            loadingIndicator.style.display = 'none';
+            tableContainer.innerHTML = '<p>Lỗi khi tải dữ liệu từ server. Vui lòng thử lại sau.</p>';
+            throw error;
+        });
     }
     // ========== XUẤT EXCEL VIEW (v2 — GIỮ ĐỦ CỘT CHIẾT KHẤU) ==========
     // LỖI CŨ: ô chiết khấu được render bằng <input class="ck-input"> nên td.textContent = ''
