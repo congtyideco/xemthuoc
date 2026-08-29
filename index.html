@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Xem Giá Thuốc — Hệ Thống Báo Giá Pro · V7 đồng bộ file/thông báo 7 ngày</title>
+    <title>Xem Giá Thuốc — Báo Giá Pro V7 · Chọn SP Excel phụ · Popup 24H</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -1217,7 +1217,7 @@
 
 
 <style id="ideco-product-change-7d-style">
-/* ===== IDECO V8: KHÔI PHỤC SP MỚI/CẬP NHẬT 7 NGÀY · FILE↔THÔNG BÁO ĐỒNG BỘ CHẶT ===== */
+/* ===== IDECO V6: EXCEL LÀ NGUỒN CHUẨN · GỘP TRÙNG THÔNG MINH · THEO DÕI TỪNG ĐỢT 7 NGÀY ===== */
 #productChange7dBar{
     display:none; margin:0 0 10px; padding:10px 12px;
     border:1px solid #cfe0ff; border-radius:12px;
@@ -1243,7 +1243,7 @@
 #pc7BatchList{display:none;margin-top:9px;padding-top:9px;border-top:1px dashed #cddcf2}
 #pc7BatchList .pc7-batch-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;color:#345274;font-size:11px;font-weight:800}
 #pc7BatchList .pc7-batch-head small{font-weight:600;color:#7b8798}
-#pc7BatchList .pc7-batch-items{display:flex;flex-direction:column;gap:6px;max-height:205px;overflow:auto;padding-right:2px}
+#pc7BatchList .pc7-batch-items{display:flex;flex-direction:column;gap:8px;max-height:430px;overflow:auto;padding-right:3px}
 #pc7BatchList .pc7-batch-item{
     display:flex;align-items:center;gap:7px;flex-wrap:wrap;
     background:#fff;border:1px solid #dde7f4;border-left:4px solid #4285f4;
@@ -1262,6 +1262,21 @@
 #pc7BatchList .pc7-batch-view{border:0;border-radius:7px;padding:5px 9px;background:#2458a6;color:#fff;font-size:10px;font-weight:900;cursor:pointer}
 #pc7BatchList .pc7-batch-view:hover{background:#174784}
 #pc7BatchList .pc7-batch-empty{font-size:11px;color:#7b8798;padding:3px 0}
+#pc7BatchList .pc7-batch-selectall{border:0;border-radius:7px;padding:5px 9px;background:#0f9d58;color:#fff;font-size:10px;font-weight:900;cursor:pointer}
+#pc7BatchList .pc7-batch-selectall:hover{background:#0b8248}
+#pc7BatchList .pc7-product-list{width:100%;margin-top:2px;border-top:1px dashed #dbe5f2;padding-top:6px;display:grid;gap:4px}
+#pc7BatchList .pc7-product-item{display:grid;grid-template-columns:24px minmax(160px,1fr) auto;gap:7px;align-items:center;padding:5px 7px;border-radius:7px;background:#f8fbff;border:1px solid #edf2f8}
+#pc7BatchList .pc7-product-item.selected{background:#eafbef;border-color:#b6e6c4}
+#pc7BatchList .pc7-product-item.disabled{opacity:.68;background:#f7f7f8}
+#pc7BatchList .pc7-product-check{width:16px;height:16px;cursor:pointer;accent-color:#0f9d58}
+#pc7BatchList .pc7-product-check:disabled{cursor:not-allowed}
+#pc7BatchList .pc7-product-name{min-width:0;font-size:10.8px;font-weight:800;color:#213d62;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#pc7BatchList .pc7-product-code{font-size:9px;color:#7b8798;margin-left:5px;font-weight:700}
+#pc7BatchList .pc7-product-state{font-size:9.5px;font-weight:900;border-radius:999px;padding:2px 6px;white-space:nowrap}
+#pc7BatchList .pc7-product-state.wait{background:#fff3cd;color:#8a6100;border:1px solid #ffe08a}
+#pc7BatchList .pc7-product-state.quoted{background:#e8f5e9;color:#1b5e20;border:1px solid #a5d6a7}
+#pc7BatchList .pc7-product-state.same{background:#f1f3f5;color:#667085;border:1px solid #dde1e7}
+#pc7BatchList .pc7-product-state.stale{background:#eef4ff;color:#526b8d;border:1px solid #c9daf8}
 
 .price-table tr.pc7-row-new > td{background:#f0fff5 !important}
 .price-table tr.pc7-row-updated > td{background:#fff8f0 !important}
@@ -1277,6 +1292,7 @@
     #productChange7dBar .pc7-note{width:100%;margin-left:0}
     .pc7-badge{display:inline-flex;margin:4px 0 0 4px}
     #pc7BatchList .pc7-batch-main{min-width:180px;flex-basis:100%}
+    #pc7BatchList .pc7-product-item{grid-template-columns:24px minmax(120px,1fr);}#pc7BatchList .pc7-product-state{grid-column:2}
 }
 </style>
 
@@ -1472,8 +1488,7 @@
                     <button class="pc7-btn" id="pc7ShowUnquotedBtn" type="button">Chưa báo giá</button>
                     <button class="pc7-btn" id="pc7ShowUpdatedBtn" type="button">Xem thay đổi</button>
                     <button class="pc7-btn" id="pc7ShowAllBtn" type="button">Tất cả</button>
-                    <button class="pc7-btn primary" id="pc7SelectQuoteBtn" type="button">✓ Chọn SP chưa BG</button>
-                    <span class="pc7-note">Excel mới là nguồn chuẩn · xóa file = xóa ngay đợt thông báo · mỗi đợt tự tắt sau 7 ngày</span>
+                    <span class="pc7-note">✓ Chọn báo giá trực tiếp tại từng SP của file Excel phụ bên dưới · mỗi đợt tự tắt sau 7 ngày</span>
                 </div>
                 <div id="pc7BatchList" aria-label="Danh sách các đợt cập nhật đang còn hiệu lực"></div>
             </div>
@@ -2167,7 +2182,7 @@
 
 
     // ============================================================
-    // ===== V8: THEO DÕI SẢN PHẨM MỚI / CẬP NHẬT TỪ EXCEL PHỤ — 7 NGÀY =====
+    // ===== V5: THEO DÕI SẢN PHẨM MỚI / CẬP NHẬT TỪ EXCEL PHỤ — 7 NGÀY =====
     // - MỖI LẦN upload Excel phụ có thay đổi = 1 "đợt cập nhật" độc lập.
     // - Mỗi đợt có createdAt/expiresAt riêng, đủ 7 ngày thì chỉ đợt đó tự tắt.
     // - Đợt hôm qua vẫn chạy đủ 7 ngày; đợt hôm nay bắt đầu 7 ngày mới.
@@ -2184,9 +2199,6 @@
     let pc7FilterMode = '';
     let pc7BatchFilterId = '';
     let pc7MigrationTimer = null;
-    let pc7PriceDataReady = false;      // chỉ đối chiếu batch sau khi priceData đã nạp xong
-    let pc7PruneBusy = false;           // chống listener Firebase gọi dọn orphan lặp nhau
-    let pc7ImportBusy = false;          // V8: khóa dọn orphan trong lúc đang tạo batch + gắn file để tránh batch mới bị xóa do race condition
     // V6: metadata nguồn của từng SP đang hiển thị. File upload sau cùng thắng file cũ.
     // Dùng để bảo đảm Excel mới luôn thắng CK Firebase cũ, nhưng vẫn cho phép người dùng lưu CK thủ công SAU lần import.
     let currentProductSourceMeta = new Map();
@@ -2337,10 +2349,7 @@
         return !!t && (Date.now()-t) < PRICE_CHANGE_TTL_MS;
     }
     function pc7ChangeForRow(row, header){
-        const id=pc7Identity(row,header); if(!id || !pc7PriceDataReady) return null;
-        // V7: badge/cập nhật chỉ hợp lệ nếu sản phẩm thuộc ít nhất một đợt còn gắn với file đang tồn tại.
-        const linked=pc7CollectActiveBatches().some(b=>pc7BatchEntries(b).some(it=>it&&it.productKey===id.key));
-        if(!linked) return null;
+        const id=pc7Identity(row,header); if(!id) return null;
         const rec=pc7GetByKey(id.key); return rec && pc7IsActive(rec) ? rec : null;
     }
 
@@ -2398,149 +2407,11 @@
         const items=batch && batch.items || {};
         return Array.isArray(items) ? items.filter(Boolean) : Object.values(items).filter(Boolean);
     }
-    // V8: hàm này bị thiếu ở V7 khiến pc7RenderBar/pc7DecorateTable ném ReferenceError
-    // và toàn bộ chức năng “SP mới/cập nhật 7 ngày” biến mất. Chỉ trả batch còn hạn VÀ còn file nguồn thực tế.
-    function pc7CollectActiveBatches(){
-        if(!pc7PriceDataReady) return [];
-        return Object.keys(productChangeBatches||{})
-            .map(k=>{
-                const b=productChangeBatches[k]||{};
-                if(!b.batchId) b.batchId=k;
-                return b;
-            })
-            .filter(pc7BatchIsActive)
-            .filter(pc7BatchLinkedToCurrentFile)
-            .sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0));
-    }
-
-    // ===== V8: QUAN HỆ 1-1 GIỮA FILE EXCEL PHỤ VÀ ĐỢT THÔNG BÁO =====
-    // Thông báo 7 ngày KHÔNG được tồn tại độc lập với file nguồn.
-    // File còn -> batch còn (nếu chưa đủ 7 ngày). File bị xóa -> batch phải biến mất ngay.
-    function pc7NormFileName(name){
-        return String(name||'').normalize ? String(name||'').normalize('NFC').trim().toLowerCase() : String(name||'').trim().toLowerCase();
-    }
-    function pc7IsRealTrackedFile(f){
-        if(!f || !Array.isArray(f.data)) return false;
-        if(String(f.name||'')==='User Added Data') return false;
-        if(String(f.sourceType||'')==='main' || String(f.sourceType||'')==='manual') return false;
-        // File V6/V7 có uploadId u_* hoặc pc7BatchId là Excel phụ chắc chắn.
-        if(String(f.sourceType||'')==='aux' || /^u_/i.test(String(f.uploadId||'')) || f.pc7BatchId) return true;
-        // Tương thích file phụ cũ: chỉ coi là file theo dõi khi đang có batch cùng tên.
-        const fn=pc7NormFileName(f.name);
-        return !!fn && Object.values(productChangeBatches||{}).some(b=>pc7NormFileName(b&&b.fileName)===fn);
-    }
-    function pc7CurrentTrackedFiles(){
-        return (uploadedFiles||[]).filter(pc7IsRealTrackedFile);
-    }
-    function pc7BatchLinkedToCurrentFile(batch){
-        if(!batch) return false;
-        if(!pc7PriceDataReady) return false; // tránh hiện batch cũ trước khi biết file nào đang thật sự còn trên bảng
-        const files=pc7CurrentTrackedFiles();
-        if(!files.length) return false;
-        const srcId=String(batch.sourceUploadId||'');
-        const bid=String(batch.batchId||'');
-        // Batch V7 có sourceUploadId: bắt buộc đúng CHÍNH file đó; không được cứu bằng tên file trùng.
-        if(srcId) return files.some(f=>String(f.uploadId||'')===srcId);
-        if(bid && files.some(f=>String(f.pc7BatchId||'')===bid)) return true;
-        // Batch V5/V6 cũ chưa có sourceUploadId: nối lại bằng tên file; chỉ dùng cho tương thích ngược.
-        const fn=pc7NormFileName(batch.fileName);
-        return !!fn && files.some(f=>pc7NormFileName(f.name)===fn);
-    }
-    function pc7FindBatchIdsForFile(file){
-        if(!file) return [];
-        const all=Object.keys(productChangeBatches||{});
-        const exact=[];
-        const uploadId=String(file.uploadId||'');
-        const batchId=String(file.pc7BatchId||'');
-        const fn=pc7NormFileName(file.name);
-        if(batchId && productChangeBatches[batchId]) exact.push(batchId);
-        all.forEach(id=>{
-            const b=productChangeBatches[id]||{};
-            if(uploadId && String(b.sourceUploadId||'')===uploadId && !exact.includes(id)) exact.push(id);
-        });
-        if(exact.length) return exact;
-
-        // Tương thích batch cũ không có ID liên kết: chọn batch cùng tên gần thời điểm import nhất.
-        const candidates=all.filter(id=>pc7NormFileName((productChangeBatches[id]||{}).fileName)===fn);
-        if(!candidates.length) return [];
-        const importedAt=Number(file.importedAt||0);
-        if(importedAt){
-            candidates.sort((a,b)=>Math.abs(Number((productChangeBatches[a]||{}).createdAt||0)-importedAt)-Math.abs(Number((productChangeBatches[b]||{}).createdAt||0)-importedAt));
-            return [candidates[0]];
-        }
-        // Nếu chỉ có 1 batch cùng tên thì liên kết chắc chắn; nhiều batch legacy thì lấy mới nhất để tránh xóa nhầm hàng loạt.
-        candidates.sort((a,b)=>Number((productChangeBatches[b]||{}).createdAt||0)-Number((productChangeBatches[a]||{}).createdAt||0));
-        return [candidates[0]];
-    }
-    async function pc7DeleteBatchesAndRebuild(batchIds){
-        const ids=Array.from(new Set((batchIds||[]).filter(id=>productChangeBatches && productChangeBatches[id])));
-        if(!ids.length) return 0;
-        const affected=new Set(), batchUpdates={};
-        ids.forEach(id=>{
-            const b=productChangeBatches[id];
-            pc7BatchEntries(b).forEach(it=>{ if(it&&it.productKey) affected.add(it.productKey); });
-            delete productChangeBatches[id];
-            batchUpdates[id]=null;
-        });
-        try{ await database.ref(PRICE_CHANGE_BATCH_FB_PATH).update(batchUpdates); }
-        catch(e){ console.warn('[V7] Không xóa được batch Firebase:',e); }
-
-        // Dựng lại tracker hiện hành CHỈ từ các batch còn gắn với file đang tồn tại.
-        const trackerUpdates={};
-        const remaining=pc7CollectActiveBatches();
-        affected.forEach(key=>{
-            let best=null, bestBatch=null, bestTs=0;
-            remaining.forEach(b=>{
-                pc7BatchEntries(b).forEach(it=>{
-                    if(!it || it.productKey!==key || it.type==='same') return;
-                    const ts=Number(it.changedAt||b.createdAt||0);
-                    if(ts>bestTs){ best=it; bestBatch=b; bestTs=ts; }
-                });
-            });
-            const h=pc7Hash(key);
-            if(best && bestBatch){
-                const prev=productChangeTracker[h]||{};
-                const rec={
-                    productKey:key, productName:best.productName||prev.productName||'', productCode:best.productCode||prev.productCode||'',
-                    type:best.type==='updated'?'updated':'new',
-                    firstSeenAt:Number(prev.firstSeenAt||bestTs||Date.now()), lastChangedAt:bestTs||Date.now(),
-                    lastSourceFile:String(bestBatch.fileName||''), quoteAt:null, lastQuotedSource:''
-                };
-                productChangeTracker[h]=rec; trackerUpdates[h]=rec;
-            }else{
-                delete productChangeTracker[h]; trackerUpdates[h]=null;
-            }
-        });
-        if(Object.keys(trackerUpdates).length){
-            try{ await database.ref(PRICE_CHANGE_FB_PATH).update(trackerUpdates); }
-            catch(e){ console.warn('[V7] Không cập nhật lại tracker sau xóa file:',e); }
-        }
-        return ids.length;
-    }
-    async function pc7PruneOrphanBatches(){
-        if(!pc7PriceDataReady || pc7PruneBusy || pc7ImportBusy) return 0;
-        pc7PruneBusy=true;
-        try{
-            const removeIds=[];
-            Object.keys(productChangeBatches||{}).forEach(id=>{
-                const b=productChangeBatches[id]||{};
-                // Chỉ dọn batch còn hạn; batch hết hạn không hiển thị và có thể giữ làm lịch sử.
-                if(pc7BatchIsActive(b) && !pc7BatchLinkedToCurrentFile(b)) removeIds.push(id);
-            });
-            if(!removeIds.length) return 0;
-            const n=await pc7DeleteBatchesAndRebuild(removeIds);
-            pc7RenderBar(); pc7DecorateTable();
-            console.info('[IDECO V7] Đã dọn',n,'đợt thông báo mồ côi không còn file nguồn.');
-            return n;
-        } finally { pc7PruneBusy=false; }
-    }
-    async function pc7CreateBatch(fileName, sum, sourceMeta){
+    async function pc7CreateBatch(fileName, sum){
         if(!sum || !(Number(sum.newCount||0)+Number(sum.updatedCount||0))) return null;
-        const createdAt=Number(sum.changedAt)||Number(sourceMeta&&sourceMeta.importedAt)||Date.now();
+        const createdAt=Number(sum.changedAt)||Date.now();
         const rec={
             fileName:String(fileName||sum.fileName||'Excel phụ'),
-            sourceUploadId:String(sourceMeta&&sourceMeta.uploadId||''),
-            sourceType:'aux',
             createdAt:createdAt,
             expiresAt:createdAt + PRICE_CHANGE_TTL_MS,
             newCount:Number(sum.newCount||0),
@@ -2565,18 +2436,15 @@
         }
         return rec;
     }
-    function pc7CollectActive(){
-        if(!pc7PriceDataReady) return [];
-        const allowed=new Set();
-        pc7CollectActiveBatches().forEach(b=>pc7BatchEntries(b).forEach(it=>{ if(it&&it.productKey&&it.type!=='same') allowed.add(it.productKey); }));
-        if(!allowed.size) return [];
-        const out=new Map(), header=currentData[0]||[];
-        for(let i=1;i<currentData.length;i++){
-            const row=currentData[i]||[], id=pc7Identity(row,header); if(!id || !allowed.has(id.key)) continue;
-            const rec=pc7GetByKey(id.key); if(!rec || !pc7IsActive(rec)) continue;
-            if(!out.has(id.key)) out.set(id.key,{rec,rowIdx:i,id});
-        }
-        return Array.from(out.values());
+    function pc7CollectActiveBatches(){
+        return Object.keys(productChangeBatches||{})
+            .map(k=>{
+                const b=productChangeBatches[k]||{};
+                if(!b.batchId) b.batchId=k;
+                return b;
+            })
+            .filter(pc7BatchIsActive)
+            .sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0));
     }
     function pc7DateLabel(ts){
         const d=new Date(Number(ts)||Date.now());
@@ -2593,26 +2461,96 @@
         const hh=Math.max(1,Math.ceil(ms/hour));
         return 'Còn '+hh+' giờ';
     }
+    function pc7CurrentRowIndexMap(){
+        const map=new Map(), header=currentData[0]||[];
+        for(let i=1;i<currentData.length;i++){
+            const id=pc7Identity(currentData[i]||[],header);
+            if(id && !map.has(id.key)) map.set(id.key,i);
+        }
+        return map;
+    }
+    function pc7BatchEntryState(item,rowMap){
+        item=item||{};
+        const rowIdx=rowMap.get(item.productKey);
+        const rec=pc7GetByKey(item.productKey);
+        if(item.type==='same') return {selectable:false,rowIdx:rowIdx,state:'same',label:'✓ Không đổi',rec:rec};
+        if(rowIdx==null) return {selectable:false,rowIdx:null,state:'stale',label:'Không còn trong bảng',rec:rec};
+        if(!rec || !pc7IsActive(rec)) return {selectable:false,rowIdx:rowIdx,state:'stale',label:'Đã hết theo dõi',rec:rec};
+        if(Number(rec.lastChangedAt||0)!==Number(item.changedAt||0)) return {selectable:false,rowIdx:rowIdx,state:'stale',label:'Có cập nhật mới hơn',rec:rec};
+        if(rec.quoteAt) return {selectable:false,rowIdx:rowIdx,state:'quoted',label:'✅ Đã BG',rec:rec};
+        return {selectable:true,rowIdx:rowIdx,state:'wait',label:'⏳ Chưa BG',rec:rec};
+    }
+    function pc7BatchSelectable(batch){
+        const rowMap=pc7CurrentRowIndexMap();
+        return pc7BatchEntries(batch).map(item=>({item,state:pc7BatchEntryState(item,rowMap)})).filter(x=>x.state.selectable);
+    }
+    function pc7SelectBatchUnquoted(batchId){
+        const b=productChangeBatches && productChangeBatches[batchId];
+        if(!b || !pc7BatchIsActive(b)){ alert('Đợt cập nhật này đã đủ 7 ngày hoặc không còn tồn tại.'); return; }
+        const list=pc7BatchSelectable(b);
+        if(!list.length){ alert('File Excel phụ này không còn sản phẩm CHƯA BÁO GIÁ cần chọn.'); return; }
+        // Chọn ĐÚNG danh sách của đợt đang bấm, không trộn selection từ file khác.
+        selectedRowIdx.clear();
+        list.forEach(x=>selectedRowIdx.add(x.state.rowIdx));
+        showingOnlySelected=true;
+        renderSelectedOnly();
+        pc7DecorateTable();
+        updateActionButtonsState();
+        updateFilteredSection();
+        pc7RenderBatchList();
+        setTimeout(()=>alert('✅ Đã chọn đúng '+list.length+' sản phẩm CHƯA BÁO GIÁ của file "'+String(b.fileName||'Excel phụ')+'".\n\nBấm "Tạo Báo Giá ▾" để tiếp tục.'),60);
+    }
+    function pc7ToggleBatchProduct(rowIdx,checked){
+        rowIdx=Number(rowIdx);
+        if(!Number.isInteger(rowIdx) || rowIdx<1 || !currentData[rowIdx]) return;
+        if(checked) selectedRowIdx.add(rowIdx); else selectedRowIdx.delete(rowIdx);
+        showingOnlySelected=false;
+        // Đồng bộ checkbox đang thấy trong bảng chính mà không ép đổi bộ lọc.
+        const tr=tableContainer && tableContainer.querySelector('tr[data-row-index="'+rowIdx+'"]');
+        if(tr){ const cb=tr.querySelector('input[type="checkbox"]'); if(cb) cb.checked=checked; }
+        updateActionButtonsState(); updateFilteredSection(); pc7RenderBatchList();
+    }
     function pc7RenderBatchList(){
         const wrap=document.getElementById('pc7BatchList'); if(!wrap) return;
         const batches=pc7CollectActiveBatches();
         if(!batches.length){ wrap.style.display='none'; wrap.innerHTML=''; return; }
+        const rowMap=pc7CurrentRowIndexMap();
         const rows=batches.map((b,i)=>{
             const exp=Number(b.expiresAt || (Number(b.createdAt||0)+PRICE_CHANGE_TTL_MS));
+            const entries=pc7BatchEntries(b);
+            let selectableCount=0, selectedCount=0;
+            const products=entries.map(item=>{
+                const st=pc7BatchEntryState(item,rowMap);
+                if(st.selectable) selectableCount++;
+                const checked=st.selectable && selectedRowIdx.has(st.rowIdx);
+                if(checked) selectedCount++;
+                const cls='pc7-product-item'+(checked?' selected':'')+(!st.selectable?' disabled':'');
+                const name=pc7Esc(item.productName||item.productCode||'Sản phẩm');
+                const code=item.productCode?'<span class="pc7-product-code">'+pc7Esc(item.productCode)+'</span>':'';
+                const cb=st.selectable
+                    ? '<input type="checkbox" class="pc7-product-check" data-pc7-row-index="'+st.rowIdx+'" '+(checked?'checked':'')+' title="Chọn sản phẩm này vào báo giá">'
+                    : '<input type="checkbox" class="pc7-product-check" disabled>';
+                return '<label class="'+cls+'">'+cb+'<span class="pc7-product-name">'+name+code+'</span><span class="pc7-product-state '+st.state+'">'+pc7Esc(st.label)+'</span></label>';
+            }).join('');
+            const selectBtn=selectableCount
+                ? '<button type="button" class="pc7-batch-selectall" data-pc7-batch-select="'+pc7Esc(b.batchId||'')+'">✓ Chọn '+selectableCount+' SP chưa BG'+(selectedCount?' · đang chọn '+selectedCount:'')+'</button>'
+                : '';
             return '<div class="pc7-batch-item '+(i===0?'newest':'')+'">'+
                 '<div class="pc7-batch-main">'+
                     '<div class="pc7-batch-name">📄 '+pc7Esc(b.fileName||'Excel phụ')+'</div>'+
-                    '<div class="pc7-batch-meta">Bắt đầu: '+pc7Esc(pc7DateLabel(b.createdAt))+' · Tự tắt: '+pc7Esc(pc7DateLabel(exp))+'</div>'+
+                    '<div class="pc7-batch-meta">Bắt đầu: '+pc7Esc(pc7DateLabel(b.createdAt))+' · Tự tắt: '+pc7Esc(pc7DateLabel(exp))+' · Tick SP ngay bên dưới để đưa vào báo giá</div>'+
                 '</div>'+
-                '<span class="pc7-mini total">📦 '+Number(b.inputCount||pc7BatchEntries(b).length||0)+' SP</span>'+
+                '<span class="pc7-mini total">📦 '+Number(b.inputCount||entries.length||0)+' SP</span>'+
                 '<span class="pc7-mini new">🆕 '+Number(b.newCount||0)+'</span>'+
                 '<span class="pc7-mini upd">🔄 '+Number(b.updatedCount||0)+'</span>'+
                 '<span class="pc7-mini same">✓ '+Number(b.sameCount||0)+'</span>'+
                 '<span class="pc7-mini ttl">⏱ '+pc7Esc(pc7RemainingLabel(b))+'</span>'+
+                selectBtn+
                 '<button type="button" class="pc7-batch-view" data-pc7-batch="'+pc7Esc(b.batchId||'')+'">Xem đợt</button>'+
+                '<div class="pc7-product-list">'+(products||'<div class="pc7-batch-empty">Không có sản phẩm.</div>')+'</div>'+
             '</div>';
         }).join('');
-        wrap.innerHTML='<div class="pc7-batch-head">📚 CÁC ĐỢT ĐANG THEO DÕI <small>mỗi đợt gắn với 1 file · xóa file là tắt đợt ngay</small></div>'+
+        wrap.innerHTML='<div class="pc7-batch-head">📚 DANH SÁCH EXCEL PHỤ <small>chọn báo giá trực tiếp theo từng sản phẩm · không chọn nhầm đợt</small></div>'+
             '<div class="pc7-batch-items">'+rows+'</div>';
         wrap.style.display='block';
     }
@@ -2638,13 +2576,6 @@
     }
     async function pc7MigrateLegacyTrackerToBatches(){
         try{
-            if(!pc7PriceDataReady) return;
-            const trackedFiles=pc7CurrentTrackedFiles();
-            const byName=new Map();
-            trackedFiles.forEach(f=>{
-                const k=pc7NormFileName(f.name); if(!k)return;
-                if(!byName.has(k)) byName.set(k,[]); byName.get(k).push(f);
-            });
             const trackers=Object.values(productChangeTracker||{}).filter(r=>r&&r.productKey&&pc7IsActive(r));
             if(!trackers.length) return;
 
@@ -2658,12 +2589,9 @@
             trackers.forEach(r=>{
                 const day=pc7DayKey(r.lastChangedAt);
                 if(covered.has(r.productKey+'|'+day)) return;
-                const file=String(r.lastSourceFile||'');
-                const matches=byName.get(pc7NormFileName(file))||[];
-                // Không còn file nguồn -> tuyệt đối không dựng lại thông báo "ma".
-                if(!matches.length) return;
+                const file=String(r.lastSourceFile||'Đợt cũ V4');
                 const gk=file+'|'+day;
-                if(!groups[gk]) groups[gk]={fileName:file,createdAt:0,newCount:0,updatedCount:0,sameCount:0,items:{},sourceUploadId:String(matches[0].uploadId||''),sourceType:'aux'};
+                if(!groups[gk]) groups[gk]={fileName:file,createdAt:0,newCount:0,updatedCount:0,sameCount:0,items:{}};
                 const g=groups[gk];
                 g.createdAt=Math.max(Number(g.createdAt||0),Number(r.lastChangedAt||0));
                 if(r.type==='updated') g.updatedCount++; else g.newCount++;
@@ -2685,93 +2613,22 @@
                 writes[id]=g;
             });
             if(Object.keys(writes).length) await database.ref(PRICE_CHANGE_BATCH_FB_PATH).update(writes);
-        }catch(e){ console.warn('Chuyển lịch sử cũ sang danh sách đợt V7:',e); }
+        }catch(e){ console.warn('Chuyển lịch sử V4 sang danh sách đợt V5:',e); }
     }
-    // V8: tự phục hồi batch bị V7 xóa nhầm do race-condition.
-    // Chỉ phục hồi file Excel phụ có metadata importedAt/uploadId còn trong 7 ngày và vẫn tồn tại trong priceData.
-    async function pc7RecoverMissingBatchesFromFiles(){
-        if(!pc7PriceDataReady || pc7ImportBusy) return 0;
-        let recovered=0, metaChanged=false;
-        const now=Date.now(), baseline=new Map(), trackerUpdates={};
-        pc7ImportBusy=true;
-        try{
-            // Đọc snapshot mới nhất để không tạo trùng nếu listener realtime chưa kịp chạy.
-            try{
-                const snaps=await Promise.all([
-                    database.ref(PRICE_CHANGE_BATCH_FB_PATH).once('value'),
-                    database.ref(PRICE_CHANGE_FB_PATH).once('value')
-                ]);
-                productChangeBatches=snaps[0].val()||{};
-                productChangeTracker=snaps[1].val()||{};
-            }catch(e){ console.warn('[V8] Không đọc được snapshot tracker để phục hồi:',e); }
-
-            for(const f of (uploadedFiles||[])){
-                if(!f || !Array.isArray(f.data) || f.data.length<2) continue;
-                const isAux=String(f.sourceType||'')==='aux' || /^u_/i.test(String(f.uploadId||'')) || !!f.pc7BatchId;
-                const importedAt=Number(f.importedAt||0);
-
-                if(isAux && importedAt && (now-importedAt)<PRICE_CHANGE_TTL_MS){
-                    const linked=pc7FindBatchIdsForFile(f).some(id=>productChangeBatches[id] && pc7BatchIsActive(productChangeBatches[id]));
-                    if(!linked){
-                        const header=f.data[0]||[], items={}, seen=new Set();
-                        let newCount=0, updatedCount=0, sameCount=0;
-                        for(let i=1;i<f.data.length;i++){
-                            const row=f.data[i]||[], id=pc7Identity(row,header); if(!id || seen.has(id.key)) continue;
-                            seen.add(id.key);
-                            const old=baseline.get(id.key);
-                            const type=!old ? 'new' : (pc7RowsDiffer(old,row,header) ? 'updated' : 'same');
-                            const h=pc7Hash(id.key);
-                            items[h]={productKey:id.key,productName:id.name||'',productCode:id.code||'',type,changedAt:importedAt};
-                            if(type==='new') newCount++; else if(type==='updated') updatedCount++; else sameCount++;
-                            if(type!=='same'){
-                                const prev=productChangeTracker[h]||{};
-                                if(!prev.lastChangedAt || Number(prev.lastChangedAt)<=importedAt){
-                                    const rec={
-                                        productKey:id.key, productName:id.name||prev.productName||'', productCode:id.code||prev.productCode||'',
-                                        type:type, firstSeenAt:Number(prev.firstSeenAt||importedAt), lastChangedAt:importedAt,
-                                        lastSourceFile:String(f.name||''), quoteAt:prev.quoteAt||null, lastQuotedSource:prev.lastQuotedSource||''
-                                    };
-                                    productChangeTracker[h]=rec; trackerUpdates[h]=rec;
-                                }
-                            }
-                        }
-                        if(newCount+updatedCount){
-                            const sum={newCount,updatedCount,sameCount,inputCount:seen.size,fileName:String(f.name||''),changedAt:importedAt,items};
-                            const b=await pc7CreateBatch(f.name,sum,{uploadId:String(f.uploadId||''),importedAt,sourceType:'aux'});
-                            if(b){ f.pc7BatchId=b.batchId||''; recovered++; metaChanged=true; }
-                        }
-                    }
-                }
-                // Dù có phục hồi hay không, file hiện tại trở thành baseline cho file sau.
-                pc7AddFileToBaseline(f,baseline);
-            }
-            if(Object.keys(trackerUpdates).length){
-                try{ await database.ref(PRICE_CHANGE_FB_PATH).update(trackerUpdates); }
-                catch(e){ console.warn('[V8] Không ghi lại tracker khi phục hồi:',e); }
-            }
-            if(metaChanged){
-                try{ await saveDataToFirebase(); }
-                catch(e){ console.warn('[V8] Không lưu pc7BatchId phục hồi vào priceData:',e); }
-            }
-        } finally { pc7ImportBusy=false; }
-        if(recovered) console.info('[IDECO V8] Đã phục hồi',recovered,'đợt 7 ngày bị V7 làm mất.');
-        return recovered;
-    }
-
     function pc7ScheduleMigration(){
         clearTimeout(pc7MigrationTimer);
-        if(!pc7PriceDataReady) return;
-        pc7MigrationTimer=setTimeout(()=>{
-            pc7PruneOrphanBatches()
-                .then(()=>pc7MigrateLegacyTrackerToBatches())
-                .then(()=>pc7RecoverMissingBatchesFromFiles())
-                .then(()=>pc7RenderBar())
-                .catch(e=>console.warn('[V8] Đồng bộ tracker:',e));
-        },900);
+        pc7MigrationTimer=setTimeout(()=>{ pc7MigrateLegacyTrackerToBatches().then(()=>pc7RenderBar()); },1800);
     }
 
-    // V8: đã bỏ bản pc7CollectActive cũ ở đây vì nó ghi đè hàm strict ở phía trên
-    // và có thể làm tracker “ma” hiện dù batch/file nguồn đã bị xóa.
+    function pc7CollectActive(){
+        const out=new Map(), header=currentData[0]||[];
+        for(let i=1;i<currentData.length;i++){
+            const row=currentData[i]||[], id=pc7Identity(row,header); if(!id) continue;
+            const rec=pc7GetByKey(id.key); if(!rec || !pc7IsActive(rec)) continue;
+            if(!out.has(id.key)) out.set(id.key,{rec,rowIdx:i,id});
+        }
+        return Array.from(out.values());
+    }
     function pc7RenderBar(){
         const bar=document.getElementById('productChange7dBar'); if(!bar) return;
         const list=pc7CollectActive();
@@ -2827,14 +2684,6 @@
         showingOnlySelected=false; searchInput.value=''; if(groupFilter)groupFilter.value='';
         createTable(aoa,source); pc7DecorateTable();
     }
-    function pc7SelectUnquotedForQuote(){
-        const list=pc7CollectActive().filter(x=>!x.rec.quoteAt);
-        if(!list.length){ alert('Không còn sản phẩm mới/cập nhật nào trong 7 ngày chưa làm báo giá.'); return; }
-        selectedRowIdx.clear(); list.forEach(x=>selectedRowIdx.add(x.rowIdx));
-        showingOnlySelected=true; renderSelectedOnly(); pc7DecorateTable(); updateActionButtonsState(); updateFilteredSection();
-        const msg='✅ Đã chọn '+list.length+' sản phẩm mới/cập nhật CHƯA BÁO GIÁ.\n\nBấm "Tạo Báo Giá ▾" để tiếp tục.';
-        setTimeout(()=>alert(msg),80);
-    }
     function pc7MarkSelectedQuoted(){
         const now=Date.now(), header=currentData[0]||[], updates={}; let n=0;
         selectedRowIdx.forEach(idx=>{
@@ -2871,7 +2720,6 @@
         if(by('pc7ShowUnquotedBtn'))by('pc7ShowUnquotedBtn').onclick=()=>pc7RenderFiltered('unquoted');
         if(by('pc7ShowUpdatedBtn'))by('pc7ShowUpdatedBtn').onclick=()=>pc7RenderFiltered('updated');
         if(by('pc7ShowAllBtn'))by('pc7ShowAllBtn').onclick=()=>pc7RenderFiltered('');
-        if(by('pc7SelectQuoteBtn'))by('pc7SelectQuoteBtn').onclick=pc7SelectUnquotedForQuote;
 
         const toast=by('productChange7dToast');
         if(toast)toast.addEventListener('click',e=>{
@@ -2883,6 +2731,10 @@
 
         const batchList=by('pc7BatchList');
         if(batchList)batchList.addEventListener('click',e=>{
+            const selectBtn=e.target.closest('button[data-pc7-batch-select]');
+            if(selectBtn){ pc7SelectBatchUnquoted(selectBtn.dataset.pc7BatchSelect||''); return; }
+            const cb=e.target.closest('input[data-pc7-row-index]');
+            if(cb){ pc7ToggleBatchProduct(cb.dataset.pc7RowIndex, cb.checked); return; }
             const b=e.target.closest('button[data-pc7-batch]'); if(!b)return;
             pc7RenderBatch(b.dataset.pc7Batch||'');
         });
@@ -2895,11 +2747,10 @@
             });
             database.ref(PRICE_CHANGE_BATCH_FB_PATH).on('value',snap=>{
                 productChangeBatches=snap.val()||{};
-                pc7RenderBar();
-                if(pc7PriceDataReady) pc7PruneOrphanBatches().then(()=>pc7ScheduleMigration()).catch(e=>console.warn('[V7] prune realtime:',e));
+                pc7RenderBar(); pc7ScheduleMigration();
             });
         }catch(e){ console.warn('Tracker 7 ngày:',e); }
-        setInterval(()=>{ pc7RenderBar(); pc7DecorateTable(); if(pc7PriceDataReady) pc7PruneOrphanBatches(); },60*1000);
+        setInterval(()=>{ pc7RenderBar(); pc7DecorateTable(); },60*1000);
     }
     // CRUD
     let rowIndexMap = []; 
@@ -3692,67 +3543,51 @@
     async function handleFileSelect(event){
         const files = event.target.files; if(!files.length) return;
         loadingIndicator.style.display = "block"; tableContainer.innerHTML = "";
-        pc7ImportBusy = true; // V8: chặn realtime-prune xóa batch vừa tạo trước khi file kịp được gắn uploadId
 
+        // Trước khi ghi đợt mới, chuyển các thông báo V4 còn hạn thành "đợt cũ"
+        // để đợt hôm qua không bị mất khi hôm nay cùng SP thay đổi tiếp.
+        try { await pc7MigrateLegacyTrackerToBatches(); } catch(e) {}
+
+        // Baseline được chụp TRƯỚC khi nạp file phụ: dùng để biết SP nào thật sự mới / đã thay đổi.
+        const pc7Baseline = pc7BuildBaseline();
         const pc7Totals = {newCount:0,updatedCount:0,sameCount:0,fileName:'',batchId:''};
         let lastBatchSummary = null;
-        try{
-            // Giữ các thông báo cũ còn hạn trước khi tạo đợt hôm nay.
-            try { await pc7MigrateLegacyTrackerToBatches(); } catch(e) {}
 
-            // Baseline chụp trước upload đầu tiên. Sau mỗi file sẽ bổ sung vào baseline để file kế tiếp so sánh đúng.
-            const pc7Baseline = pc7BuildBaseline();
+        for(let i=0;i<files.length;i++){
+            const file = files[i];
+            try{
+                const data = await readExcelFile(file);
+                autoFillStt(data); // Tự động điền số thứ tự nối tiếp
+                const importedAt = Date.now();
+                // V6 an toàn dữ liệu: Excel mới phải thắng mọi CK Firebase cũ của các mã có trong file.
+                await ckPurgeSavedOverridesForExcel(data);
 
-            for(let i=0;i<files.length;i++){
-                const file = files[i];
-                try{
-                    const data = await readExcelFile(file);
-                    autoFillStt(data);
-                    const importedAt = Date.now();
-                    const uploadId='u_'+importedAt.toString(36)+'_'+Math.random().toString(36).slice(2,8);
+                // 1) So sánh dữ liệu; 2) ghi tracker SP; 3) tạo MỘT ĐỢT 7 NGÀY RIÊNG cho file này.
+                const sm = await pc7TrackAuxFile(file.name, data, pc7Baseline);
+                const batch = await pc7CreateBatch(file.name, sm);
+                if(batch) sm.batchId = batch.batchId || '';
 
-                    // Excel mới là nguồn chuẩn cho các mã có trong file: xóa override CK cũ trước khi render.
-                    await ckPurgeSavedOverridesForExcel(data);
+                pc7Totals.newCount += sm.newCount;
+                pc7Totals.updatedCount += sm.updatedCount;
+                pc7Totals.sameCount += sm.sameCount;
+                pc7Totals.fileName = files.length>1 ? (files.length+' file Excel phụ') : file.name;
+                if(files.length===1) pc7Totals.batchId = sm.batchId || '';
+                if(sm.newCount || sm.updatedCount) lastBatchSummary = sm;
 
-                    // So sánh + tracker sản phẩm.
-                    const sm = await pc7TrackAuxFile(file.name, data, pc7Baseline);
-
-                    // Tạo batch trong khi pc7ImportBusy=true để listener không thể dọn nhầm batch mới.
-                    const batch = await pc7CreateBatch(file.name, sm, {uploadId, importedAt, sourceType:'aux'});
-                    if(batch) sm.batchId = batch.batchId || '';
-
-                    // QUAN TRỌNG: gắn file vào uploadedFiles ngay trong cùng transaction import.
-                    const fileRec={ name:file.name, data, importedAt, uploadId, pc7BatchId:(sm.batchId||''), sourceType:'aux' };
-                    uploadedFiles.push(fileRec);
-                    addFileToList(file.name, uploadedFiles.length - 1);
-                    pc7AddFileToBaseline(fileRec, pc7Baseline);
-
-                    pc7Totals.newCount += sm.newCount;
-                    pc7Totals.updatedCount += sm.updatedCount;
-                    pc7Totals.sameCount += sm.sameCount;
-                    pc7Totals.fileName = files.length>1 ? (files.length+' file Excel phụ') : file.name;
-                    if(files.length===1) pc7Totals.batchId = sm.batchId || '';
-                    if(sm.newCount || sm.updatedCount) lastBatchSummary = sm;
-                }catch(error){
-                    console.error("Lỗi khi đọc file:", file.name, error);
-                    alert(`Lỗi khi đọc file ${file.name}: ${error.message}`);
-                }
+                const uploadId='u_'+importedAt.toString(36)+'_'+Math.random().toString(36).slice(2,8);
+                uploadedFiles.push({ name: file.name, data, importedAt, uploadId, pc7BatchId:(sm.batchId||'') });
+                addFileToList(file.name, uploadedFiles.length - 1);
+                pc7AddFileToBaseline({name:file.name,data:data}, pc7Baseline);
+            }catch(error){
+                console.error("Lỗi khi đọc file:", file.name, error);
+                alert(`Lỗi khi đọc file ${file.name}: ${error.message}`);
             }
-
-            // Chỉ khi file + uploadId + pc7BatchId đã đầy đủ mới ghi priceData lên Firebase.
-            updateFileNameDisplay();
-            displayAllData();
-            await saveDataToFirebase();
-        } finally {
-            pc7ImportBusy = false;
-            loadingIndicator.style.display = "none";
         }
 
-        // Sau khi transaction hoàn tất mới cho phép dọn batch mồ côi.
-        try { await pc7PruneOrphanBatches(); } catch(e) { console.warn('[V8] prune sau import:',e); }
+        updateFileNameDisplay(); displayAllData(); await saveDataToFirebase(); loadingIndicator.style.display = "none";
         pc7RenderBar(); pc7DecorateTable();
         pc7ShowUploadToast(files.length===1 && lastBatchSummary ? lastBatchSummary : pc7Totals);
-        event.target.value = '';
+        event.target.value = ''; // cho phép chọn lại chính file đó để kiểm tra/cập nhật
     }
     function readExcelFile(file){
         return new Promise((resolve,reject)=>{
@@ -3798,40 +3633,65 @@
         });
     }
     async function pc7RemoveTrackingForFile(file){
-        if(!file) return 0;
+        if(!file) return;
         try{
-            const removeIds=pc7FindBatchIdsForFile(file);
+            const removeIds=[];
+            if(file.pc7BatchId && productChangeBatches[file.pc7BatchId]) removeIds.push(file.pc7BatchId);
             if(!removeIds.length){
-                console.info('[IDECO V7] File không có batch 7 ngày liên kết:',file.name||'');
-                return 0;
+                Object.keys(productChangeBatches||{}).forEach(id=>{
+                    const b=productChangeBatches[id];
+                    if(b && String(b.fileName||'')===String(file.name||'')) removeIds.push(id);
+                });
             }
-            return await pc7DeleteBatchesAndRebuild(removeIds);
-        }catch(e){ console.warn('Xóa tracker theo file:',e); return 0; }
+            if(!removeIds.length) return;
+            const affected=new Set(), batchUpdates={};
+            removeIds.forEach(id=>{
+                const b=productChangeBatches[id];
+                pc7BatchEntries(b).forEach(it=>{ if(it&&it.productKey) affected.add(it.productKey); });
+                delete productChangeBatches[id]; batchUpdates[id]=null;
+            });
+            await database.ref(PRICE_CHANGE_BATCH_FB_PATH).update(batchUpdates);
+
+            // Dựng lại tracker mới nhất cho các SP bị ảnh hưởng từ các batch còn lại.
+            const trackerUpdates={};
+            affected.forEach(key=>{
+                let best=null, bestBatch=null;
+                pc7CollectActiveBatches().forEach(b=>{
+                    pc7BatchEntries(b).forEach(it=>{
+                        if(!it || it.productKey!==key || it.type==='same') return;
+                        const ts=Number(it.changedAt||b.createdAt||0);
+                        if(!best || ts>Number(best.changedAt||bestBatch.createdAt||0)){ best=it; bestBatch=b; }
+                    });
+                });
+                const h=pc7Hash(key);
+                if(best && bestBatch){
+                    const prev=productChangeTracker[h]||{};
+                    const rec={
+                        productKey:key, productName:best.productName||prev.productName||'', productCode:best.productCode||prev.productCode||'',
+                        type:best.type==='updated'?'updated':'new', firstSeenAt:Number(prev.firstSeenAt||best.changedAt||bestBatch.createdAt||Date.now()),
+                        lastChangedAt:Number(best.changedAt||bestBatch.createdAt||Date.now()), lastSourceFile:String(bestBatch.fileName||''),
+                        quoteAt:null, lastQuotedSource:''
+                    };
+                    productChangeTracker[h]=rec; trackerUpdates[h]=rec;
+                }else{
+                    delete productChangeTracker[h]; trackerUpdates[h]=null;
+                }
+            });
+            if(Object.keys(trackerUpdates).length) await database.ref(PRICE_CHANGE_FB_PATH).update(trackerUpdates);
+        }catch(e){ console.warn('Xóa tracker theo file:',e); }
     }
     async function removeFile(index){
         if(index<0 || index>=uploadedFiles.length) return;
         const removedFile=uploadedFiles[index];
-        const removedName=String(removedFile&&removedFile.name||'Excel phụ');
-
-        // V7: FILE là nguồn sự thật. Gỡ file khỏi danh sách trước để mọi phép render sau đó không thể giữ notification mồ côi.
+        // Xóa notification/batch đi cùng file trước để UI và Firebase không còn "bảng file ma".
+        await pc7RemoveTrackingForFile(removedFile);
         uploadedFiles.splice(index,1);
-        filesList.innerHTML = '';
+        filesList.innerHTML = "";
         uploadedFiles.forEach((file,i)=> addFileToList(file.name,i));
         updateFileNameDisplay();
         displayAllData();
-
-        // Lưu danh sách file mới lên Firebase trước, sau đó xóa batch/tracker gắn với file vừa xóa.
         await saveDataToFirebase();
-        const nBatch=await pc7RemoveTrackingForFile(removedFile);
-        await pc7PruneOrphanBatches();
-
         pc7RenderBar(); pc7DecorateTable();
-        const totalNow=(typeof pc7CurrentUniqueProductCount==='function') ? pc7CurrentUniqueProductCount() : Math.max(0,(currentData||[]).length-1);
-        setTimeout(()=>alert('✅ Đã xóa file: '+removedName+'\n'+
-            '• Dữ liệu bảng đã tính lại theo các file còn lại.\n'+
-            '• Đã xóa '+nBatch+' đợt thông báo 7 ngày liên quan.\n'+
-            '• Tổng sản phẩm hiện tại: '+totalNow+' SP.\n\n'+
-            'Thông báo của file đã xóa sẽ không còn xuất hiện lại.'),60);
     }
     function updateFileNameDisplay(){
         if(uploadedFiles.length===0) fileNameDisplay.textContent = "Chưa chọn file";
@@ -3846,14 +3706,6 @@
         }
         return set.size;
     }
-    function pc7CurrentUniqueProductCount(){
-        const header=(currentData&&currentData[0])||[], set=new Set();
-        for(let i=1;i<(currentData||[]).length;i++){
-            const id=pc7Identity(currentData[i]||[],header); if(id) set.add(id.key);
-        }
-        return set.size;
-    }
-
     function pc7MapRowToMaster(row, sourceHeader, masterHeader){
         row=row||[]; sourceHeader=sourceHeader||[]; masterHeader=masterHeader||[];
         // Cấu trúc cùng số cột: giữ NGUYÊN vị trí/giá trị Excel để tránh sai lệch CK, giá, hàm lượng.
@@ -4507,6 +4359,7 @@
                     return;
                 }
                 if(cb.checked) selectedRowIdx.add(rowIdx); else selectedRowIdx.delete(rowIdx); 
+                try { pc7RenderBatchList(); } catch(e) {}
                 updateActionButtonsState();
                 updateFilteredSection(); // Cập nhật phần chọn tất cả danh sách đã lọc
             });
@@ -4724,32 +4577,20 @@
 
     function loadDataFromFirebase(){
         loadingIndicator.style.display = 'block'; tableContainer.innerHTML = ''; filesList.innerHTML = '';
-        pc7PriceDataReady=false;
         return database.ref('priceData').once('value').then(snapshot=>{
             const data = snapshot.val();
-            if(data && data.files){
-                uploadedFiles = normalizeFilesFromFirebase(data.files);
+            if(data && data.files){ 
+                uploadedFiles = normalizeFilesFromFirebase(data.files);   // [VÁ v2] object → mảng, tránh lệch chỉ số dòng
+                // Tự động thêm cột Mã sp nếu data cũ chưa có
                 injectMaSpIfMissing(uploadedFiles);
                 filesList.innerHTML = '';
-                uploadedFiles.forEach((file,index)=> addFileToList(file.name,index));
-                updateFileNameDisplay();
-                displayAllData();
-            } else {
-                uploadedFiles=[];
-                tableContainer.innerHTML = '<p>Không có dữ liệu trên server. Vui lòng tải lên file Excel.</p>';
-                columnToolbar.style.display = 'none';
+                uploadedFiles.forEach((file,index)=> addFileToList(file.name,index)); 
+                updateFileNameDisplay(); 
+                displayAllData(); 
             }
-            pc7PriceDataReady=true;
+            else { tableContainer.innerHTML = '<p>Không có dữ liệu trên server. Vui lòng tải lên file Excel.</p>'; columnToolbar.style.display = 'none'; }
             loadingIndicator.style.display = 'none';
-            // V7: vừa mở ứng dụng là đối chiếu ngay danh sách thông báo với file thực tế đang còn.
-            return pc7PruneOrphanBatches().then(()=>{ pc7RenderBar(); pc7DecorateTable(); pc7ScheduleMigration(); });
-        }).catch(error=>{
-            console.error('Lỗi khi tải dữ liệu:', error);
-            pc7PriceDataReady=false;
-            loadingIndicator.style.display = 'none';
-            tableContainer.innerHTML = '<p>Lỗi khi tải dữ liệu từ server. Vui lòng thử lại sau.</p>';
-            throw error;
-        });
+        }).catch(error=>{ console.error('Lỗi khi tải dữ liệu:', error); loadingIndicator.style.display = 'none'; tableContainer.innerHTML = '<p>Lỗi khi tải dữ liệu từ server. Vui lòng thử lại sau.</p>'; });
     }
     // ========== XUẤT EXCEL VIEW (v2 — GIỮ ĐỦ CỘT CHIẾT KHẤU) ==========
     // LỖI CŨ: ô chiết khấu được render bằng <input class="ck-input"> nên td.textContent = ''
@@ -8149,37 +7990,28 @@
 })();
 </script>
 
-
-<!-- IDECO_ZALO_PRAISE_REALTIME_V3 -->
+<!-- IDECO_ZALO_PRAISE_REALTIME_V5 · TẮT TẤT CẢ 24H -->
 <script>
 /*
- * IDECO ZALO PRAISE REALTIME V1
- * Module doc lap: Shadow DOM + Firebase RTDB + event delegation.
- * - Khong tao ID trong DOM.
- * - CSS nam tron trong Shadow DOM, khong ro ri ra website.
- * - Khong preventDefault/stopPropagation click gui Zalo => khong doi hanh vi app goc.
- * - May vua bam: popup ngay.
- * - May khac: realtime; neu vua mo app thi cho du 10 giay moi hien.
- * - Chi nut "DA XEM" moi dong popup.
+ * IDECO POPUP BG REALTIME V5 — 24H + TẮT TẤT CẢ 24H
+ * Có thể dùng file JS ngoài hoặc copy nguyên khối mã vào trước thẻ đóng BODY.
  *
- * Tu dong nhan:
- *   .zalo-phone-link
- *   [data-ideco-zalo-praise]
- *   [data-zalo-phone]
- *   a[href*="zalo.me/"]
- *   a[href^="zalo://conversation"]
- *
- * De dung o app khac, nen gan:
- *   data-ideco-zalo-praise
- *   data-phone="090..."
- *   data-name="TEN KHACH HANG"
+ * Quy tắc:
+ * - Chỉ nhận/hiện sự kiện trong 24 giờ gần nhất.
+ * - Khi máy này bấm ✓ ĐÃ XEM một khách hàng, máy này không hiện lại khách đó nữa.
+ * - Nhận diện khách ưu tiên theo SĐT; nếu thiếu SĐT mới dùng tên chuẩn hóa.
+ * - Nhiều sự kiện cùng khách trong 24h chỉ giữ 1 thông báo mới nhất.
+ * - Máy vừa đăng nhập/mở app chờ 10 giây rồi mới hiện backlog.
+ * - Sự kiện realtime mới sau đó hiện ngay nếu khách chưa từng được máy này xác nhận.
+ * - Popup có Nhân viên + Thời điểm gửi + Khách hàng + SĐT.
+ * - Shadow DOM, named Firebase app, không làm rò CSS/ID sang website.
  */
-(function IDECO_ZALO_PRAISE_REALTIME_V3(){
+(function IDECO_ZALO_PRAISE_REALTIME_V5(){
   'use strict';
 
-  if (window.__IDECO_ZALO_PRAISE_REALTIME_V3__) return;
-  try { Object.defineProperty(window, '__IDECO_ZALO_PRAISE_REALTIME_V3__', { value:true, configurable:false }); }
-  catch (_) { window.__IDECO_ZALO_PRAISE_REALTIME_V3__ = true; }
+  if (window.__IDECO_ZALO_PRAISE_REALTIME_V5__) return;
+  try { Object.defineProperty(window, '__IDECO_ZALO_PRAISE_REALTIME_V5__', {value:true, configurable:false}); }
+  catch(e){ window.__IDECO_ZALO_PRAISE_REALTIME_V5__ = true; }
 
   var CFG = {
     firebase: {
@@ -8191,12 +8023,14 @@
       messagingSenderId: '61139094665',
       appId: '1:61139094665:web:13ebec976cec24e53f8a58'
     },
-    firebaseAppName: 'ideco-zalo-praise-v3',
+    appName: 'ideco-zalo-praise-v5-24h-mute',
     path: 'idecoSharedPraise/zaloContactEvents',
     startupDelayMs: 10000,
     eventTtlMs: 24 * 60 * 60 * 1000,
-    listenLast: 50,
-    seenLimit: 300,
+    listenLast: 150,
+    maxStartupCustomers: 12,
+    // Bảng IDECO đã gọi API trigger trực tiếp cho .zalo-send-btn/.zalo-phone-link;
+    // không tự bắt lại 2 class này để tránh một thao tác phát sinh popup kép.
     selector: [
       '[data-ideco-zalo-praise]',
       '[data-zalo-phone]',
@@ -8206,346 +8040,349 @@
   };
 
   var LS_DEVICE = 'idecoZaloPraiseDevice_v1';
-  var LS_SEEN = 'idecoZaloPraiseSeen_v1';
-  var deviceId = getDeviceId();
-  var seen = loadSeen();
-  var queuedKeys = new Set();
-  var queue = [];
-  var current = null;
-  var db = null;
-  var eventsRef = null;
-  var startupReady = false;
-  var host = null, shadow = null, ui = null;
+  var LS_SEEN_CUSTOMERS = 'idecoZaloPraiseSeenCustomers_v4';
+  var LS_PENDING = 'idecoZaloPraisePending_v4';
+  var LS_CLEAN = 'idecoZaloPraiseClean_v4';
+  var LS_MUTE_UNTIL = 'idecoZaloPraiseMuteUntil_v5';
+  var MUTE_ALL_MS = 24 * 60 * 60 * 1000;
+  var STAFF_KEYS = ['zaloClaimStaffName_v1','ideco_tickerKH_staffName','idecoStaffName'];
 
-  function safeJsonParse(s, fallback){
-    try { return JSON.parse(s); } catch (_) { return fallback; }
+  function safeGet(k, fallback){ try { var v=localStorage.getItem(k); return v==null?fallback:v; } catch(e){ return fallback; } }
+  function safeSet(k,v){ try { localStorage.setItem(k,v); } catch(e){} }
+  function jsonGet(k,fallback){ try { var x=JSON.parse(safeGet(k,'')); return x==null?fallback:x; } catch(e){ return fallback; } }
+  function jsonSet(k,v){ try { safeSet(k,JSON.stringify(v)); } catch(e){} }
+  function token(){ return 'dev_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,10); }
+
+  function muteUntil(){ return Number(safeGet(LS_MUTE_UNTIL,'0')||0); }
+  function isMuted(){
+    var until=muteUntil();
+    if(until && until<=Date.now()){ safeSet(LS_MUTE_UNTIL,'0'); return false; }
+    return until>Date.now();
+  }
+  function muteAll24h(){ var until=Date.now()+MUTE_ALL_MS; safeSet(LS_MUTE_UNTIL,String(until)); return until; }
+  function clearMute(){ safeSet(LS_MUTE_UNTIL,'0'); return true; }
+
+  var deviceId = safeGet(LS_DEVICE,'');
+  if(!deviceId){ deviceId=token(); safeSet(LS_DEVICE,deviceId); }
+
+  function cleanText(v){ return String(v==null?'':v).replace(/\s+/g,' ').trim(); }
+  function cleanPhone(v){
+    var p=String(v==null?'':v).replace(/[^0-9+]/g,'').trim();
+    if(p.indexOf('+84')===0) p='0'+p.slice(3);
+    else if(p.indexOf('84')===0 && p.length>=10) p='0'+p.slice(2);
+    return p;
+  }
+  function plausiblePhone(v){ return /^0\d{8,10}$/.test(cleanPhone(v)); }
+  function normName(v){
+    var s=cleanText(v).toLowerCase();
+    try{s=s.normalize('NFD').replace(/[\u0300-\u036f]/g,'');}catch(e){}
+    return s.replace(/đ/g,'d').replace(/[^a-z0-9]+/g,' ').trim();
+  }
+  function customerKey(name,phone){
+    var p=cleanPhone(phone).replace(/\D/g,'');
+    if(p) return 'p:'+p;
+    var n=normName(name);
+    return n ? 'n:'+n : '';
+  }
+  function formatDateTime(ms){
+    var d=new Date(Number(ms||Date.now())); if(isNaN(d.getTime())) d=new Date();
+    var z=function(n){return String(n).padStart(2,'0');};
+    return z(d.getDate())+'/'+z(d.getMonth()+1)+'/'+d.getFullYear()+' · '+z(d.getHours())+':'+z(d.getMinutes())+':'+z(d.getSeconds());
+  }
+  function isFresh(at){ at=Number(at||0); return !!at && at >= Date.now()-CFG.eventTtlMs && at <= Date.now()+5*60*1000; }
+
+  function loadSeenCustomers(){
+    var o=jsonGet(LS_SEEN_CUSTOMERS,{});
+    return (o && typeof o==='object' && !Array.isArray(o)) ? o : {};
+  }
+  var seenCustomers=loadSeenCustomers();
+  function isCustomerSeen(key){ return !!(key && seenCustomers[key]); }
+  function markCustomerSeen(item){
+    if(!item || !item.customerKey) return;
+    seenCustomers[item.customerKey]={
+      at:Date.now(),
+      name:cleanText(item.name).slice(0,160),
+      phone:cleanPhone(item.phone).slice(0,30)
+    };
+    jsonSet(LS_SEEN_CUSTOMERS,seenCustomers);
   }
 
-  function getDeviceId(){
-    var v = '';
-    try { v = localStorage.getItem(LS_DEVICE) || ''; } catch (_) {}
-    if (v) return v;
-    v = 'dev_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,10);
-    try { localStorage.setItem(LS_DEVICE, v); } catch (_) {}
-    return v;
-  }
-
-  function loadSeen(){
-    var obj = {};
-    try { obj = safeJsonParse(localStorage.getItem(LS_SEEN) || '{}', {}); } catch (_) {}
-    return (obj && typeof obj === 'object') ? obj : {};
-  }
-
-  function saveSeen(key){
-    if (!key) return;
-    seen[key] = Date.now();
-    var keys = Object.keys(seen).sort(function(a,b){ return (seen[b]||0) - (seen[a]||0); });
-    if (keys.length > CFG.seenLimit) keys.slice(CFG.seenLimit).forEach(function(k){ delete seen[k]; });
-    try { localStorage.setItem(LS_SEEN, JSON.stringify(seen)); } catch (_) {}
-  }
-
-  function normalizePhone(v){
-    var s = String(v || '').trim();
-    if (!s) return '';
-    s = s.replace(/[^0-9+]/g, '');
-    if (s.indexOf('+84') === 0) return '0' + s.slice(3);
-    if (s.indexOf('84') === 0 && s.length >= 10) return '0' + s.slice(2);
-    return s;
-  }
-
-  function phoneFromHref(href){
-    href = String(href || '');
-    var m = href.match(/(?:phone=|zalo\.me\/|tel:)(\+?\d[\d\s.()-]{7,})/i);
-    return m ? normalizePhone(m[1]) : '';
-  }
-
-  function pickTextPhone(s){
-    var m = String(s || '').match(/(?:\+?84|0)[\s.()-]*\d(?:[\s.()-]*\d){8,10}/);
-    return m ? normalizePhone(m[0]) : '';
-  }
-
-  function extractContact(el){
-    if (!el) return null;
-    var ds = el.dataset || {};
-    var phone = normalizePhone(ds.phone || ds.zaloPhone || ds.customerPhone || '');
-    if (!phone && el.getAttribute) phone = phoneFromHref(el.getAttribute('href'));
-    if (!phone) phone = pickTextPhone(el.textContent || '');
-
-    var name = String(ds.name || ds.customerName || ds.custName || '').trim();
-    if (!name) {
-      var parent = el.closest && el.closest('[data-customer-name],[data-cust-name]');
-      if (parent && parent.dataset) name = String(parent.dataset.customerName || parent.dataset.custName || '').trim();
-    }
-    if (!name) {
-      var row = el.closest && el.closest('tr');
-      if (row) {
-        var named = row.querySelector('[data-name],[data-customer-name],[data-cust-name]');
-        if (named && named.dataset) name = String(named.dataset.name || named.dataset.customerName || named.dataset.custName || '').trim();
+  function bestStaff(el){
+    var ds=el&&el.dataset?el.dataset:{};
+    var s=cleanText(ds.staff||ds.employee||ds.nhanVien||ds.staffName||'');
+    if(!s){
+      for(var i=0;i<STAFF_KEYS.length;i++){
+        s=cleanText(safeGet(STAFF_KEYS[i],'')); if(s) break;
       }
     }
-    if (!name) name = 'Khách hàng';
-    if (!phone) return null;
-    return { name:name, phone:phone };
+    if(!s){
+      try{
+        var cand=document.querySelector('[data-ideco-staff-name],#zaloMyStaffInput,input[name="staff"],input[name="nhanVien"]');
+        if(cand) s=cleanText((cand.dataset&&cand.dataset.idecoStaffName)||cand.value||cand.textContent||'');
+      }catch(e){}
+    }
+    return s||'(Chưa khai tên nhân viên)';
+  }
+  function bestName(el){
+    var ds=el&&el.dataset?el.dataset:{};
+    var n=cleanText(ds.name||ds.customerName||ds.tenKhachHang||ds.customer||ds.custName||'');
+    if(n) return n;
+    var row=el&&el.closest?el.closest('tr,[data-customer-name],[data-name],[data-cust-name]'):null;
+    if(row){
+      var rd=row.dataset||{};
+      n=cleanText(rd.customerName||rd.name||rd.tenKhachHang||rd.custName||'');
+      if(!n){ var b=row.querySelector('b,strong,[data-customer-name],[data-name]'); if(b) n=cleanText(b.textContent||''); }
+    }
+    return n||'Khách hàng';
+  }
+  function bestPhone(el){
+    var ds=el&&el.dataset?el.dataset:{};
+    var p=cleanPhone(ds.phone||ds.zaloPhone||ds.customerPhone||ds.tel||ds.dienThoai||'');
+    if(!p && el && el.getAttribute){
+      var href=String(el.getAttribute('href')||'');
+      var m=href.match(/(?:phone=|zalo\.me\/|tel:)(\+?\d[\d\s.()-]{7,})/i); if(m) p=cleanPhone(m[1]);
+    }
+    if(!p && el){
+      var mm=cleanText(el.textContent||'').match(/(?:\+?84|0)\d(?:[\s.()-]*\d){8,10}/); if(mm) p=cleanPhone(mm[0]);
+    }
+    return p;
+  }
+  function findTrigger(node){ if(!node||!node.closest) return null; try{return node.closest(CFG.selector);}catch(e){return null;} }
+
+  function loadScript(src){ return new Promise(function(res,rej){ var s=document.createElement('script'); s.src=src; s.async=true; s.onload=res; s.onerror=rej; (document.head||document.documentElement).appendChild(s); }); }
+  function fbReady(){ return !!(window.firebase&&firebase.apps&&typeof firebase.initializeApp==='function'&&typeof firebase.database==='function'); }
+  function ensureFirebase(){
+    if(fbReady()) return Promise.resolve();
+    var base='https://www.gstatic.com/firebasejs/9.22.0/'; var p=Promise.resolve();
+    if(!(window.firebase&&firebase.apps&&typeof firebase.initializeApp==='function')) p=p.then(function(){return loadScript(base+'firebase-app-compat.js');});
+    return p.then(function(){ if(!(window.firebase&&typeof firebase.database==='function')) return loadScript(base+'firebase-database-compat.js'); });
   }
 
-  function isEligibleTrigger(target){
-    if (!target || !target.closest) return null;
-    var el;
-    try { el = target.closest(CFG.selector); } catch (_) { return null; }
-    if (!el) return null;
+  /* ===== UI SHADOW DOM ===== */
+  var host=document.createElement('div');
+  host.style.cssText='all:initial;position:fixed;inset:0;z-index:2147483646;display:none;pointer-events:none;';
+  var shadow=host.attachShadow({mode:'closed'});
+  shadow.innerHTML=''+
+    '<style>:host{all:initial}*,*:before,*:after{box-sizing:border-box}.ov{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(3,12,25,.72);backdrop-filter:blur(5px);pointer-events:auto;font-family:"Segoe UI",system-ui,-apple-system,Arial,sans-serif}.card{width:min(710px,96vw);max-height:92vh;overflow:auto;background:#fff;border-radius:22px;box-shadow:0 30px 90px rgba(0,0,0,.45);animation:zin .22s ease-out}@keyframes zin{from{opacity:0;transform:translateY(14px) scale(.975)}to{opacity:1;transform:none}}.head{padding:18px 22px;background:linear-gradient(135deg,#0d47a1,#1565c0 55%,#00897b);color:#fff}.badge{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28)}.title{font-size:21px;font-weight:950;line-height:1.3;margin-top:10px}.body{padding:22px 24px 20px;color:#17324d;background:linear-gradient(180deg,#fff,#f8fbff)}.msg{font-size:16px;font-weight:800;line-height:1.72}.dash{color:#ff8f00;font-weight:950;margin:0 4px}.info{margin-top:17px;border:1px solid #d9e7f7;background:#eef6ff;border-radius:14px;padding:13px 15px;display:grid;gap:7px;font-size:14px}.row{display:grid;grid-template-columns:122px 1fr;gap:10px}.lbl{font-size:11px;font-weight:900;color:#607d8b;letter-spacing:.08em;text-transform:uppercase;padding-top:2px}.val{font-weight:900;color:#0d47a1;overflow-wrap:anywhere}.staff{color:#7b1fa2}.tm{color:#00695c;font-variant-numeric:tabular-nums}.policy{margin-top:12px;padding:9px 11px;border-radius:10px;background:#fff8e1;border:1px solid #ffe0a3;color:#795400;font-size:11.5px;font-weight:750;line-height:1.45}.foot{padding:0 24px 22px;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;background:#f8fbff}.ack,.ackall{appearance:none;border:0;border-radius:13px;color:#fff;font:900 14px/1 "Segoe UI",system-ui,sans-serif;padding:14px 22px;cursor:pointer}.ack{background:linear-gradient(135deg,#16a34a,#0f8a3c);box-shadow:0 10px 24px rgba(22,163,74,.28)}.ackall{background:linear-gradient(135deg,#e65100,#c62828);box-shadow:0 10px 24px rgba(198,40,40,.22)}@media(max-width:560px){.card{border-radius:17px}.head{padding:16px 17px}.body{padding:18px 17px 16px}.foot{padding:0 17px 18px}.title{font-size:18px}.msg{font-size:14.5px}.row{grid-template-columns:100px 1fr}}</style>'+
+    '<div class="ov" role="dialog" aria-modal="true"><div class="card"><div class="head"><div class="badge">🏆 BAN GIÁM ĐỐC · IDECO</div><div class="title">GHI NHẬN NỖ LỰC CHÀO MỜI KHÁCH HÀNG</div></div><div class="body"><div class="msg">BAN GIÁM ĐỐC KHEN BẠN ĐÃ NỖ LỰC CHÀO MỜI KHÁCH HÀNG<span class="dash"> — </span>CHÚNG TA ĐỪNG BAO GIỜ PHỤ THUỘC 1 KHÁCH HÀNG<span class="dash"> — </span>BÁN CHỈ 1 SẢN PHẨM<span class="dash"> — </span>HÃY LIÊN TỤC TÌM CÁCH MỞ RỘNG CƠ HỘI<span class="dash"> — </span>NHƯNG PHẢI CÓ KẾ HOẠCH THEO DÕI<span class="dash"> — </span>KHAI BÁO GIAO DỊCH TỐT.</div><div class="info"><div class="row"><div class="lbl">Nhân viên</div><div class="val staff">—</div></div><div class="row"><div class="lbl">Thời điểm gửi</div><div class="val tm">—</div></div><div class="row"><div class="lbl">Liên hệ</div><div class="val nm">—</div></div><div class="row"><div class="lbl">Điện thoại</div><div class="val ph">—</div></div></div><div class="policy">⏱ ĐÃ XEM = xác nhận khách hiện tại. ĐÃ XEM – TẮT TẤT CẢ = đóng toàn bộ hàng đợi và tạm tắt popup BGĐ trên máy này trong 24 giờ.</div></div><div class="foot"><button class="ack" type="button">✓ ĐÃ XEM</button><button class="ackall" type="button">✓ ĐÃ XEM – TẮT TẤT CẢ</button></div></div></div>';
+  var nmEl=shadow.querySelector('.nm'), phEl=shadow.querySelector('.ph'), staffEl=shadow.querySelector('.staff'), tmEl=shadow.querySelector('.tm'), ackBtn=shadow.querySelector('.ack'), ackAllBtn=shadow.querySelector('.ackall'), ovEl=shadow.querySelector('.ov');
+  if(document.body) document.body.appendChild(host); else document.addEventListener('DOMContentLoaded',function(){document.body.appendChild(host);},{once:true});
 
-    // data-zalo-phone va explicit marker luon duoc chap nhan.
-    if (el.hasAttribute('data-ideco-zalo-praise') || el.hasAttribute('data-zalo-phone')) return el;
-    // Link Zalo ro rang.
-    var href = String(el.getAttribute && el.getAttribute('href') || '');
-    if (/zalo\.me\/|^zalo:\/\/conversation/i.test(href)) return el;
-    return null;
+  var queue=[];
+  var current=null;
+  var startupReady=false;
+  var startupReleased=false;
+  var db=null, eventsRef=null, dbReady=false;
+  var bypass=typeof WeakSet!=='undefined'?new WeakSet():null;
+
+  function queueIndexByCustomer(k){ for(var i=0;i<queue.length;i++) if(queue[i]&&queue[i].customerKey===k) return i; return -1; }
+  function removeQueuedCustomer(k){ queue=queue.filter(function(x){return !x||x.customerKey!==k;}); }
+  function showNext(){
+    if(isMuted()){
+      var mutedQueue=queue.splice(0);
+      mutedQueue.forEach(function(x){ if(x&&typeof x.resume==='function'){ try{x.resume();}catch(e){} } });
+      if(current&&typeof current.resume==='function'){ try{current.resume();}catch(e){} }
+      current=null; host.style.display='none';
+      return;
+    }
+    if(current||!queue.length) return;
+    // Backlog máy khác chờ đăng nhập + 10 giây; thao tác gửi cục bộ luôn hiện ngay.
+    if(!startupReady && !(queue[0] && queue[0].local)) return;
+    while(queue.length){
+      var item=queue.shift();
+      if(!item||!item.customerKey||isCustomerSeen(item.customerKey)||!isFresh(item.at)) continue;
+      current=item; break;
+    }
+    if(!current) return;
+    staffEl.textContent=current.staff||'(Chưa khai tên nhân viên)';
+    tmEl.textContent=formatDateTime(current.at||current.clientAt||Date.now());
+    nmEl.textContent=current.name||'Khách hàng';
+    phEl.textContent=current.phone||'—';
+    host.style.display='block';
+    try{ackBtn.focus({preventScroll:true});}catch(e){try{ackBtn.focus();}catch(_e){}}
+  }
+  function enqueue(item, front){
+    if(!item) return false;
+    if(isMuted()){ if(typeof item.resume==='function'){ try{item.resume();}catch(e){} } return false; }
+    item.customerKey=item.customerKey||customerKey(item.name,item.phone);
+    if(!item.customerKey||isCustomerSeen(item.customerKey)||!isFresh(item.at||Date.now())) return false;
+    if(current&&current.customerKey===item.customerKey) return false;
+    var idx=queueIndexByCustomer(item.customerKey);
+    if(idx>=0){
+      if(Number(item.at||0)>=Number(queue[idx].at||0)) queue[idx]=item;
+      return true;
+    }
+    if(front) queue.unshift(item); else queue.push(item);
+    showNext();
+    return true;
   }
 
-  function ensureUi(){
-    if (host) return;
-    host = document.createElement('div');
-    // Khong dung id/class cua website ngoai Shadow DOM.
-    host.setAttribute('data-ideco-shadow-module', 'zalo-praise-v3');
-    host.style.cssText = 'display:none;position:fixed;inset:0;z-index:2147483647;';
-    document.documentElement.appendChild(host);
-    shadow = host.attachShadow({ mode:'open' });
+  ackBtn.addEventListener('click',function(e){
+    e.preventDefault(); e.stopPropagation();
+    var item=current;
+    if(item){ markCustomerSeen(item); removeQueuedCustomer(item.customerKey); }
+    current=null; host.style.display='none';
+    if(item&&typeof item.resume==='function'){ try{ item.resume(); }catch(err){console.warn('[IDECO Praise V5] resume:',err);} }
+    showNext();
+  });
+  ackAllBtn.addEventListener('click',function(e){
+    e.preventDefault(); e.stopPropagation();
+    var all=[]; if(current) all.push(current); all=all.concat(queue.splice(0));
+    all.forEach(function(item){
+      if(!item) return;
+      if(item.customerKey) markCustomerSeen(item);
+    });
+    muteAll24h();
+    current=null; host.style.display='none';
+    // Các thao tác gửi cục bộ đã bị giữ chờ popup phải được tiếp tục ngay.
+    all.forEach(function(item){ if(item&&typeof item.resume==='function'){ try{item.resume();}catch(err){console.warn('[IDECO Praise V5] resume all:',err);} } });
+  });
+  ovEl.addEventListener('click',function(e){ if(e.target===ovEl){e.preventDefault();e.stopPropagation();} });
+  document.addEventListener('keydown',function(e){ if(current&&e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();} },true);
 
-    var style = document.createElement('style');
-    style.textContent = [
-      ':host{all:initial}',
-      '*{box-sizing:border-box}',
-      '.ov{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(5,16,36,.72);backdrop-filter:blur(5px);font-family:"Segoe UI",Arial,sans-serif;color:#172033}',
-      '.card{width:min(720px,94vw);background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 30px 90px rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.7);animation:idecoPraiseIn .24s ease-out}',
-      '@keyframes idecoPraiseIn{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:none}}',
-      '.head{padding:22px 26px;background:linear-gradient(135deg,#123a7a,#0a5a8f 58%,#008d79);color:white;display:flex;gap:14px;align-items:center}',
-      '.ico{width:54px;height:54px;border-radius:17px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font-size:29px;flex:0 0 auto;border:1px solid rgba(255,255,255,.22)}',
-      '.ttl{font-size:19px;font-weight:900;line-height:1.25;letter-spacing:.2px}',
-      '.sub{font-size:12.5px;opacity:.82;margin-top:4px;font-weight:600}',
-      '.body{padding:25px 28px 22px}',
-      '.msg{font-size:17px;line-height:1.68;font-weight:800;color:#18345e;text-align:center}',
-      '.msg strong{color:#b42318}',
-      '.cust{margin-top:18px;background:#f2f7ff;border:1px solid #d8e6fb;border-radius:14px;padding:14px 16px;text-align:left}',
-      '.custRow{display:flex;gap:9px;align-items:flex-start;font-size:14px;line-height:1.45;margin:3px 0}',
-      '.lab{min-width:92px;color:#65758d;font-weight:700}',
-      '.val{color:#132f59;font-weight:900;word-break:break-word}',
-      '.foot{padding:0 28px 26px;display:flex;justify-content:center}',
-      '.ok{appearance:none;border:0;border-radius:13px;background:linear-gradient(135deg,#16a34a,#059669);color:white;font-size:15px;font-weight:900;padding:13px 34px;cursor:pointer;box-shadow:0 10px 24px rgba(5,150,105,.28);min-width:180px}',
-      '.ok:hover{filter:brightness(1.04);transform:translateY(-1px)}',
-      '.ok:active{transform:translateY(0)}',
-      '@media(max-width:520px){.body{padding:20px 18px 18px}.head{padding:18px}.msg{font-size:15px}.foot{padding:0 18px 20px}.lab{min-width:78px}}'
-    ].join('');
-
-    var ov = document.createElement('div'); ov.className = 'ov';
-    var card = document.createElement('div'); card.className = 'card'; card.setAttribute('role','dialog'); card.setAttribute('aria-modal','true');
-    var head = document.createElement('div'); head.className = 'head';
-    var ico = document.createElement('div'); ico.className = 'ico'; ico.textContent = '🏆';
-    var ht = document.createElement('div');
-    var ttl = document.createElement('div'); ttl.className = 'ttl'; ttl.textContent = 'THÔNG ĐIỆP TỪ BAN GIÁM ĐỐC';
-    var sub = document.createElement('div'); sub.className = 'sub'; sub.textContent = 'Ghi nhận nỗ lực mở rộng cơ hội khách hàng';
-    ht.appendChild(ttl); ht.appendChild(sub); head.appendChild(ico); head.appendChild(ht);
-
-    var body = document.createElement('div'); body.className = 'body';
-    var msg = document.createElement('div'); msg.className = 'msg';
-    msg.innerHTML = '<strong>BAN GIÁM ĐỐC KHEN BẠN ĐÃ NỖ LỰC CHÀO MỜI KHÁCH HÀNG</strong><br>' +
-      'CHÚNG TA ĐỪNG BAO GIỜ PHỤ THUỘC 1 KHÁCH HÀNG - BÁN CHỈ 1 SẢN PHẨM.<br>' +
-      'HÃY LIÊN TỤC TÌM CÁCH MỞ RỘNG CƠ HỘI - NHƯNG PHẢI CÓ KẾ HOẠCH THEO DÕI - KHAI BÁO GIAO DỊCH TỐT.';
-    var cust = document.createElement('div'); cust.className = 'cust';
-    var r1 = document.createElement('div'); r1.className = 'custRow';
-    var l1 = document.createElement('div'); l1.className = 'lab'; l1.textContent = 'LIÊN HỆ:';
-    var v1 = document.createElement('div'); v1.className = 'val';
-    var r2 = document.createElement('div'); r2.className = 'custRow';
-    var l2 = document.createElement('div'); l2.className = 'lab'; l2.textContent = 'ĐIỆN THOẠI:';
-    var v2 = document.createElement('div'); v2.className = 'val';
-    r1.appendChild(l1); r1.appendChild(v1); r2.appendChild(l2); r2.appendChild(v2); cust.appendChild(r1); cust.appendChild(r2);
-    body.appendChild(msg); body.appendChild(cust);
-
-    var foot = document.createElement('div'); foot.className = 'foot';
-    var ok = document.createElement('button'); ok.className = 'ok'; ok.type = 'button'; ok.textContent = '✓ ĐÃ XEM';
-    foot.appendChild(ok);
-    card.appendChild(head); card.appendChild(body); card.appendChild(foot); ov.appendChild(card);
-    shadow.appendChild(style); shadow.appendChild(ov);
-    ui = { name:v1, phone:v2, ok:ok, card:card };
-
-    // Click nen KHONG dong. Chi nut DA XEM dong.
-    ov.addEventListener('click', function(e){ if (e.target === ov) { e.preventDefault(); e.stopPropagation(); } });
-    ok.addEventListener('click', acknowledgeCurrent);
+  function pendingLoad(){var a=jsonGet(LS_PENDING,[]);return Array.isArray(a)?a:[];}
+  function pendingSave(a){jsonSet(LS_PENDING,a.slice(-200));}
+  function eventId(){return deviceId.replace(/[^a-zA-Z0-9_-]/g,'_')+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);}
+  var recentPublished={};
+  function queuePublish(info){
+    var k=customerKey(info.name,info.phone); if(!k) return;
+    var nowPub=Date.now();
+    if(recentPublished[k] && nowPub-recentPublished[k] < 1500) return;
+    recentPublished[k]=nowPub;
+    var a=pendingLoad();
+    a.push({id:eventId(),name:cleanText(info.name)||'Khách hàng',phone:cleanPhone(info.phone),staff:cleanText(info.staff)||'(Chưa khai tên nhân viên)',customerKey:k,atLocal:Number(info.at||Date.now()),page:String(location.href||'').slice(0,450)});
+    pendingSave(a); flushPending();
+  }
+  var flushBusy=false;
+  function flushPending(){
+    if(!dbReady||!eventsRef||flushBusy) return;
+    var a=pendingLoad(); if(!a.length) return;
+    var item=a[0]; flushBusy=true;
+    var payload={name:item.name,phone:item.phone,staff:item.staff,customerKey:item.customerKey,originDevice:deviceId,clientAt:item.atLocal||Date.now(),at:firebase.database.ServerValue.TIMESTAMP,page:item.page||''};
+    eventsRef.child(item.id).set(payload).then(function(){var now=pendingLoad().filter(function(x){return x.id!==item.id;});pendingSave(now);flushBusy=false;flushPending();pruneOld();}).catch(function(){flushBusy=false;});
   }
 
-  function enqueue(evt, front){
-    if (!evt || !evt.key || seen[evt.key] || queuedKeys.has(evt.key)) return;
-    var at = Number(evt.at || 0);
-    if (at && Date.now() - at > CFG.eventTtlMs) return;
-    queuedKeys.add(evt.key);
-    if (front) queue.unshift(evt); else queue.push(evt);
-    pump();
-  }
+  var lastSig='', lastSigAt=0;
+  function handleLocalClick(e){
+    var el=findTrigger(e.target); if(!el) return;
+    if(bypass&&bypass.has(el)){bypass.delete(el);return;}
+    var phone=bestPhone(el); if(!plausiblePhone(phone)) return;
+    var name=bestName(el), staff=bestStaff(el), at=Date.now(), ck=customerKey(name,phone);
+    var sig=ck+'|'+String(el.className||'');
+    if(sig===lastSig && at-lastSigAt<900) return;
+    lastSig=sig; lastSigAt=at;
 
-  function pump(){
-    if (current || !queue.length) return;
-    current = queue.shift();
-    queuedKeys.delete(current.key);
-    ensureUi();
-    ui.name.textContent = current.name || 'Khách hàng';
-    ui.phone.textContent = current.phone || '—';
-    host.style.display = 'block';
-    try { ui.ok.focus({preventScroll:true}); } catch (_) { try { ui.ok.focus(); } catch(__){} }
-  }
+    // Luôn phát sự kiện cho các máy khác, kể cả máy hiện tại đã xem KH này.
+    queuePublish({name:name,phone:phone,staff:staff,at:at});
 
-  function acknowledgeCurrent(){
-    if (!current) return;
-    var done = current.onAck;
-    saveSeen(current.key);
-    current = null;
-    if (host) host.style.display = 'none';
-    // Chạy hành động gửi Zalo sau khi popup thực sự đã được xác nhận.
-    if (typeof done === 'function') setTimeout(function(){ try { done(); } catch(e){ console.error('[IDECO PRAISE] onAck:', e); } }, 60);
-    setTimeout(pump, 80);
-  }
+    // Máy này đang tắt tất cả popup 24h -> vẫn gửi bình thường, không chặn hành động gốc.
+    if(isMuted()) return;
 
-  function showLocal(contact, onAck){
-    var key = 'local_' + deviceId + '_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
-    enqueue({ key:key, name:contact.name, phone:contact.phone, at:Date.now(), source:deviceId, onAck:onAck }, true);
-    return key;
-  }
+    // Máy này đã xác nhận khách này trước đây -> không popup, không chặn hành động gốc.
+    if(isCustomerSeen(ck)) return;
 
-  function publish(contact){
-    if (!eventsRef) return Promise.resolve(null);
-    var ref = eventsRef.push();
-    var payload = {
-      name: String(contact.name || 'Khách hàng').slice(0,160),
-      phone: String(contact.phone || '').slice(0,40),
-      source: deviceId,
-      at: window.firebase && firebase.database && firebase.database.ServerValue ? firebase.database.ServerValue.TIMESTAMP : Date.now()
+    e.preventDefault(); e.stopImmediatePropagation();
+    var resume=function(){
+      if(bypass) bypass.add(el);
+      try{ if(typeof el.click==='function') el.click(); else el.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window})); }catch(_e){}
     };
-    return ref.set(payload).then(function(){ pruneOld(); return ref.key; }).catch(function(err){
-      console.warn('[IDECO PRAISE] Firebase publish:', err);
-      return null;
-    });
+    enqueue({name:name,phone:phone,staff:staff,at:at,customerKey:ck,resume:resume,local:true},true);
   }
+  document.addEventListener('click',handleLocalClick,true);
 
-  var lastLocalClickSig = '';
-  var lastLocalClickAt = 0;
-  document.addEventListener('click', function(e){
-    var el = isEligibleTrigger(e.target);
-    if (!el) return;
-    var c = extractContact(el);
-    if (!c) return;
-
-    // Chong double event trong 1 thao tac click/render.
-    var sig = c.name + '|' + c.phone;
-    var now = Date.now();
-    if (sig === lastLocalClickSig && now - lastLocalClickAt < 1200) return;
-    lastLocalClickSig = sig; lastLocalClickAt = now;
-
-    showLocal(c);
-    publish(c);
-  }, true);
-
-  window.addEventListener('keydown', function(e){
-    // Popup chi dong bang nut DA XEM. Chan ESC khi popup dang mo de khong dong modal nen.
-    if (current && e.key === 'Escape') {
-      e.preventDefault();
-      e.stopImmediatePropagation();
-    }
-  }, true);
-
-  function scriptLoad(src){
-    return new Promise(function(resolve, reject){
-      var s = document.createElement('script');
-      s.src = src; s.async = true;
-      s.onload = resolve; s.onerror = reject;
-      (document.head || document.documentElement).appendChild(s);
-    });
+  function remoteItem(snap){
+    if(isMuted()) return null;
+    var v=snap&&snap.val?(snap.val()||{}):{};
+    var at=Number(v.at||v.clientAt||0); if(!isFresh(at)) return null;
+    if(v.originDevice===deviceId) return null;
+    var name=cleanText(v.name)||'Khách hàng', phone=cleanPhone(v.phone), ck=cleanText(v.customerKey)||customerKey(name,phone);
+    if(!ck||isCustomerSeen(ck)) return null;
+    return {eventId:snap.key||'',name:name,phone:phone,staff:cleanText(v.staff)||'(Chưa khai tên nhân viên)',at:at,customerKey:ck,remote:true};
   }
-
-  async function ensureFirebase(){
-    if (!window.firebase || !window.firebase.initializeApp) {
-      await scriptLoad('https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js');
-    }
-    if (!window.firebase.database) {
-      await scriptLoad('https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js');
-    }
-    var app = null;
-    try { app = firebase.app(CFG.firebaseAppName); } catch (_) {}
-    if (!app) app = firebase.initializeApp(CFG.firebase, CFG.firebaseAppName);
-    db = app.database();
-    eventsRef = db.ref(CFG.path);
-  }
-
   function onRemoteAdded(snap){
-    var v = snap && snap.val ? (snap.val() || {}) : {};
-    var key = snap && snap.key;
-    if (!key || seen[key]) return;
-    if (v.source && v.source === deviceId) return;
-    var evt = { key:key, name:v.name || 'Khách hàng', phone:v.phone || '', at:Number(v.at || 0), source:v.source || '' };
-    if (evt.at && Date.now() - evt.at > CFG.eventTtlMs) return;
-    if (!startupReady) {
-      if (!queuedKeys.has(evt.key)) { queuedKeys.add(evt.key); queue.push(evt); }
-    } else {
-      enqueue(evt, false);
-    }
-  }
-
-  function startRealtime(){
-    eventsRef.limitToLast(CFG.listenLast).on('child_added', onRemoteAdded, function(err){
-      console.warn('[IDECO PRAISE] Firebase listener:', err);
-    });
-    setTimeout(function(){
-      startupReady = true;
-      // child_added da nap cac su kien gan nhat vao queue; gio moi cho hien.
-      // Loai cac event da seen/het han truoc khi pump.
-      var clean = [];
-      queuedKeys.clear();
-      queue.forEach(function(evt){
-        if (!evt || !evt.key || seen[evt.key]) return;
-        if (evt.at && Date.now() - evt.at > CFG.eventTtlMs) return;
-        if (!queuedKeys.has(evt.key)) { queuedKeys.add(evt.key); clean.push(evt); }
-      });
-      queue = clean.sort(function(a,b){ return (a.at||0) - (b.at||0); });
-      pump();
-    }, CFG.startupDelayMs);
+    var item=remoteItem(snap); if(!item) return;
+    enqueue(item,false);
   }
 
   function pruneOld(){
-    if (!eventsRef) return;
-    var cutoff = Date.now() - CFG.eventTtlMs;
-    try {
-      eventsRef.orderByChild('at').endAt(cutoff).limitToFirst(30).once('value').then(function(s){
-        var ops = [];
-        s.forEach(function(ch){ ops.push(ch.ref.remove().catch(function(){})); });
-        return Promise.all(ops);
+    if(!eventsRef) return;
+    var last=Number(safeGet(LS_CLEAN,'0')||0); if(Date.now()-last<6*60*60*1000) return;
+    safeSet(LS_CLEAN,String(Date.now()));
+    var cutoff=Date.now()-CFG.eventTtlMs;
+    try{
+      eventsRef.orderByChild('at').endAt(cutoff).limitToFirst(120).once('value').then(function(s){
+        var upd={}; s.forEach(function(ch){upd[ch.key]=null;}); if(Object.keys(upd).length) return eventsRef.update(upd);
       }).catch(function(){});
-    } catch (_) {}
+    }catch(e){}
   }
 
-  function boot(){
-    ensureUi();
-    ensureFirebase().then(startRealtime).catch(function(err){
-      console.warn('[IDECO PRAISE] Khong khoi tao duoc Firebase; popup cuc bo van hoat dong:', err);
-      setTimeout(function(){ startupReady = true; pump(); }, CFG.startupDelayMs);
+  function releaseStartup(){
+    if(startupReleased) return; startupReleased=true;
+    var latestByCustomer={};
+    queue.forEach(function(x){
+      if(!x||!x.customerKey||isCustomerSeen(x.customerKey)||!isFresh(x.at)) return;
+      if(!latestByCustomer[x.customerKey]||Number(x.at||0)>Number(latestByCustomer[x.customerKey].at||0)) latestByCustomer[x.customerKey]=x;
     });
+    queue=Object.keys(latestByCustomer).map(function(k){return latestByCustomer[k];}).sort(function(a,b){return Number(b.at||0)-Number(a.at||0);}).slice(0,CFG.maxStartupCustomers);
+    startupReady=true; showNext();
+  }
+  function waitForLoginThenRelease(){
+    var gate=null;
+    try{gate=document.getElementById('loginGate');}catch(e){}
+    function visible(){
+      if(!gate||!document.documentElement.contains(gate)) return false;
+      try{var cs=getComputedStyle(gate);return cs.display!=='none'&&cs.visibility!=='hidden'&&cs.opacity!=='0';}catch(e){return false;}
+    }
+    function schedule(){setTimeout(releaseStartup,CFG.startupDelayMs);}
+    if(!visible()){schedule();return;}
+    var done=false;
+    var check=function(){if(done)return;if(!visible()){done=true;try{mo.disconnect();}catch(e){} clearInterval(iv);schedule();}};
+    var mo=new MutationObserver(check); try{mo.observe(gate,{attributes:true,attributeFilter:['style','class','hidden']});}catch(e){}
+    var iv=setInterval(check,500); check();
   }
 
-  // API công khai để app gốc gọi trực tiếp đúng lúc chuẩn bị gửi Zalo.
-  // trigger(contact, onAck): hiện ngay máy hiện tại + publish Firebase; onAck chỉ chạy sau nút ✓ ĐÃ XEM.
-  window.IDECO_ZALO_PRAISE_REALTIME = {
-    trigger: function(contact, onAck){
-      contact = contact || {};
-      var c = { name:String(contact.name || 'Khách hàng').trim() || 'Khách hàng', phone:normalizePhone(contact.phone || '') };
-      if (!c.phone) { if (typeof onAck === 'function') onAck(); return false; }
-      showLocal(c, onAck);
-      publish(c);
+  ensureFirebase().then(function(){
+    var app;
+    try{app=firebase.apps.filter(function(a){return a.name===CFG.appName;})[0]||firebase.initializeApp(CFG.firebase,CFG.appName);db=app.database();eventsRef=db.ref(CFG.path);dbReady=true;}catch(e){console.warn('[IDECO Praise V5] Firebase init:',e);waitForLoginThenRelease();return;}
+    flushPending(); pruneOld();
+    try{eventsRef.orderByChild('at').startAt(Date.now()-CFG.eventTtlMs).limitToLast(CFG.listenLast).on('child_added',onRemoteAdded,function(err){console.warn('[IDECO Praise V5] listener:',err);});}catch(e){console.warn('[IDECO Praise V5] realtime:',e);}
+    try{db.ref('.info/connected').on('value',function(s){if(s.val()===true) flushPending();});}catch(e){}
+    waitForLoginThenRelease();
+  }).catch(function(e){console.warn('[IDECO Praise V5] Firebase load:',e);waitForLoginThenRelease();});
+
+  /* API cho IDECO FULL hoặc app khác gọi trực tiếp đúng lúc chuẩn bị gửi */
+  window.IDECO_ZALO_PRAISE_REALTIME={
+    version:'5.0-24h-customer-seen-mute-all',
+    trigger:function(info,onAck){
+      info=info||{};
+      var name=cleanText(info.name||info.tenKhachHang||'')||'Khách hàng';
+      var phone=cleanPhone(info.phone||info.dienThoai||'');
+      var staff=cleanText(info.staff||info.nhanVien||'')||bestStaff(null);
+      var at=Number(info.at||Date.now());
+      if(!phone){if(typeof onAck==='function')onAck();return false;}
+      var ck=customerKey(name,phone);
+      queuePublish({name:name,phone:phone,staff:staff,at:at});
+      if(isMuted()){ if(typeof onAck==='function') onAck(); return true; }
+      if(isCustomerSeen(ck)){
+        if(typeof onAck==='function') onAck();
+        return true;
+      }
+      // Thao tác gửi cục bộ luôn hiện ngay; backlog máy khác vẫn tuân thủ chờ đăng nhập + 10 giây.
+      enqueue({name:name,phone:phone,staff:staff,at:at,customerKey:ck,resume:typeof onAck==='function'?onAck:null,local:true},true);
       return true;
     },
-    isOpen: function(){ return !!current; }
+    isOpen:function(){return !!current;},
+    hasSeenCustomer:function(name,phone){return isCustomerSeen(customerKey(name,phone));},
+    resetSeenCustomer:function(name,phone){var k=customerKey(name,phone);if(k&&seenCustomers[k]){delete seenCustomers[k];jsonSet(LS_SEEN_CUSTOMERS,seenCustomers);return true;}return false;},
+    muteAll24h:function(){return muteAll24h();},
+    enablePopups:function(){return clearMute();},
+    isMuted:function(){return isMuted();},
+    mutedUntil:function(){return muteUntil();}
   };
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once:true });
-  else boot();
 })();
 
 </script>
-<!-- /IDECO_ZALO_PRAISE_REALTIME_V3 -->
+<!-- /IDECO_ZALO_PRAISE_REALTIME_V5 -->
 </body>
 </html>
