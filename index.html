@@ -2809,7 +2809,9 @@
     }
     // CRUD
     let rowIndexMap = []; 
-    let editingRowState = { index: null, originalData: [] }; 
+    // Lưu cả vị trí thật trong uploadedFiles. currentData là bảng đã gộp/đánh lại STT
+    // nên không thể chỉ dựa vào index hoặc tham chiếu của dòng đang hiển thị.
+    let editingRowState = { index: null, originalData: [], sourceLocation: null, originalIdentityKey: '' }; 
     const REMOVE_BG_API_KEY = "iHt8DKCwKg4Va63ACXopN7nm"; 
     // MẶC ĐỊNH LÀ LANDSCAPE
     let currentPaperOrientation = 'landscape';
@@ -4578,9 +4580,11 @@
         try {
             await database.ref("priceData").set(dataToSave);
             console.log("Đã lưu Firebase");
+            return true;
         } catch (err) {
             console.error("Lỗi khi lưu dữ liệu:", err);
             alert("Lỗi khi lưu dữ liệu lên server. Vui lòng kiểm tra kết nối mạng.");
+            return false;
         }
     }
     // ========== TỰ ĐỘNG THÊM CỘT MÃ SP NẾU THIẾU (tương thích ngược data cũ) ==========
@@ -5109,47 +5113,157 @@
         tableContainer.scrollTop = tableContainer.scrollHeight;
         const newIdx = currentData.length-1; selectedRowIdx.clear(); selectedRowIdx.add(newIdx); handleEditRow();
     }
-    function handleEditRow() {
+    function resolveSourceLocationForEdit(displayIndex, row){
+        // Ưu tiên metadata được tạo lúc gộp dữ liệu: đây là vị trí của file mới nhất
+        // đang thắng và cũng chính là dòng người dùng đang nhìn thấy.
+        const id = pc7Identity(row, currentData[0] || headersCache || []);
+        const meta = id && currentProductSourceMeta ? currentProductSourceMeta.get(id.key) : null;
+        if(meta && uploadedFiles[meta.fileIndex] && Array.isArray(uploadedFiles[meta.fileIndex].data)
+            && uploadedFiles[meta.fileIndex].data[meta.rowIndexInFile]){
+            return { fileIndex: meta.fileIndex, rowIndexInFile: meta.rowIndexInFile };
+        }
+        const direct = locateRowInFiles(row);
+        if(direct) return direct;
+        const mapped = rowIndexMap[displayIndex];
+        if(mapped && uploadedFiles[mapped.fileIndex] && Array.isArray(uploadedFiles[mapped.fileIndex].data)
+            && uploadedFiles[mapped.fileIndex].data[mapped.rowIndexInFile]) return mapped;
+        return null;
+    }
+
+    function readRowCellForEdit(td){
+        if(!td) return '';
+        const control = td.querySelector('input:not([type="checkbox"]), select, textarea');
+        if(control){
+            let value = String(control.value == null ? '' : control.value).trim();
+            if(control.classList.contains('ck-input')) value = value.replace(/%/g, '').trim();
+            return value;
+        }
+        return String(td.innerText == null ? td.textContent : td.innerText).replace(/\u00a0/g, ' ').trim();
+    }
+
+    function writeEditedMasterRowToSource(location, editedRow){
+        if(!location) return false;
+        const file = uploadedFiles[location.fileIndex];
+        if(!file || !Array.isArray(file.data)) return false;
+        const sourceRow = file.data[location.rowIndexInFile];
+        const sourceHeader = file.data[0] || [];
+        const masterHeader = currentData[0] || headersCache || [];
+        if(!Array.isArray(sourceRow)) return false;
+
+        // Ghi theo tên cột để không làm lệch dữ liệu khi Excel nguồn có thứ tự cột khác.
+        const masterByKey = new Map();
+        masterHeader.forEach((h, i)=>{ const key = pc7HeaderKey(h); if(key && !masterByKey.has(key)) masterByKey.set(key, i); });
+        sourceHeader.forEach((h, sourceIdx)=>{
+            const key = pc7HeaderKey(h);
+            let masterIdx = masterByKey.has(key) ? masterByKey.get(key) : -1;
+            if(masterIdx < 0 && (key === 'masp' || key === 'masanpham')) masterIdx = pc7FindCol(masterHeader, 'code');
+            if(masterIdx < 0 && (key === 'tenthuoc' || key === 'tensanpham' || key === 'tenhang')) masterIdx = pc7FindCol(masterHeader, 'name');
+            if(masterIdx < 0 && sourceHeader.length === masterHeader.length) masterIdx = sourceIdx;
+            if(masterIdx >= 0) sourceRow[sourceIdx] = editedRow[masterIdx] == null ? '' : editedRow[masterIdx];
+        });
+        return true;
+    }
+
+    async function handleEditRow() {
         const btn = editRowBtn;
         if(editingRowState.index !== null){
             const idx = editingRowState.index;
             const tr = tableContainer.querySelector(`tr[data-row-index='${idx}']`);
-            if(!tr) return;
+            if(!tr){
+                alert('Không tìm thấy hàng đang sửa trên màn hình. Vui lòng bấm Hủy rồi chọn lại hàng.');
+                return;
+            }
             const cells = tr.querySelectorAll('td');
             const newRow = [];
-            for(let i=0; i<cells.length-1; i++) newRow.push(cells[i].textContent.trim());
+            for(let i=0; i<cells.length-1; i++) newRow.push(readRowCellForEdit(cells[i]));
             const fullRow = [...currentData[idx]];
             const visibleIdx = visibleColumnIndexes();
             visibleIdx.forEach((origIdx, i) => fullRow[origIdx] = newRow[i]||'');
-            // [VÁ v2] Định vị theo tham chiếu dòng (rowIndexMap bị xóa trắng khi trộn nhóm nhiều file)
-            const loc = locateRowInFiles(currentData[idx]) || rowIndexMap[idx] || null;
-            if(loc && uploadedFiles[loc.fileIndex] && Array.isArray(uploadedFiles[loc.fileIndex].data)){
-                const target = uploadedFiles[loc.fileIndex].data[loc.rowIndexInFile];
-                if(Array.isArray(target)){ target.length = 0; fullRow.forEach(v => target.push(v)); } // ghi đè tại chỗ → currentData đồng bộ theo
-                else uploadedFiles[loc.fileIndex].data[loc.rowIndexInFile] = fullRow;
-                saveDataToFirebase();
-            } else {
+            const loc = editingRowState.sourceLocation || resolveSourceLocationForEdit(idx, editingRowState.originalData);
+            const sourceRowBeforeSave = (loc && uploadedFiles[loc.fileIndex] && Array.isArray(uploadedFiles[loc.fileIndex].data)
+                && Array.isArray(uploadedFiles[loc.fileIndex].data[loc.rowIndexInFile]))
+                ? [...uploadedFiles[loc.fileIndex].data[loc.rowIndexInFile]] : null;
+            if(!writeEditedMasterRowToSource(loc, fullRow)){
                 alert('❌ Không định vị được hàng trong dữ liệu gốc nên chưa lưu được.\nVui lòng tải lại trang (F5) rồi sửa lại.');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Đang lưu...';
+            const saved = await saveDataToFirebase();
+            btn.disabled = false;
+            if(!saved){
+                // Hoàn lại bản cục bộ; nếu không, một lần lưu khác về sau có thể vô tình ghi dữ liệu vừa thất bại.
+                if(sourceRowBeforeSave && loc && uploadedFiles[loc.fileIndex] && Array.isArray(uploadedFiles[loc.fileIndex].data)){
+                    uploadedFiles[loc.fileIndex].data[loc.rowIndexInFile] = sourceRowBeforeSave;
+                }
+                // Dữ liệu trên màn hình vẫn ở trạng thái sửa để người dùng có thể bấm Lưu lại.
+                btn.textContent = 'Lưu thay đổi';
+                return;
+            }
+
+            currentData[idx] = fullRow;
+            const newId = pc7Identity(fullRow, currentData[0] || headersCache || []);
+            if(editingRowState.originalIdentityKey && currentProductSourceMeta) currentProductSourceMeta.delete(editingRowState.originalIdentityKey);
+            if(newId && currentProductSourceMeta && loc){
+                const file = uploadedFiles[loc.fileIndex] || {};
+                currentProductSourceMeta.set(newId.key, {
+                    fileIndex: loc.fileIndex, rowIndexInFile: loc.rowIndexInFile,
+                    fileName: file.name || '', importedAt: Number(file.importedAt || 0),
+                    uploadId: file.uploadId || '', pc7BatchId: file.pc7BatchId || ''
+                });
             }
             cells.forEach(td=>{ td.contentEditable='false'; td.classList.remove('editing-cell'); });
-            editingRowState = {index:null, originalData:[]};
-            btn.textContent = 'Sửa hàng đã chọn'; btn.style.background='#ffc107';
+            editingRowState = {index:null, originalData:[], sourceLocation:null, originalIdentityKey:''};
+            btn.textContent = '✓ Đã lưu dữ liệu mới'; btn.style.background='#2e7d32';
             document.getElementById('cancelEditBtn')?.remove();
+            setTimeout(()=>{
+                if(editingRowState.index === null){ btn.textContent = 'Sửa hàng đã chọn'; btn.style.background='#ffc107'; }
+            }, 1400);
         } else {
-            if(selectedRowIdx.size !== 1) return;
+            if(selectedRowIdx.size !== 1){
+                alert('Vui lòng chỉ chọn đúng 1 hàng cần sửa.');
+                return;
+            }
             const idx = selectedRowIdx.values().next().value;
             const tr = tableContainer.querySelector(`tr[data-row-index='${idx}']`);
-            editingRowState.index = idx; editingRowState.originalData = [...currentData[idx]];
+            const row = currentData[idx];
+            if(!tr || !row || isGroupHeaderRow(row)){
+                alert('Hàng đã chọn hiện không còn hiển thị. Vui lòng bỏ bộ lọc hoặc chọn lại hàng cần sửa.');
+                return;
+            }
+            const sourceLocation = resolveSourceLocationForEdit(idx, row);
+            if(!sourceLocation){
+                alert('❌ Không định vị được hàng này trong dữ liệu gốc. Vui lòng tải lại trang (F5) rồi chọn lại.');
+                return;
+            }
+            const rowId = pc7Identity(row, currentData[0] || headersCache || []);
+            editingRowState = {
+                index: idx,
+                originalData: [...row],
+                sourceLocation,
+                originalIdentityKey: rowId ? rowId.key : ''
+            };
             const cells = tr.querySelectorAll('td');
-            for(let i=0; i<cells.length-1; i++){ cells[i].contentEditable='true'; cells[i].classList.add('editing-cell'); }
-            cells[0].focus();
+            for(let i=0; i<cells.length-1; i++){
+                // Các ô CK đã có input riêng; không bật contentEditable lên ô cha để tránh làm hỏng input.
+                if(!cells[i].querySelector('input, select, textarea')) cells[i].contentEditable='true';
+                cells[i].classList.add('editing-cell');
+            }
+            const firstEditable = tr.querySelector('td[contenteditable="true"], td input:not([type="checkbox"]), td select, td textarea');
+            if(firstEditable) firstEditable.focus();
             btn.textContent = 'Lưu thay đổi'; btn.style.background='#4caf50';
             const cancelBtn = document.createElement('button'); cancelBtn.id='cancelEditBtn'; cancelBtn.textContent='Hủy'; cancelBtn.className='export-btn'; cancelBtn.style.background='#9e9e9e';
             cancelBtn.onclick = ()=>{
                 const visIdx = visibleColumnIndexes();
-                visIdx.forEach((origIdx, i) => cells[i].textContent = editingRowState.originalData[origIdx]||'');
+                visIdx.forEach((origIdx, i) => {
+                    const control = cells[i] && cells[i].querySelector('input:not([type="checkbox"]), select, textarea');
+                    const oldValue = editingRowState.originalData[origIdx] == null ? '' : editingRowState.originalData[origIdx];
+                    if(control) control.value = control.classList.contains('ck-input') ? ckWithPct(oldValue) : oldValue;
+                    else if(cells[i]) cells[i].textContent = oldValue;
+                });
                 cells.forEach(td=>{ td.contentEditable='false'; td.classList.remove('editing-cell'); });
-                editingRowState={index:null, originalData:[]};
+                editingRowState={index:null, originalData:[], sourceLocation:null, originalIdentityKey:''};
                 btn.textContent='Sửa hàng đã chọn'; btn.style.background='#ffc107'; cancelBtn.remove();
                 updateActionButtonsState();
             };
