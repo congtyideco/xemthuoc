@@ -544,6 +544,9 @@
         .zalo-cust-table th { background: #0068ff; color: #fff; padding: 8px; position: sticky; top: 0; z-index: 1; text-align: left; }
         .zalo-cust-table td { border-bottom: 1px solid #e8f1ff; padding: 7px 8px; vertical-align: middle; }
         .zalo-cust-table tr:hover td { background: #eaf3ff; }
+        .zalo-address-link { color: #1565c0; text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; }
+        .zalo-address-link:hover { color: #0d47a1; }
+        .zalo-address-link:focus-visible { outline: 2px solid #1565c0; outline-offset: 3px; border-radius: 3px; }
         .zalo-phone-link { color: #0068ff; font-weight: bold; text-decoration: underline; cursor: pointer; white-space: nowrap; }
         .zalo-send-btn { background: #0068ff; color: #fff; border: none; border-radius: 6px; padding: 6px 12px; cursor: pointer; font-weight: bold; font-size: 13px; white-space: nowrap; }
         .zalo-send-btn:hover { background: #0052cc; }
@@ -1357,6 +1360,7 @@
                 <div class="hero-cta">
                     <button class="cta-primary" id="heroViewPrice">💊 Tra cứu &amp; Xem giá</button>
                     <button class="cta-secondary" id="heroCreateQuote">🧾 Tạo báo giá</button>
+                    <button type="button" class="cta-secondary" data-dav-open>🔎 Tra cứu giá thuốc Bộ Y tế</button>
                 </div>
             </div>
             <div class="hero-visual">
@@ -1537,6 +1541,7 @@
                     <div class="pro-tool-card">
                         <h4>🔘 Lọc & Chọn hàng</h4>
                         <div class="pro-row">
+                            <button type="button" class="btn" data-dav-open style="background:#087f8c;color:white">🔎 Giá thuốc Bộ Y tế</button>
                             <button class="btn btn-filter" id="filterSelectedBtn" title="Chỉ hiển thị các hàng đã tick">Lọc hàng đã chọn</button>
                             <button class="btn btn-clear" id="clearSelectionBtn" title="Xóa mọi tick và trở về danh sách ban đầu">Refresh</button>
                         </div>
@@ -1833,7 +1838,7 @@
             </div>
             <div class="zalo-panel-body" id="zaloPanelBody">
                 <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:13px;color:#795548;line-height:1.5">
-                    👉 <b>Bước 1:</b> Bấm nút <b>📋 Chọn</b> (hoặc bấm vào hàng) khách hàng → tên, SĐT, địa chỉ tự load lên báo giá phía trên. <b>Bước 2:</b> Kiểm tra đúng KH rồi bấm <b>🖼 Ảnh</b> / <b>📄 PDF</b> để gửi Zalo.
+                    👉 <b>Bước 1:</b> Bấm nút <b>📋 Chọn</b> (hoặc bấm vào hàng) khách hàng → tên, SĐT, địa chỉ tự load lên báo giá phía trên. <b>Bước 2:</b> Kiểm tra đúng KH rồi bấm <b>🖼 Ảnh</b> / <b>📄 PDF</b> để gửi Zalo. <br>📍 Bấm vào <b>địa chỉ khách hàng</b> để tra cứu trên <b>Google Maps</b> trong tab mới.
                 </div>
                 <div class="zalo-toolbar">
                     <input type="text" id="zaloCustSearch" placeholder="🔍 Tìm khách hàng (tên, người liên hệ, SĐT, địa chỉ)..." />
@@ -6315,6 +6320,14 @@
             });
     }
 
+    // Tra cứu địa chỉ cho cả KH hiện tại và KH mới / upload Excel.
+    function zaloAddressLink(address) {
+        const value = String(address == null ? '' : address).trim();
+        if (!value) return '<span style="color:#aaa">—</span>';
+        const url = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(value);
+        return '<a class="zalo-address-link" href="' + zaloEsc(url) + '" target="_blank" rel="noopener noreferrer" title="Tra cứu địa chỉ này trên Google Maps (mở tab mới)"><span aria-hidden="true">📍</span> ' + zaloEsc(value) + '</a>';
+    }
+
     function renderZaloCustomerList(filter) {
         if (!zaloCustListBody) return;
         const kw = String(filter || '').toLowerCase().trim();
@@ -6350,7 +6363,7 @@
                 '<td><b>' + zaloEsc(c.tenKhachHang) + '</b>' + (sent ? '<span class="zalo-sent-badge">✓ đã gửi hôm nay</span>' : '') + (dbClaim ? '<span class="zalo-claim-badge" title="NV đã ghi nhận gửi' + (dbClaim.at ? ' — ' + new Date(dbClaim.at).toLocaleString('vi-VN') : '') + '">👤 NV ' + zaloEsc(dbClaim.staff) + ' đã gửi</span>' : '') + '</td>' +
                 '<td>' + zaloEsc(c.nguoiPhuTrach) + '</td>' +
                 '<td>' + (c.dienThoai ? '<span class="zalo-phone-link" data-ridx="' + ridx + '" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Bấm để gửi báo giá qua Zalo (tự load thông tin KH này lên báo giá trước khi gửi)">' + zaloEsc(c.dienThoai) + '</span>' : '<span style="color:#aaa">—</span>') + '</td>' +
-                '<td>' + zaloEsc(c.diaChi) + '</td>' +
+                '<td>' + zaloAddressLink(c.diaChi) + '</td>' +
                 '<td style="white-space:nowrap">' + (c.dienThoai ? '<button class="zalo-send-btn" data-mode="img" data-ridx="' + ridx + '" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Copy ảnh báo giá rồi dán Ctrl+V vào Zalo">🖼 Ảnh</button> <button class="zalo-send-btn" data-mode="pdf" data-ridx="' + ridx + '" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Tải file PDF báo giá rồi kéo vào Zalo — phù hợp danh mục dài">📄 PDF</button> ' : '') + '<button class="zalo-claim-btn' + (dbClaim ? ' claimed' : '') + '" data-ridx="' + ridx + '" title="' + (dbClaim ? 'Đã ghi nhận NV ' + zaloEsc(dbClaim.staff) + ' gửi — bấm để sửa/xóa' : 'Ghi nhận tên NV đã gửi cho KH này') + '">' + (dbClaim ? '👤 NV: ' + zaloEsc(dbClaim.staff) : '👤 Tên NV') + '</button></td>' +
                 '</tr>';
         });
@@ -6395,7 +6408,7 @@
                 '<td><b>' + zaloEsc(c.tenKhachHang) + '</b><span class="zalo-upload-badge">📁 upload</span>' + (sent ? '<span class="zalo-sent-badge">✓ đã gửi hôm nay</span>' : '') + (claim ? '<span class="zalo-claim-badge" title="Nhân viên đã ghi nhận gửi cho KH này' + (claim.at ? ' — ' + new Date(claim.at).toLocaleString('vi-VN') : '') + '">👤 NV ' + zaloEsc(claim.staff) + ' đã gửi</span>' : '') + '</td>' +
                 '<td>' + (c.nguoiPhuTrach ? zaloEsc(c.nguoiPhuTrach) : '<span style="color:#bbb">—</span>') + '</td>' +
                 '<td>' + (c.dienThoai ? '<span class="zalo-phone-link" data-ridx="' + ridx + '" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Bấm để gửi báo giá qua Zalo (tự load thông tin KH này lên báo giá trước khi gửi)">' + zaloEsc(c.dienThoai) + '</span>' : '<span style="color:#aaa">—</span>') + '</td>' +
-                '<td>' + zaloEsc(c.diaChi) + '</td>' +
+                '<td>' + zaloAddressLink(c.diaChi) + '</td>' +
                 '<td style="white-space:nowrap">' + (c.dienThoai ? '<button class="zalo-send-btn" data-mode="img" data-ridx="' + ridx + '" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Copy ảnh báo giá rồi dán Ctrl+V vào Zalo">🖼 Ảnh</button> <button class="zalo-send-btn" data-mode="pdf" data-ridx="' + ridx + '" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Tải file PDF báo giá rồi kéo vào Zalo — phù hợp danh mục dài">📄 PDF</button> ' : '') + '<button class="zalo-claim-btn' + (claim ? ' claimed' : '') + '" data-ridx="' + ridx + '" title="' + (claim ? 'Đã ghi nhận NV ' + zaloEsc(claim.staff) + ' gửi — bấm để sửa/xóa' : 'Ghi nhận tên NV đã gửi cho KH này (đồng bộ mọi máy để NV khác không khai thác nhầm)') + '">' + (claim ? '👤 NV: ' + zaloEsc(claim.staff) : '👤 Tên NV') + '</button></td>' +
                 '</tr>';
         });
@@ -6406,6 +6419,8 @@
     // - Bấm 📋 Chọn (hoặc bấm vào hàng) → load thông tin KH lên báo giá; bấm lại KH đang chọn → BỎ CHỌN
     // - Bấm 🖼 Ảnh / 📄 PDF / SĐT → nếu KH này CHƯA được load lên báo giá thì tự load trước, rồi mới gửi (chống nhầm tên)
     function handleZaloListClick(e, getList) {
+        // Giữ hành vi mở liên kết, không chọn / bỏ chọn KH khi bấm địa chỉ.
+        if (e.target.closest('.zalo-address-link')) { e.stopPropagation(); return; }
         const list = getList() || [];
         const claimEl = e.target.closest('.zalo-claim-btn');
         if (claimEl) {
@@ -8597,5 +8612,70 @@
 
 </script>
 <!-- /IDECO_ZALO_PRAISE_REALTIME_V3 -->
+
+<!-- IDECO: Tra cứu trực tiếp giá thuốc Cục Quản lý Dược -->
+<style>
+#idecoDavDialog{box-sizing:border-box;width:96vw;max-width:none;height:94vh;height:94dvh;max-height:none;margin:auto;padding:0;border:0;border-radius:16px;background:#fff;color:#18334a;box-shadow:0 20px 80px #0005;overflow:hidden}
+#idecoDavDialog::backdrop{background:rgba(9,23,40,.72)}
+#idecoDavDialog[open]{display:flex;flex-direction:column}
+#idecoDavDialog.dav-max{width:100vw;height:100vh;height:100dvh;border-radius:0}
+#idecoDavDialog .dav-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;background:#086775;color:white}
+#idecoDavDialog h2{font-size:17px;margin:0;color:white}
+#idecoDavDialog .dav-actions{display:flex;gap:8px;flex-wrap:wrap}
+#idecoDavDialog button{position:static;border:1px solid #ffffff70;border-radius:8px;background:#fff;color:#075c68;padding:9px 12px;font-weight:700;cursor:pointer}
+#idecoDavDialog button:focus-visible{outline:3px solid #ffb83d;outline-offset:2px}
+#idecoDavDialog .dav-note{font-size:13px;padding:9px 16px;background:#edf8fa;border-bottom:1px solid #dce9ec}
+#idecoDavDialog .dav-body{flex:1;min-height:0;position:relative;background:#fff}
+#idecoDavFrame{display:block;border:0;width:100%;height:100%;background:white}
+#idecoDavDialog .dav-loading{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:#fff5d8;border:1px solid #ebce77;border-radius:8px;padding:10px 16px;font-size:13px;max-width:85%;pointer-events:none}
+#idecoDavDialog .dav-loading[hidden]{display:none}
+#idecoDavDialog details{padding:7px 16px;background:#f5f8fb;font-size:12px;border-top:1px solid #dce9ec}
+#idecoDavDialog summary{cursor:pointer}
+#idecoDavDialog .dav-source{overflow-wrap:anywhere;color:#536773;margin-top:5px}
+@media(max-width:640px){#idecoDavDialog{width:100vw;height:100vh;height:100dvh;border-radius:0}#idecoDavDialog .dav-head{padding:10px}#idecoDavDialog h2{font-size:15px}#idecoDavDialog .dav-note{padding:8px 10px}}
+</style>
+<dialog id="idecoDavDialog" aria-labelledby="idecoDavTitle">
+ <div class="dav-head"><h2 id="idecoDavTitle">🔎 Tra cứu giá thuốc · Bộ Y tế</h2><div class="dav-actions">
+ <button type="button" id="idecoDavReload">↻ Tải lại</button>
+ <button type="button" id="idecoDavExpand" aria-pressed="false">⛶ Phóng to</button>
+ <button type="button" id="idecoDavClose" autofocus>✕ Đóng</button>
+ </div></div>
+ <div class="dav-note">Nhập <b>tên thuốc hoặc số đăng ký</b> vào ô tìm kiếm của trang bên dưới, rồi bấm <b>Tìm kiếm</b>. Chọn <b>Tra cứu nâng cao</b> để lọc thêm thông tin.</div>
+ <div class="dav-body"><iframe id="idecoDavFrame" title="Trang tra cứu giá thuốc Cục Quản lý Dược – Bộ Y tế" sandbox="allow-forms allow-scripts allow-same-origin allow-downloads" referrerpolicy="strict-origin-when-cross-origin"></iframe><div class="dav-loading" id="idecoDavLoading" role="status" hidden>Đang yêu cầu tải trang Bộ Y tế…</div></div>
+ <details><summary>Trang trống hoặc không tải được?</summary><p>Thử bấm Tải lại và kiểm tra kết nối Internet. Nếu trình duyệt báo “refused to connect” hoặc từ chối hiển thị trong khung, website nguồn đang chặn nhúng; ứng dụng HTML không thể tự bỏ giới hạn này.</p><div class="dav-source">Nguồn: https://dichvucong.dav.gov.vn/congbogiathuocbackup/index</div></details>
+</dialog>
+<script id="idecoDavScript">
+(function(){
+ 'use strict';
+ const url='https://dichvucong.dav.gov.vn/congbogiathuocbackup/index';
+ const dialog=document.getElementById('idecoDavDialog');
+ const frame=document.getElementById('idecoDavFrame');
+ const status=document.getElementById('idecoDavLoading');
+ const expand=document.getElementById('idecoDavExpand');
+ let started=false, timer, opener, oldOverflow='';
+ function load(){
+   clearTimeout(timer);status.hidden=false;status.textContent='Đang yêu cầu tải trang Bộ Y tế…';
+   frame.src=url;started=true;
+   timer=setTimeout(function(){status.textContent='Nếu trang chưa hiển thị, bấm Tải lại hoặc xem hướng dẫn bên dưới.';},20000);
+ }
+ frame.addEventListener('load',function(){clearTimeout(timer);status.hidden=true;});
+ frame.addEventListener('error',function(){clearTimeout(timer);status.hidden=false;status.textContent='Không tải được trang. Thử Tải lại hoặc xem hướng dẫn bên dưới.';});
+ document.querySelectorAll('[data-dav-open]').forEach(function(button){
+   button.addEventListener('click',function(){
+     if(dialog.open)return;
+     opener=button;oldOverflow=document.body.style.overflow;
+     dialog.showModal();document.body.style.overflow='hidden';
+     if(!started)load();
+   });
+ });
+ document.getElementById('idecoDavReload').addEventListener('click',load);
+ document.getElementById('idecoDavClose').addEventListener('click',function(){dialog.close();});
+ expand.addEventListener('click',function(){
+   const max=dialog.classList.toggle('dav-max');expand.setAttribute('aria-pressed',String(max));expand.textContent=max?'⛶ Thu gọn':'⛶ Phóng to';
+ });
+ dialog.addEventListener('close',function(){document.body.style.overflow=oldOverflow;if(opener&&opener.isConnected)opener.focus();});
+})();
+</script>
+
 </body>
 </html>
