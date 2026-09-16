@@ -1905,14 +1905,13 @@
 <script>
     // ========== FIREBASE CONFIG ==========
  const firebaseConfig = {
-        apiKey: "AIzaSyBuXjYpTuKpNyZY6ZIfUSA-m4NWBwPWcU0",
-        authDomain: "baica-dae2b.firebaseapp.com",
-        databaseURL: "https://baica-dae2b-default-rtdb.firebaseio.com",
-        projectId: "baica-dae2b",
-        storageBucket: "baica-dae2b.appspot.com",
-        messagingSenderId: "61139094665",
-        appId: "1:61139094665:web:13ebec976cec24e53f8a58",
-        measurementId: "G-VN2S2VVSZB",
+        apiKey: "AIzaSyAcy4Wr4D1nHFyVejJWLNacmT-bnWm6xWY",
+        authDomain: "webcty-ecf1b.firebaseapp.com",
+        databaseURL: "https://webcty-ecf1b-default-rtdb.firebaseio.com",
+        projectId: "webcty-ecf1b",
+        storageBucket: "webcty-ecf1b.appspot.com",
+        messagingSenderId: "736670340278",
+        appId: "1:736670340278:web:788716a477fef3ba1a0217"
     };
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
@@ -4581,7 +4580,17 @@
                 return row.some(cell => String(cell).trim() !== '');
             });
         }
-        const dataToSave = { files: uploadedFiles, lastUpdated: new Date().toISOString() };
+        const syncNow = new Date();
+        // Ghi thêm metadata để app Báo giá điện tử nhận biết rõ cả trạng thái XÓA SẠCH.
+        // Firebase có thể lược bỏ mảng [] nên fileCount/cleared là tín hiệu đồng bộ chắc chắn.
+        const dataToSave = {
+            files: uploadedFiles,
+            fileCount: uploadedFiles.length,
+            cleared: uploadedFiles.length === 0,
+            source: "TRACUU_BAOGIA_GOOGLEMAP_BO_Y_TE",
+            syncVersion: Date.now(),
+            lastUpdated: syncNow.toISOString()
+        };
         try {
             await database.ref("priceData").set(dataToSave);
             console.log("Đã lưu Firebase");
