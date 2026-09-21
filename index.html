@@ -1903,6 +1903,37 @@
     </div>
     
 <script>
+
+// IDECO sync v11: common, explicit header/number semantics in both applications.
+const IdecoPrice = (()=>{
+ const norm=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/gi,'d').toLowerCase().replace(/[^a-z0-9]+/g,'');
+ function field(v){
+  const k=norm(v), tier=k.includes('12hop')?12:k.includes('6hop')?6:0;
+  if(tier && /^(ck|chietkhau)/.test(k)) return 'discount'+tier;
+  if(tier && /^(gia|muatren)/.test(k)) return 'price'+tier;
+  if(/^(dongia|giaban)/.test(k)&&!tier) return 'price';
+  const aliases={code:['masp','masanpham','mahang','sku','productcode'],name:['tenthuoc','tensanpham','tenhang','hanghoa'],category:['nhom','nhomdieutri','loaidieutri'],manufacturer:['nsx','nhasanxuat'],use:['congdung','congdungchinh']};
+  for(const [f,ks] of Object.entries(aliases)) if(ks.includes(k)) return f;
+  return k;
+ }
+ function money(v){
+  if(typeof v==='number') return Number.isFinite(v)?Math.round(v):NaN;
+  let s=String(v??'').trim().replace(/[^\d.,-]/g,''); if(!s) return NaN;
+  const pos=Math.max(s.lastIndexOf('.'),s.lastIndexOf(','));
+  if(pos>=0 && s.length-pos-1>0 && s.length-pos-1<=2) s=s.slice(0,pos).replace(/[.,]/g,'')+'.'+s.slice(pos+1);
+  else s=s.replace(/[.,]/g,'');
+  const n=Number(s); return Number.isFinite(n)?Math.round(n):NaN;
+ }
+ function percent(v,unit='points'){
+  if(v==null||String(v).trim()==='') return NaN;
+  const s=String(v).trim(), n=Number(s.replace(/%/g,'').replace(',','.'));
+  if(!Number.isFinite(n)) return NaN;
+  return s.includes('%')||unit==='points'?n:n*100;
+ }
+ const key=v=>String(v??'').trim().toLowerCase().replace(/[\u0000-\u001F\u007F]/g,'').replace(/[.#$/\[\]]/g,c=>({'.':'(d)','#':'(h)','$':'(s)','/':'(sl)','[':'(lb)',']':'(rb)'}[c])).slice(0,700);
+ return {norm,field,money,percent,key};
+})();
+
     // ========== FIREBASE CONFIG ==========
  const firebaseConfig = {
         apiKey: "AIzaSyAcy4Wr4D1nHFyVejJWLNacmT-bnWm6xWY",
@@ -1929,6 +1960,7 @@
             ckMaxExtra = (v === null || v === undefined || v === '' ) ? null : Number(v);
             if (isNaN(ckMaxExtra)) ckMaxExtra = null;
             // Vẽ lại bảng để áp trần mới (nếu đang mở)
+            if (!ckDirty) ckDiscount = {};
             if (typeof redrawWithFilters === 'function' && typeof currentData !== 'undefined' && currentData && currentData.length) {
                 try { redrawWithFilters(); } catch(e){}
             }
@@ -3772,16 +3804,16 @@
     function pc7MapRowToMaster(row, sourceHeader, masterHeader){
         row=row||[]; sourceHeader=sourceHeader||[]; masterHeader=masterHeader||[];
         // Cấu trúc cùng số cột: giữ NGUYÊN vị trí/giá trị Excel để tránh sai lệch CK, giá, hàm lượng.
-        if(sourceHeader.length===masterHeader.length){
+        if(sourceHeader.length===masterHeader.length && sourceHeader.every((h,i)=>IdecoPrice.field(h)===IdecoPrice.field(masterHeader[i]))){
             const out=new Array(masterHeader.length).fill('');
             for(let i=0;i<masterHeader.length;i++) out[i]=(row[i]===undefined||row[i]===null)?'':row[i];
             return out;
         }
         const srcMap=new Map();
-        sourceHeader.forEach((h,i)=>{ const k=pc7HeaderKey(h); if(k&&!srcMap.has(k)) srcMap.set(k,i); });
+        sourceHeader.forEach((h,i)=>{ const k=IdecoPrice.field(h); if(k&&!srcMap.has(k)) srcMap.set(k,i); });
         const out=new Array(masterHeader.length).fill('');
         masterHeader.forEach((h,i)=>{
-            const k=pc7HeaderKey(h); let si=srcMap.has(k)?srcMap.get(k):-1;
+            const k=IdecoPrice.field(h); let si=srcMap.has(k)?srcMap.get(k):-1;
             // alias quan trọng
             if(si<0 && (k==='masp'||k==='masanpham')) si=pc7FindCol(sourceHeader,'code');
             if(si<0 && (k==='tenthuoc'||k==='tensanpham'||k==='tenhang')) si=pc7FindCol(sourceHeader,'name');
@@ -4030,53 +4062,19 @@
         return headersCache.map((_, idx)=> idx).filter(idx => !hiddenColumns.has(idx));
     }
     // Hàm nhận diện cột Mã sp bằng index (tránh lỗi so sánh encoding Vietnamese)
-    function getMaSpColIdx() {
-        return headersCache.findIndex(h => {
-            if (!h) return false;
-            const s = String(h).trim().toLowerCase();
-            // Normalize: bỏ dấu cách, so sánh nhiều dạng
-            return s === 'mã sp' || s === 'masp' || s === 'mã sp' || s.replace(/\s+/g,'') === 'mãsp';
-        });
-    }
+    function getMaSpColIdx(){return headersCache.findIndex(h=>IdecoPrice.field(h)==='code');}
     // ====== NHẬN DIỆN CÁC CỘT GIÁ / CHIẾT KHẤU THEO TÊN TIÊU ĐỀ ======
     function getColIdxByHeader(predicate){
         return headersCache.findIndex(h => h && predicate(String(h).normalize('NFC').toLowerCase().trim()));
     }
     // Cột "Đơn giá" (giá gốc dùng làm cơ sở tính chiết khấu)
-    function getDonGiaColIdx(){
-        return getColIdxByHeader(s =>
-            (s.includes('đơn giá') || s === 'don gia' || s.replace(/\s+/g,'') === 'đơngiá')
-            && !s.includes('6 hộp') && !s.includes('12 hộp')
-        );
-    }
+    function getDonGiaColIdx(){return headersCache.findIndex(h=>IdecoPrice.field(h)==='price');}
     // Cột chiết khấu theo mốc số hộp (n = 6 hoặc 12)
-    function getCkColIdx(n){
-        const tag6 = ['6 hộp','6hộp']; const tag12 = ['12 hộp','12hộp'];
-        const tags = n === 6 ? tag6 : tag12;
-        const other = n === 6 ? tag12 : tag6;
-        return getColIdxByHeader(s => {
-            const isCk = s.includes('chiết khấu') || /\bck\b/.test(s) || s.startsWith('ck');
-            return isCk && tags.some(t => s.includes(t)) && !other.some(t => s.includes(t));
-        });
-    }
+    function getCkColIdx(n){return headersCache.findIndex(h=>IdecoPrice.field(h)==='discount'+n);}
     // Cột "Giá mua từ n hộp" (cột đích được tính tự động)
-    function getGiaMuaColIdx(n){
-        const tag6 = ['6 hộp','6hộp']; const tag12 = ['12 hộp','12hộp'];
-        const tags = n === 6 ? tag6 : tag12;
-        const other = n === 6 ? tag12 : tag6;
-        return getColIdxByHeader(s => {
-            const isGia = s.includes('giá mua') || s.includes('gia mua');
-            return isGia && tags.some(t => s.includes(t)) && !other.some(t => s.includes(t));
-        });
-    }
+    function getGiaMuaColIdx(n){return headersCache.findIndex(h=>IdecoPrice.field(h)==='price'+n);}
     // Chuyển chuỗi giá "1.200.000 đ" → số nguyên VNĐ
-    function parsePriceNumber(v){
-        if (v === null || v === undefined) return NaN;
-        const s = String(v).replace(/[^\d.,-]/g,'').trim();
-        if (!s) return NaN;
-        const n = parseInt(s.replace(/[.,]/g,''), 10);
-        return isNaN(n) ? NaN : n;
-    }
+    function parsePriceNumber(v){ return IdecoPrice.money(v); }
     // Định dạng số → "1.200.000"
     function formatPriceVN(n){ return isNaN(n) ? '' : Math.round(n).toLocaleString('vi-VN'); }
     // Đọc % chiết khấu đã nhập
@@ -4170,7 +4168,11 @@
         const saveBtn = document.getElementById('ckSaveBtn');
         if (saveBtn){ saveBtn.disabled = true; saveBtn.textContent = '⏳ Đang lưu...'; }
         try {
-            await database.ref('ckSavedDiscounts').set(merged);
+            const changes={};
+            Object.keys(payload).forEach(k=>{Object.keys(payload[k]).forEach(m=>{changes[k+'/'+m]=payload[k][m];});});
+            Object.keys(cleared).forEach(k=>{Object.keys(cleared[k]).forEach(m=>{changes[k+'/'+m]=null;});});
+            legacyToDrop.forEach(k=>{if(ckKeyIsValid(k)&&payload[ckMaKey(k)]) changes[k]=null;});
+            if(Object.keys(changes).length) await database.ref('ckSavedDiscounts').update(changes);
             ckSaved = merged; ckDirty = false;
             let note = '';
             if (noKeyCount)  note += ' (Bỏ qua ' + noKeyCount + ' ô không có Mã sp)';
@@ -4608,7 +4610,7 @@
             const header = file.data[0];
             if (!header) return;
             // Kiểm tra xem đã có cột Mã sp chưa
-            const hasMaSp = header.some(h => h && String(h).toLowerCase().replace(/\s/g,'') === 'mãsp');
+            const hasMaSp = pc7FindCol(header,'code') >= 0;
             if (hasMaSp) return; // Đã có rồi, bỏ qua
             // Kiểm tra có cột STT không (để chèn sau STT)
             const sttIdx = header.findIndex(h => h && String(h).toLowerCase().trim() === 'stt');
@@ -4641,7 +4643,11 @@
     function normalizeFilesFromFirebase(files){
         return fbToArray(files).filter(Boolean).map(f => ({
             name: (f && f.name) || 'Dữ liệu',
-            data: Array.from(fbToArray(f && f.data), r => Array.from(fbToArray(r), c => (c == null ? '' : c))),
+            data: Array.from(fbToArray(f && f.data), (r,ri) => Array.from(fbToArray(r), (c,ci) => {
+                if(ri>0 && f.sourceType==='IDECO_BAO_GIA_DIEN_TU' && f.discountUnit!=='points' && IdecoPrice.field(fbToArray(f.data[0])[ci]).startsWith('discount')) return IdecoPrice.percent(c,'fraction');
+                return c==null?'':c;
+            })),
+            discountUnit:'points',
             importedAt: Number(f && f.importedAt || 0),
             uploadId: (f && f.uploadId) || '',
             pc7BatchId: (f && f.pc7BatchId) || '',
