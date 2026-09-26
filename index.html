@@ -547,6 +547,27 @@
         .zalo-address-link { color: #1565c0; text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; }
         .zalo-address-link:hover { color: #0d47a1; }
         .zalo-address-link:focus-visible { outline: 2px solid #1565c0; outline-offset: 3px; border-radius: 3px; }
+        /* ===== IDECO MAP POPUP — tra cứu địa chỉ + ảnh nhà thuốc ngay trong Tạo báo giá ===== */
+        .ideco-map-modal{display:none;position:fixed;inset:0;z-index:10050;background:rgba(4,17,28,.72);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:14px;box-sizing:border-box}
+        .ideco-map-modal.show{display:flex}
+        .ideco-map-box{width:min(1240px,96vw);height:min(84vh,840px);min-height:440px;background:#fff;border:2px solid #36cda1;border-radius:16px;overflow:hidden;box-shadow:0 22px 70px rgba(0,0,0,.48);display:flex;flex-direction:column}
+        .ideco-map-head{display:flex;align-items:center;gap:9px;padding:10px 12px;background:#103b46;color:#fff;flex:0 0 auto}
+        .ideco-map-title{flex:1;min-width:0;font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .ideco-map-head button{border:none;border-radius:9px;padding:8px 11px;font:700 13px "Segoe UI",Arial,sans-serif;cursor:pointer}
+        .ideco-map-open{background:#36d6a5;color:#07382a}.ideco-map-close{background:rgba(255,255,255,.15);color:#fff}
+        .ideco-map-body{display:grid;grid-template-columns:minmax(300px,38%) minmax(420px,62%);flex:1 1 auto;min-height:0}
+        .ideco-map-photo-panel{display:flex;flex-direction:column;min-width:0;min-height:0;background:#f7fbfa;border-right:1px solid #e3ece9}
+        .ideco-map-section-title{padding:10px 12px 8px;color:#123d48;font-size:12px;font-weight:900;letter-spacing:.03em}
+        .ideco-map-photo-box{margin:0 12px 8px;min-height:250px;flex:1 1 auto;border:1px solid #dce8e5;border-radius:13px;overflow:hidden;background:#eef5f3;display:flex;align-items:center;justify-content:center;position:relative}
+        .ideco-map-photo{display:none;width:100%;height:100%;object-fit:cover}.ideco-map-photo.show{display:block}
+        .ideco-map-photo-fallback{padding:22px;text-align:center;color:#587079;font-size:13px;line-height:1.55}
+        .ideco-map-photo-fallback b{display:block;color:#123d48;font-size:14px;margin-bottom:5px}
+        .ideco-map-credit{padding:0 12px 11px;color:#6b7f86;font-size:11px;line-height:1.4;min-height:15px}.ideco-map-credit a{color:#1565c0}
+        .ideco-map-map-panel{display:flex;flex-direction:column;min-width:0;min-height:0;background:#f5f7f7}
+        .ideco-map-frame{border:0;width:100%;height:100%;flex:1 1 auto;min-height:0;background:#e8efed}
+        #quoteCustomerAddress.ideco-quote-map-address{color:#1565c0;text-decoration:underline dotted;text-underline-offset:3px;cursor:pointer}
+        @media(max-width:900px){.ideco-map-body{grid-template-columns:1fr;grid-template-rows:minmax(230px,38%) minmax(280px,62%)}.ideco-map-photo-panel{border-right:none;border-bottom:1px solid #e3ece9}}
+        @media(max-width:640px){.ideco-map-modal{padding:6px}.ideco-map-box{width:98vw;height:90vh;min-height:380px;border-radius:12px}.ideco-map-head{padding:8px}.ideco-map-title{font-size:12px}.ideco-map-head button{font-size:12px;padding:8px 9px}.ideco-map-photo-box{min-height:190px}}
         .zalo-phone-link { color: #0068ff; font-weight: bold; text-decoration: underline; cursor: pointer; white-space: nowrap; }
         .zalo-send-btn { background: #0068ff; color: #fff; border: none; border-radius: 6px; padding: 6px 12px; cursor: pointer; font-weight: bold; font-size: 13px; white-space: nowrap; }
         .zalo-send-btn:hover { background: #0052cc; }
@@ -1840,7 +1861,7 @@
             </div>
             <div class="zalo-panel-body" id="zaloPanelBody">
                 <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:13px;color:#795548;line-height:1.5">
-                    👉 <b>Bước 1:</b> Bấm nút <b>📋 Chọn</b> (hoặc bấm vào hàng) khách hàng → tên, SĐT, địa chỉ tự load lên báo giá phía trên. <b>Bước 2:</b> Kiểm tra đúng KH rồi bấm <b>🖼 Ảnh</b> / <b>📄 PDF</b> để gửi Zalo. <br>📍 Bấm vào <b>địa chỉ khách hàng</b> để tra cứu trên <b>Google Maps</b> trong tab mới.
+                    👉 <b>Bước 1:</b> Bấm nút <b>📋 Chọn</b> (hoặc bấm vào hàng) khách hàng → tên, SĐT, địa chỉ tự load lên báo giá phía trên. <b>Bước 2:</b> Kiểm tra đúng KH rồi bấm <b>🖼 Ảnh</b> / <b>📄 PDF</b> để gửi Zalo. <br>📍 Bấm vào <b>địa chỉ khách hàng</b> để mở <b>Google Maps + ảnh nhà thuốc/địa điểm</b> ngay trong popup của ứng dụng.
                 </div>
                 <div class="zalo-toolbar">
                     <input type="text" id="zaloCustSearch" placeholder="🔍 Tìm khách hàng (tên, người liên hệ, SĐT, địa chỉ, NV phụ trách)..." />
@@ -4849,6 +4870,10 @@ const IdecoPrice = (()=>{
         quoteCustomerContact.textContent = customerContact;
         quoteCustomerPhone.textContent = customerPhone;
         quoteCustomerAddress.textContent = customerAddress;
+        quoteCustomerAddress.dataset.mapQuery = [customerName, customerAddress].filter(Boolean).join(', ');
+        quoteCustomerAddress.dataset.mapPhoto = '';
+        quoteCustomerAddress.classList.toggle('ideco-quote-map-address', !!customerAddress);
+        quoteCustomerAddress.title = customerAddress ? 'Bấm để xem Google Maps + ảnh địa điểm ngay trong ứng dụng' : '';
         
         quoteCustomerName.contentEditable = "true";
         quoteCustomerContact.contentEditable = "true";
@@ -5889,10 +5914,37 @@ const IdecoPrice = (()=>{
         quoteCustomerContact.textContent = c.nguoiPhuTrach || '';
         quoteCustomerPhone.textContent = c.dienThoai || '';
         quoteCustomerAddress.textContent = c.diaChi || '';
+        quoteCustomerAddress.dataset.mapQuery = [c.tenKhachHang || '', c.diaChi || ''].filter(Boolean).join(', ');
+        quoteCustomerAddress.dataset.mapPhoto = idecoCustomerPhoto(c);
+        quoteCustomerAddress.classList.toggle('ideco-quote-map-address', !!String(c.diaChi || '').trim());
+        quoteCustomerAddress.title = c.diaChi ? 'Bấm để xem Google Maps + ảnh địa điểm ngay trong ứng dụng' : '';
         zaloSelectedPhone = zaloNormalizePhone(c.dienThoai || '') || null;
         renderZaloCustomerList(zaloCustSearch.value);
         renderZaloUploadList(zaloCustSearch.value);
         zaloToast('📋 Đã load KH <b>' + zaloEsc(c.tenKhachHang) + '</b> lên báo giá.<br>Kiểm tra thông tin phía trên, sau đó bấm <b>🖼 Ảnh</b> hoặc <b>📄 PDF</b> ở đúng hàng KH này để gửi Zalo.', 7000);
+    }
+
+    // Địa chỉ đã load trên đầu báo giá: click xem bản đồ; double-click vẫn cho phép chỉnh sửa nội dung.
+    if (quoteCustomerAddress) {
+        let idecoQuoteAddrLastTap = 0;
+        quoteCustomerAddress.addEventListener('click', function() {
+            const addr = String(quoteCustomerAddress.textContent || '').trim();
+            if (!addr) return;
+            const stamp = Date.now();
+            if (stamp - idecoQuoteAddrLastTap < 380) {
+                idecoQuoteAddrLastTap = 0;
+                quoteCustomerAddress.focus();
+                return;
+            }
+            idecoQuoteAddrLastTap = stamp;
+            setTimeout(() => {
+                if (idecoQuoteAddrLastTap !== stamp) return;
+                idecoQuoteAddrLastTap = 0;
+                const q = quoteCustomerAddress.dataset.mapQuery || [String(quoteCustomerName.textContent || '').trim(), addr].filter(Boolean).join(', ');
+                const url = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q);
+                idecoOpenMapPopup(q, url, quoteCustomerAddress.dataset.mapPhoto || '');
+            }, 400);
+        });
     }
 
     // Bỏ chọn KH: xóa thông tin KH trên báo giá để chọn khách hàng khác
@@ -5901,6 +5953,10 @@ const IdecoPrice = (()=>{
         quoteCustomerContact.textContent = '';
         quoteCustomerPhone.textContent = '';
         quoteCustomerAddress.textContent = '';
+        delete quoteCustomerAddress.dataset.mapQuery;
+        delete quoteCustomerAddress.dataset.mapPhoto;
+        quoteCustomerAddress.classList.remove('ideco-quote-map-address');
+        quoteCustomerAddress.removeAttribute('title');
         zaloSelectedPhone = null;
         renderZaloCustomerList(zaloCustSearch.value);
         renderZaloUploadList(zaloCustSearch.value);
@@ -6512,12 +6568,191 @@ const IdecoPrice = (()=>{
             });
     }
 
+    // ===== GOOGLE MAPS + ẢNH ĐỊA ĐIỂM TRONG POPUP (Tạo báo giá / DSKH) =====
+    let idecoMapModal = null, idecoMapFrame = null, idecoMapPhoto = null, idecoMapPhotoFallback = null;
+    let idecoMapTitle = null, idecoMapOpenBtn = null, idecoMapCloseBtn = null, idecoMapCredit = null;
+    let idecoMapExternalUrl = '', idecoMapPhotoReq = 0, idecoGooglePlacesPromise = null;
+    let idecoPlacesApiKey = '';
+
+    try {
+        database.ref('appAccessConfig/googlePlacesApiKey').on('value', snap => {
+            idecoPlacesApiKey = String(snap.val() || '').trim();
+        });
+    } catch(e) { console.warn('googlePlacesApiKey listener:', e); }
+
+    function idecoEnsureMapModal(){
+        if (idecoMapModal) return;
+        idecoMapModal = document.createElement('div');
+        idecoMapModal.className = 'ideco-map-modal';
+        idecoMapModal.setAttribute('role','dialog');
+        idecoMapModal.setAttribute('aria-modal','true');
+        idecoMapModal.innerHTML =
+            '<div class="ideco-map-box">' +
+                '<div class="ideco-map-head">' +
+                    '<div class="ideco-map-title">📍 Google Maps</div>' +
+                    '<button type="button" class="ideco-map-open" title="Mở Google Maps đầy đủ ở tab ngoài">↗ Mở ngoài</button>' +
+                    '<button type="button" class="ideco-map-close">✕ Đóng</button>' +
+                '</div>' +
+                '<div class="ideco-map-body">' +
+                    '<div class="ideco-map-photo-panel">' +
+                        '<div class="ideco-map-section-title">🖼 ẢNH NHÀ THUỐC / ĐỊA ĐIỂM</div>' +
+                        '<div class="ideco-map-photo-box">' +
+                            '<img class="ideco-map-photo" alt="Ảnh địa điểm" referrerpolicy="no-referrer">' +
+                            '<div class="ideco-map-photo-fallback"><b>Đang tìm ảnh địa điểm…</b>Ứng dụng sẽ ưu tiên ảnh có sẵn trong dữ liệu; nếu chưa có sẽ thử lấy ảnh Google Places.</div>' +
+                        '</div>' +
+                        '<div class="ideco-map-credit"></div>' +
+                    '</div>' +
+                    '<div class="ideco-map-map-panel">' +
+                        '<div class="ideco-map-section-title">🗺 BẢN ĐỒ GOOGLE MAPS</div>' +
+                        '<iframe class="ideco-map-frame" title="Google Maps" loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+        document.body.appendChild(idecoMapModal);
+        idecoMapFrame = idecoMapModal.querySelector('.ideco-map-frame');
+        idecoMapPhoto = idecoMapModal.querySelector('.ideco-map-photo');
+        idecoMapPhotoFallback = idecoMapModal.querySelector('.ideco-map-photo-fallback');
+        idecoMapTitle = idecoMapModal.querySelector('.ideco-map-title');
+        idecoMapOpenBtn = idecoMapModal.querySelector('.ideco-map-open');
+        idecoMapCloseBtn = idecoMapModal.querySelector('.ideco-map-close');
+        idecoMapCredit = idecoMapModal.querySelector('.ideco-map-credit');
+        idecoMapCloseBtn.addEventListener('click', idecoCloseMapPopup);
+        idecoMapOpenBtn.addEventListener('click', () => {
+            if (!idecoMapExternalUrl) return;
+            const w = window.open(idecoMapExternalUrl, '_blank', 'noopener');
+            if (!w) window.location.href = idecoMapExternalUrl;
+        });
+        idecoMapModal.addEventListener('click', e => { if (e.target === idecoMapModal) idecoCloseMapPopup(); });
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && idecoMapModal && idecoMapModal.classList.contains('show')) idecoCloseMapPopup();
+        });
+    }
+
+    function idecoNormalizeImageUrl(u){
+        u = String(u || '').trim();
+        if (!u) return '';
+        let m = u.match(/^https?:\/\/drive\.google\.com\/file\/d\/([^\/]+)\/view/i);
+        if (m && m[1]) return 'https://drive.google.com/uc?export=view&id=' + encodeURIComponent(m[1]);
+        m = u.match(/[?&]id=([^&#]+)/i);
+        if (/^https?:\/\/drive\.google\.com\//i.test(u) && m && m[1]) return 'https://drive.google.com/uc?export=view&id=' + encodeURIComponent(m[1]);
+        return u;
+    }
+    function idecoLooksLikeImageUrl(u){
+        u = String(u || '').trim();
+        if (!u) return false;
+        if (/^data:image\//i.test(u)) return true;
+        if (!/^https?:\/\//i.test(u)) return false;
+        return /\.(png|jpe?g|gif|webp|bmp|svg)(\?.*)?$/i.test(u) || /googleusercontent|ggpht|drive\.google\.com|firebasestorage|cloudinary|imgur|images?/i.test(u);
+    }
+    function idecoCustomerPhoto(c){
+        if (!c || typeof c !== 'object') return '';
+        const keys = ['hinhanh','hinhAnh','hinh_anh','anh','anhChup','anh_nha_thuoc','image','imageUrl','image_url','img','imgUrl','photo','photoUrl','picture','avatar','urlAnh','linkAnh'];
+        for (const k of keys) if (idecoLooksLikeImageUrl(c[k])) return idecoNormalizeImageUrl(c[k]);
+        for (const k in c) {
+            if (!Object.prototype.hasOwnProperty.call(c,k)) continue;
+            if (!/(hinh|ảnh|anh|image|img|photo|picture)/i.test(k)) continue;
+            if (idecoLooksLikeImageUrl(c[k])) return idecoNormalizeImageUrl(c[k]);
+        }
+        return '';
+    }
+    function idecoSetPhotoFallback(title, body){
+        if (!idecoMapPhoto) return;
+        idecoMapPhoto.removeAttribute('src');
+        idecoMapPhoto.classList.remove('show');
+        idecoMapPhotoFallback.innerHTML = '<b>' + zaloEsc(title || 'Chưa có ảnh địa điểm') + '</b>' + (body || '');
+        idecoMapPhotoFallback.style.display = 'block';
+        if (idecoMapCredit) idecoMapCredit.innerHTML = '';
+    }
+    function idecoShowPhoto(uri, alt, creditHtml){
+        if (!uri || !idecoMapPhoto) return;
+        idecoMapPhoto.onload = () => { idecoMapPhoto.classList.add('show'); idecoMapPhotoFallback.style.display = 'none'; };
+        idecoMapPhoto.onerror = () => idecoSetPhotoFallback('Không tải được ảnh địa điểm','Link ảnh có thể đã hết hạn hoặc bị chặn.');
+        idecoMapPhoto.alt = alt || 'Ảnh địa điểm';
+        idecoMapPhoto.src = uri;
+        if (idecoMapCredit) idecoMapCredit.innerHTML = creditHtml || '';
+    }
+    function idecoGooglePlacesKey(){
+        return String(idecoPlacesApiKey || (typeof firebaseConfig !== 'undefined' && firebaseConfig.apiKey) || '').trim();
+    }
+    function idecoEnsureGooglePlaces(){
+        try { if (window.google && google.maps && typeof google.maps.importLibrary === 'function') return Promise.resolve(); } catch(e){}
+        if (idecoGooglePlacesPromise) return idecoGooglePlacesPromise;
+        idecoGooglePlacesPromise = new Promise((resolve,reject) => {
+            const key = idecoGooglePlacesKey();
+            if (!key) { reject(new Error('missing-google-api-key')); return; }
+            const s = document.createElement('script');
+            s.async = true; s.defer = true;
+            s.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(key) + '&v=weekly&libraries=places&loading=async';
+            s.onload = () => { try { if (window.google && google.maps && typeof google.maps.importLibrary === 'function') resolve(); else reject(new Error('google-maps-loader-unavailable')); } catch(e){ reject(e); } };
+            s.onerror = () => reject(new Error('google-maps-script-load-failed'));
+            document.head.appendChild(s);
+        });
+        return idecoGooglePlacesPromise;
+    }
+    async function idecoLoadGooglePhoto(query, reqId){
+        try {
+            idecoSetPhotoFallback('Đang tìm ảnh Google Maps…','Đang dò đúng nhà thuốc/địa điểm theo tên và địa chỉ.');
+            await idecoEnsureGooglePlaces();
+            if (reqId !== idecoMapPhotoReq) return;
+            const lib = await google.maps.importLibrary('places');
+            if (reqId !== idecoMapPhotoReq) return;
+            const Place = lib && lib.Place;
+            if (!Place || typeof Place.searchByText !== 'function') throw new Error('places-search-unavailable');
+            const rs = await Place.searchByText({ textQuery:query, fields:['displayName','formattedAddress','photos'], maxResultCount:1, region:'vn', language:'vi' });
+            if (reqId !== idecoMapPhotoReq) return;
+            const p = rs && rs.places && rs.places[0];
+            if (!p) { idecoSetPhotoFallback('Google chưa nhận diện đúng địa điểm','Bản đồ vẫn xem bình thường. Có thể tên khách hàng hoặc địa chỉ chưa đủ chi tiết.'); return; }
+            if (!p.photos || !p.photos.length) { idecoSetPhotoFallback('Địa điểm này chưa có ảnh Google','Google đã tìm thấy địa điểm nhưng không trả về ảnh công khai.'); return; }
+            const ph = p.photos[0];
+            const uri = ph.getURI({maxWidth:900,maxHeight:650});
+            const credits = [];
+            try {
+                (ph.authorAttributions || []).forEach(a => {
+                    const nm = zaloEsc(a && a.displayName ? a.displayName : 'Người đóng góp Google Maps');
+                    const href = a && a.uri ? String(a.uri) : '';
+                    credits.push(href ? 'Ảnh: <a href="' + zaloEsc(href) + '" target="_blank" rel="noopener noreferrer">' + nm + '</a> · Google Maps' : 'Ảnh: ' + nm + ' · Google Maps');
+                });
+            } catch(e){}
+            if (!credits.length) credits.push('Ảnh từ Google Maps / Google Places');
+            idecoShowPhoto(uri, 'Ảnh ' + String(p.displayName || query), credits.join(' · '));
+        } catch(err) {
+            console.warn('IDECO Google Places photo:', err);
+            if (reqId !== idecoMapPhotoReq) return;
+            idecoSetPhotoFallback('Chưa lấy được ảnh Google Maps','Bản đồ vẫn hoạt động. API key hiện tại có thể chưa bật <b>Maps JavaScript API</b> và <b>Places API (New)</b> hoặc chưa cho phép domain này.');
+        }
+    }
+    function idecoOpenMapPopup(query, directUrl, photoUrl){
+        query = String(query || '').trim();
+        if (!query) return;
+        idecoEnsureMapModal();
+        idecoMapExternalUrl = directUrl || ('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(query));
+        idecoMapTitle.textContent = '📍 ' + query;
+        idecoMapFrame.src = 'https://maps.google.com/maps?q=' + encodeURIComponent(query) + '&z=16&output=embed';
+        idecoMapModal.classList.add('show');
+        const reqId = ++idecoMapPhotoReq;
+        const ownPhoto = idecoNormalizeImageUrl(photoUrl || '');
+        if (ownPhoto) idecoShowPhoto(ownPhoto,'Ảnh địa điểm','Ảnh từ dữ liệu khách hàng');
+        else idecoLoadGooglePhoto(query, reqId);
+    }
+    function idecoCloseMapPopup(){
+        if (!idecoMapModal) return;
+        idecoMapModal.classList.remove('show');
+        idecoMapPhotoReq++;
+        if (idecoMapFrame) idecoMapFrame.src = 'about:blank';
+        if (idecoMapPhoto) { idecoMapPhoto.onload=null; idecoMapPhoto.onerror=null; idecoMapPhoto.removeAttribute('src'); idecoMapPhoto.classList.remove('show'); }
+        if (idecoMapCredit) idecoMapCredit.innerHTML = '';
+        idecoMapExternalUrl = '';
+    }
+
     // Tra cứu địa chỉ cho cả KH hiện tại và KH mới / upload Excel.
-    function zaloAddressLink(address) {
+    function zaloAddressLink(address, customerName, customerObj) {
         const value = String(address == null ? '' : address).trim();
         if (!value) return '<span style="color:#aaa">—</span>';
-        const url = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(value);
-        return '<a class="zalo-address-link" href="' + zaloEsc(url) + '" target="_blank" rel="noopener noreferrer" title="Tra cứu địa chỉ này trên Google Maps (mở tab mới)"><span aria-hidden="true">📍</span> ' + zaloEsc(value) + '</a>';
+        const name = String(customerName == null ? '' : customerName).trim();
+        const query = [name, value].filter(Boolean).join(', ');
+        const url = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(query);
+        const photo = idecoCustomerPhoto(customerObj || {});
+        return '<a class="zalo-address-link" href="' + zaloEsc(url) + '" data-map-query="' + zaloEsc(query) + '" data-map-photo="' + zaloEsc(photo) + '" title="Xem Google Maps + ảnh địa điểm ngay trong ứng dụng"><span aria-hidden="true">📍</span> ' + zaloEsc(value) + '</a>';
     }
 
     function renderZaloCustomerList(filter) {
@@ -6556,7 +6791,7 @@ const IdecoPrice = (()=>{
                 '<td><b>' + zaloEsc(c.tenKhachHang) + '</b>' + (sent ? '<span class="zalo-sent-badge">✓ đã gửi hôm nay</span>' : '') + (dbClaim ? '<span class="zalo-claim-badge" title="NV đã ghi nhận gửi' + (dbClaim.at ? ' — ' + new Date(dbClaim.at).toLocaleString('vi-VN') : '') + '">👤 NV ' + zaloEsc(dbClaim.staff) + ' đã gửi</span>' : '') + '</td>' +
                 '<td>' + zaloEsc(c.nguoiPhuTrach) + '</td>' +
                 '<td>' + (c.dienThoai ? '<span class="zalo-phone-link" data-ridx="' + ridx + '" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Bấm để gửi báo giá qua Zalo (tự load thông tin KH này lên báo giá trước khi gửi)">' + zaloEsc(c.dienThoai) + '</span>' : '<span style="color:#aaa">—</span>') + '</td>' +
-                '<td>' + zaloAddressLink(c.diaChi) + '</td>' +
+                '<td>' + zaloAddressLink(c.diaChi, c.tenKhachHang, c) + '</td>' +
                 '<td>' + zaloEsc(c.nhanVienPhuTrach || '—') + '</td>' +
                 '<td style="white-space:nowrap">' + (c.dienThoai ? '<button class="zalo-send-btn" data-mode="img" data-ridx="' + ridx + '" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Copy ảnh báo giá rồi dán Ctrl+V vào Zalo">🖼 Ảnh</button> <button class="zalo-send-btn" data-mode="pdf" data-ridx="' + ridx + '" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Tải file PDF báo giá rồi kéo vào Zalo — phù hợp danh mục dài">📄 PDF</button> ' : '') + '<button class="zalo-claim-btn' + (dbClaim ? ' claimed' : '') + '" data-ridx="' + ridx + '" title="' + (dbClaim ? 'Đã ghi nhận NV ' + zaloEsc(dbClaim.staff) + ' gửi — bấm để sửa/xóa' : 'Ghi nhận tên NV đã gửi cho KH này') + '">' + (dbClaim ? '👤 NV: ' + zaloEsc(dbClaim.staff) : '👤 Tên NV') + '</button></td>' +
                 '</tr>';
@@ -6602,7 +6837,7 @@ const IdecoPrice = (()=>{
                 '<td><b>' + zaloEsc(c.tenKhachHang) + '</b><span class="zalo-upload-badge">📁 upload</span>' + (sent ? '<span class="zalo-sent-badge">✓ đã gửi hôm nay</span>' : '') + (claim ? '<span class="zalo-claim-badge" title="Nhân viên đã ghi nhận gửi cho KH này' + (claim.at ? ' — ' + new Date(claim.at).toLocaleString('vi-VN') : '') + '">👤 NV ' + zaloEsc(claim.staff) + ' đã gửi</span>' : '') + '</td>' +
                 '<td>' + (c.nguoiPhuTrach ? zaloEsc(c.nguoiPhuTrach) : '<span style="color:#bbb">—</span>') + '</td>' +
                 '<td>' + (c.dienThoai ? '<span class="zalo-phone-link" data-ridx="' + ridx + '" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Bấm để gửi báo giá qua Zalo (tự load thông tin KH này lên báo giá trước khi gửi)">' + zaloEsc(c.dienThoai) + '</span>' : '<span style="color:#aaa">—</span>') + '</td>' +
-                '<td>' + zaloAddressLink(c.diaChi) + '</td>' +
+                '<td>' + zaloAddressLink(c.diaChi, c.tenKhachHang, c) + '</td>' +
                 '<td style="white-space:nowrap">' + (c.dienThoai ? '<button class="zalo-send-btn" data-mode="img" data-ridx="' + ridx + '" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Copy ảnh báo giá rồi dán Ctrl+V vào Zalo">🖼 Ảnh</button> <button class="zalo-send-btn" data-mode="pdf" data-ridx="' + ridx + '" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Tải file PDF báo giá rồi kéo vào Zalo — phù hợp danh mục dài">📄 PDF</button> ' : '') + '<button class="zalo-claim-btn' + (claim ? ' claimed' : '') + '" data-ridx="' + ridx + '" title="' + (claim ? 'Đã ghi nhận NV ' + zaloEsc(claim.staff) + ' gửi — bấm để sửa/xóa' : 'Ghi nhận tên NV đã gửi cho KH này (đồng bộ mọi máy để NV khác không khai thác nhầm)') + '">' + (claim ? '👤 NV: ' + zaloEsc(claim.staff) : '👤 Tên NV') + '</button></td>' +
                 '</tr>';
         });
@@ -6613,8 +6848,14 @@ const IdecoPrice = (()=>{
     // - Bấm 📋 Chọn (hoặc bấm vào hàng) → load thông tin KH lên báo giá; bấm lại KH đang chọn → BỎ CHỌN
     // - Bấm 🖼 Ảnh / 📄 PDF / SĐT → nếu KH này CHƯA được load lên báo giá thì tự load trước, rồi mới gửi (chống nhầm tên)
     function handleZaloListClick(e, getList) {
-        // Giữ hành vi mở liên kết, không chọn / bỏ chọn KH khi bấm địa chỉ.
-        if (e.target.closest('.zalo-address-link')) { e.stopPropagation(); return; }
+        // Bấm địa chỉ → mở popup Google Maps + ảnh địa điểm ngay trong ứng dụng.
+        const mapEl = e.target.closest('.zalo-address-link');
+        if (mapEl) {
+            e.preventDefault();
+            e.stopPropagation();
+            idecoOpenMapPopup(mapEl.dataset.mapQuery || mapEl.textContent || '', mapEl.getAttribute('href') || '', mapEl.dataset.mapPhoto || '');
+            return;
+        }
         const list = getList() || [];
         const claimEl = e.target.closest('.zalo-claim-btn');
         if (claimEl) {
@@ -8993,7 +9234,7 @@ function decorate(config){
  const list=config.list()||[];
  wrap.querySelectorAll('tbody tr[data-ridx]').forEach(row=>{
   const c=list[Number(row.dataset.ridx)];if(!c)return;
-  row.querySelectorAll('.zalo-address-link').forEach(a=>a.title=String(c.diaChi||'')+' — Bấm để mở Google Maps');
+  row.querySelectorAll('.zalo-address-link').forEach(a=>a.title=String(c.diaChi||'')+' — Bấm để xem Google Maps + ảnh địa điểm trong popup');
   const first=row.cells&&row.cells[0];
   if(first){
    let label=first.querySelector('.ideco-batch-pick');
