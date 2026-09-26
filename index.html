@@ -1303,7 +1303,11 @@
 }
 </style>
 
-</head>
+<style>
+.ideco-customer-sync{display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:10px 12px;margin:8px 0;border:1px solid #b7d5e9;background:#eef7ff;color:#18334a;font-size:13px;border-radius:8px}
+.ideco-customer-sync span{flex:1;min-width:190px}
+.ideco-customer-sync button{position:static!important;padding:8px 12px;border:1px solid #087f8c;border-radius:7px;background:white;color:#075c68;cursor:pointer;font-weight:700}
+</style></head>
 <body>
     <!-- ============ CỔNG ĐĂNG NHẬP BẢO MẬT ============ -->
     <div id="loginGate">
@@ -1360,7 +1364,6 @@
                 <div class="hero-cta">
                     <button class="cta-primary" id="heroViewPrice">💊 Tra cứu &amp; Xem giá</button>
                     <button class="cta-secondary" id="heroCreateQuote">🧾 Tạo báo giá</button>
-                    <button type="button" class="cta-secondary" data-dav-open>🔎 Tra cứu giá thuốc Bộ Y tế</button>
                 </div>
             </div>
             <div class="hero-visual">
@@ -1541,7 +1544,6 @@
                     <div class="pro-tool-card">
                         <h4>🔘 Lọc & Chọn hàng</h4>
                         <div class="pro-row">
-                            <button type="button" class="btn" data-dav-open style="background:#087f8c;color:white">🔎 Giá thuốc Bộ Y tế</button>
                             <button class="btn btn-filter" id="filterSelectedBtn" title="Chỉ hiển thị các hàng đã tick">Lọc hàng đã chọn</button>
                             <button class="btn btn-clear" id="clearSelectionBtn" title="Xóa mọi tick và trở về danh sách ban đầu">Refresh</button>
                         </div>
@@ -1650,7 +1652,7 @@
                     <input type="file" id="customerFileInput" class="file-input" accept=".xlsx, .xls" />
                     <span class="file-name" id="customerFileNameDisplay">Chưa chọn file</span>
                 </div>
-                 <small style="display:block; margin-top:10px; color: #666;">File Excel cần có các cột: Tên khách hàng, Người phụ trách, Điện thoại, Địa chỉ.</small>
+                 <small style="display:block; margin-top:10px; color: #666;">Khách hàng hiện tại: C = Tên công ty / KH; D = Người liên hệ; E = Điện thoại; H = Địa chỉ; I = Nhân viên phụ trách. Nhập để cập nhật / bổ sung, giữ khách hàng không có trong file. Dữ liệu được đồng bộ Firebase cho các máy.</small>
             </div>
             <div class="loading" id="customerLoadingIndicator">
                 <div class="spinner"></div>
@@ -1841,7 +1843,7 @@
                     👉 <b>Bước 1:</b> Bấm nút <b>📋 Chọn</b> (hoặc bấm vào hàng) khách hàng → tên, SĐT, địa chỉ tự load lên báo giá phía trên. <b>Bước 2:</b> Kiểm tra đúng KH rồi bấm <b>🖼 Ảnh</b> / <b>📄 PDF</b> để gửi Zalo. <br>📍 Bấm vào <b>địa chỉ khách hàng</b> để tra cứu trên <b>Google Maps</b> trong tab mới.
                 </div>
                 <div class="zalo-toolbar">
-                    <input type="text" id="zaloCustSearch" placeholder="🔍 Tìm khách hàng (tên, người liên hệ, SĐT, địa chỉ)..." />
+                    <input type="text" id="zaloCustSearch" placeholder="🔍 Tìm khách hàng (tên, người liên hệ, SĐT, địa chỉ, NV phụ trách)..." />
                 </div>
                 <div class="zalo-mystaff" id="zaloMyStaffBar">
                     <span class="zms-label">👤 Tên nhân viên của tôi (máy này):</span>
@@ -1850,10 +1852,15 @@
                     <span class="zms-status" id="zaloMyStaffStatus"></span>
                     <span class="zms-note">Lưu 1 lần — mọi lần bấm gửi sẽ tự gắn tên này vào Báo cáo, không cần nhập lại.</span>
                 </div>
-                <div class="zalo-sec-title zalo-sec-db">🤝 Khách hàng đang hợp tác <span class="zst-sub">(lấy từ cơ sở dữ liệu công ty)</span></div>
+                <div class="zalo-sec-title zalo-sec-db">🤝 Khách hàng hiện tại <span class="zst-sub">(đồng bộ Firebase giữa các máy)</span></div>
+                <div style="display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:10px 0">
+                    <button type="button" id="idecoImportCompanyCustomers" class="btn" style="position:static;background:#8e24aa;color:white">📥 Nhập Excel khách hàng hiện tại</button>
+                    <span style="font-size:12px;color:#536773">C: Tên KH · D: Người liên hệ · E: Điện thoại · H: Địa chỉ · I: Nhân viên phụ trách</span>
+                    <span id="idecoCompanyImportResult" role="status" aria-live="polite"></span>
+                </div>
                 <div class="zalo-cust-table-wrap" id="zaloCustListWrap">
                     <table class="zalo-cust-table">
-                        <thead><tr><th style="width:80px">Chọn KH</th><th style="width:24%">Tên công ty / KH</th><th style="width:14%">Người liên hệ</th><th style="width:13%">Điện thoại</th><th>Địa chỉ</th><th style="width:230px">Gửi Zalo / Tên NV</th></tr></thead>
+                        <thead><tr><th style="width:80px">Chọn KH</th><th style="width:24%">Tên công ty / KH</th><th style="width:14%">Người liên hệ</th><th style="width:13%">Điện thoại</th><th>Địa chỉ</th><th style="min-width:140px">Nhân viên phụ trách</th><th style="width:230px">Gửi Zalo / Tên NV</th></tr></thead>
                         <tbody id="zaloCustListBody"></tbody>
                     </table>
                 </div>
@@ -3326,12 +3333,14 @@ const IdecoPrice = (()=>{
     deleteRowBtn.addEventListener("click", handleDeleteRows);
     databaseBtn.addEventListener("click", () => {
         customerDbOverlay.style.display = "block";
-        renderCustomerTable(customerDatabase); 
+        renderCustomerTable(customerDatabase);
+        idecoReloadCustomers();
     });
     closeDbPopupBtn.addEventListener("click", () => customerDbOverlay.style.display = "none");
     // ĐÃ XÓA: customerDbOverlay không tự đóng khi click ra ngoài
     // customerDbOverlay.addEventListener("click", (e) => { if (e.target === customerDbOverlay) customerDbOverlay.style.display = "none"; });
     customerFileInput.addEventListener("change", handleCustomerFileSelect);
+    document.getElementById('idecoImportCompanyCustomers').addEventListener('click',()=>customerFileInput.click());
     selectAllBtn.addEventListener("click", () => {
         const checkboxes = tableContainer.querySelectorAll('tbody input[type="checkbox"]');
         if (checkboxes.length === 0) { alert("Không có hàng nào để chọn."); return; }
@@ -4255,6 +4264,7 @@ const IdecoPrice = (()=>{
         
         // Tìm index cột Mã sp 1 lần cho toàn bảng
         const maSpColIdx = getMaSpColIdx();
+        const davNameIdx = pc7FindCol(headersCache, "name");
         // Phân loại kiểu cột theo tên tiêu đề (để căn phải giá, tô màu %, STT) — tra cứu 1 lần
         const colKind = headersCache.map(h => {
             const s = String(h||'').normalize('NFC').toLowerCase();
@@ -4408,6 +4418,20 @@ const IdecoPrice = (()=>{
                     td.textContent = ckWithPct(cell);     // cột % chỉ đọc: 15 → 15%
                 } else {
                     td.textContent = (typeof cell === 'string' && cell.includes('%')) ? cell : (cell || '');
+                }
+                // Tra cứu gắn trực tiếp với tên thuốc, không làm thay đổi giá trị nguồn.
+                if (colIdx === davNameIdx && String(cell == null ? '' : cell).trim()) {
+                    const lookup = document.createElement('button');
+                    lookup.type = 'button'; lookup.className = 'ideco-dav-row';
+                    lookup.textContent = '🔎 Tra cứu kê khai';
+                    lookup.dataset.davName = String(cell).trim();
+                    lookup.setAttribute('aria-label', 'Tra cứu kê khai: ' + String(cell).trim());
+                    lookup.addEventListener('click', function(event) {
+                        event.preventDefault(); event.stopPropagation();
+                        if (window.idecoOpenDav) window.idecoOpenDav(lookup.dataset.davName, lookup);
+                    });
+                    td.dataset.davSourceName = String(cell).trim();
+                    td.appendChild(lookup);
                 }
                 // Gán class căn chỉnh theo kiểu cột
                 if(kind === 'price' && String(cell).trim()!=='') td.className += ' cell-price';
@@ -4678,6 +4702,7 @@ const IdecoPrice = (()=>{
     // CÁCH SỬA: đọc đúng .value của mọi input/select/textarea trong ô, xuất y hệt những gì đang thấy trên bảng.
     function xlReadCellText(td){
         if (!td) return '';
+        if (td.dataset.davSourceName !== undefined) return td.dataset.davSourceName;
         const ctrl = td.querySelector('input, select, textarea');
         if (ctrl){
             if (ctrl.type === 'checkbox' || ctrl.type === 'radio') return '';   // cột "Chọn" — không xuất
@@ -5087,33 +5112,195 @@ const IdecoPrice = (()=>{
     }
 
     // ========== CÁC HÀM HỖ TRỢ KHÁC (Customer, Image, CRUD) ==========
+    // Đọc Excel khách hàng với vị trí cột gốc; không dùng bộ xử lý bảng giá thuốc.
+    function idecoReadCustomerExcel(file) {
+        return new Promise((resolve,reject)=>{
+            const reader=new FileReader();
+            reader.onload=event=>{
+                try {
+                    const workbook=XLSX.read(new Uint8Array(event.target.result),{type:'array',cellText:true});
+                    const sheet=workbook.Sheets[workbook.SheetNames[0]];
+                    if(!sheet || !sheet['!ref'])throw new Error('File Excel không có dữ liệu.');
+                    const range=XLSX.utils.decode_range(sheet['!ref']);
+                    range.s={r:0,c:0};
+                    resolve(XLSX.utils.sheet_to_json(sheet,{header:1,defval:'',raw:false,range:range}));
+                }catch(e){reject(e);}
+            };
+            reader.onerror=()=>reject(new Error('Không đọc được file Excel.'));
+            reader.readAsArrayBuffer(file);
+        });
+    }
+    function idecoParseCompanyCustomers(aoa) {
+        const norm=v=>String(v==null?'':v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/gi,'d').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+        const header=aoa.findIndex(r=>/khach hang|ten kh|ten cong ty/.test(norm(r[2])) && /dien thoai|sdt|phone/.test(norm(r[4])));
+        if(header<0)throw new Error('Chưa tìm thấy dòng tiêu đề đúng mẫu: tên khách hàng ở cột C, điện thoại ở cột E. Vui lòng chọn đúng file DS KH CTY DAT HANG.');
+        const cell=(r,i)=>String(r[i]==null?'':r[i]).trim();
+        const customers=[];
+        aoa.slice(header+1).forEach(r=>{
+            const name=cell(r,2);
+            if(!name || /^(tong|tong cong|cong|khach hang|ten khach hang)$/.test(norm(name)))return;
+            customers.push({maKhachHang:cell(r,1),tenKhachHang:name,nguoiPhuTrach:cell(r,3),dienThoai:cell(r,4),diaChi:cell(r,7),nhanVienPhuTrach:cell(r,8)});
+        });
+        if(!customers.length)throw new Error('Không có khách hàng hợp lệ trong cột C. Danh sách hiện có được giữ nguyên.');
+        return customers;
+    }
+    function idecoMergeCompanyCustomers(raw,incoming) {
+        const rows=idecoCustomerRows(raw);
+        const key=v=>String(v||'').trim().toLocaleLowerCase('vi-VN');
+        const phone=v=>String(v||'').replace(/[^0-9]/g,'').replace(/^84(?=\d{9}$)/,'0');
+        incoming.forEach(c=>{
+            const index=rows.findIndex(old=>{
+                if(c.maKhachHang&&old.maKhachHang)return key(c.maKhachHang)===key(old.maKhachHang);
+                return key(c.tenKhachHang)===key(old.tenKhachHang) && phone(c.dienThoai)===phone(old.dienThoai);
+            });
+            if(index>=0)rows[index]={...rows[index],...c};else rows.push({...c});
+        });
+        return rows;
+    }
+    let idecoCompanyImportBusy=false;
     async function handleCustomerFileSelect(event) {
-        const file = event.target.files[0]; if (!file) return;
-        customerLoadingIndicator.style.display = "block"; customerTableContainer.innerHTML = ""; customerFileNameDisplay.textContent = file.name;
+        const file=event.target.files[0];if(!file||idecoCompanyImportBusy)return;
+        const result=document.getElementById('idecoCompanyImportResult');
+        const trigger=document.getElementById('idecoImportCompanyCustomers');
+        idecoCompanyImportBusy=true;customerFileInput.disabled=true;if(trigger)trigger.disabled=true;
+        customerLoadingIndicator.style.display='block';
+        if(result)result.textContent='Đang đọc Excel và lưu khách hàng…';
         try {
-            const data = await readExcelFile(file);
-            const parsed = data.slice(1).map(r => ({ tenKhachHang: r[1]||'', nguoiPhuTrach: r[2]||'', dienThoai: r[3]||'', diaChi: r[4]||'' })).filter(c=>c.tenKhachHang);
-            customerDatabase = parsed;
-            await database.ref("customerData").set(customerDatabase);
-            renderCustomerTable(customerDatabase);
-        } catch (error) { alert(`Lỗi: ${error.message}`); }
-        customerLoadingIndicator.style.display = "none"; customerFileInput.value = '';
+            const parsed=idecoParseCompanyCustomers(await idecoReadCustomerExcel(file));
+            const saved=await database.ref('customerData').transaction(current=>idecoMergeCompanyCustomers(current,parsed),undefined,false);
+            if(!saved.committed)throw new Error('Chưa lưu được khách hàng. Vui lòng thử lại.');
+            customerDatabase=idecoCustomerRows(saved.snapshot.val());
+            idecoCustomerSync.company.count=customerDatabase.length;idecoSetCustomerState('company','ready');
+            customerFileNameDisplay.textContent=file.name+' — '+parsed.length+' dòng khách hàng';
+            renderCustomerTable(customerDatabase);renderZaloCustomerList(zaloCustSearch ? zaloCustSearch.value : '');
+            if(result)result.textContent='Đã lưu Firebase '+parsed.length+' dòng từ Excel. Tổng hiện tại: '+customerDatabase.length+' KH; các máy đang mở sẽ tự cập nhật.';
+        }catch(error){
+            if(result)result.textContent='Chưa lưu được: '+error.message;
+            alert('Nhập khách hàng chưa thành công: '+error.message);
+        }finally{
+            idecoCompanyImportBusy=false;customerFileInput.disabled=false;if(trigger)trigger.disabled=false;
+            customerLoadingIndicator.style.display='none';customerFileInput.value='';
+        }
     }
     function renderCustomerTable(data) {
-        if (!data || !data.length) { customerTableContainer.innerHTML = '<p>Chưa có dữ liệu KH.</p>'; return; }
-        let html = '<table class="price-table"><thead><tr><th>Tên KH</th><th>Người PT</th><th>SĐT</th><th>Địa chỉ</th></tr></thead><tbody>';
-        data.forEach(c => html += `<tr><td>${c.tenKhachHang}</td><td>${c.nguoiPhuTrach}</td><td>${c.dienThoai}</td><td>${c.diaChi}</td></tr>`);
-        customerTableContainer.innerHTML = html + '</tbody></table>';
+        if(!data||!data.length){customerTableContainer.innerHTML='<p>Chưa có dữ liệu KH. Xem trạng thái đồng bộ ở phía trên.</p>';return;}
+        let html='<table class="price-table"><thead><tr><th>Tên công ty / KH</th><th>Người liên hệ</th><th>Điện thoại</th><th>Địa chỉ</th><th>Nhân viên phụ trách</th></tr></thead><tbody>';
+        data.forEach(c=>html+='<tr>'+[c.tenKhachHang,c.nguoiPhuTrach,c.dienThoai,c.diaChi,c.nhanVienPhuTrach].map(v=>'<td>'+zaloEsc(v||'')+'</td>').join('')+'</tr>');
+        customerTableContainer.innerHTML=html+'</tbody></table>';
     }
-    async function loadCustomerDataFromFirebase() {
-        try { const snap = await database.ref('customerData').once('value'); if(snap.val()) customerDatabase = snap.val(); } catch(e){}
+    // Theo dõi riêng từng nguồn; lỗi tải không được coi là dữ liệu rỗng.
+    const idecoCustomerSync = {
+        company: {state:'loading', count:0, error:''},
+        uploaded: {state:'loading', count:0, error:''}
+    };
+    let idecoCompanyListener = null, idecoUploadedListener = null;
+    const idecoCustomerTimers = {};
+    function idecoCustomerRows(raw) {
+        if (raw == null) return [];
+        if (typeof raw !== 'object') throw new Error('Định dạng danh sách khách hàng không hợp lệ');
+        return (Array.isArray(raw) ? raw : Object.values(raw)).filter(c=>c && typeof c==='object').map(c=>({
+            ...c, tenKhachHang:String(c.tenKhachHang == null ? '' : c.tenKhachHang),
+            nguoiPhuTrach:String(c.nguoiPhuTrach == null ? '' : c.nguoiPhuTrach),
+            dienThoai:String(c.dienThoai == null ? '' : c.dienThoai),
+            diaChi:String(c.diaChi == null ? '' : c.diaChi),
+            nhanVienPhuTrach:String(c.nhanVienPhuTrach == null ? '' : c.nhanVienPhuTrach)
+        }));
     }
+    function idecoCustomerSyncText() {
+        const label={company:'Khách hàng công ty',uploaded:'Khách hàng mới từ Excel'};
+        return Object.keys(label).map(k=>{
+            const v=idecoCustomerSync[k];
+            if(v.state==='loading') return label[k]+': đang tải…';
+            if(v.state==='error') return label[k]+': chưa tải được ('+v.error+').'+(v.count?' Đang giữ '+v.count+' KH đã tải.':'');
+            return label[k]+': '+v.count+' KH'+(v.count?'':' — nguồn hiện trả về danh sách trống');
+        }).join(' | ');
+    }
+    function idecoUpdateCustomerStatus() {
+        document.querySelectorAll('[data-customer-sync-status]').forEach(el=>el.textContent=idecoCustomerSyncText());
+        const empty=document.getElementById('dskhEmpty');
+        if(empty && !zaloUploadedFiles.length) {
+            empty.style.display='block';
+            empty.textContent=idecoCustomerSync.uploaded.state==='ready'
+                ? 'Nguồn hiện trả về danh sách Excel trống. Nếu trước đây có dữ liệu, hãy kiểm tra bản cũ hoặc bản sao lưu trước khi nhập lại.'
+                : 'Danh sách chưa tải xong. Bấm “Tải lại khách hàng” hoặc kiểm tra kết nối; chưa thể kết luận dữ liệu đã mất.';
+        }
+    }
+    function idecoSetCustomerState(key,state,error) {
+        const item=idecoCustomerSync[key]; item.state=state; item.error=error||'';
+        if(state!=='loading')clearTimeout(idecoCustomerTimers[key]);
+        idecoUpdateCustomerStatus();
+    }
+    function idecoCustomerLoadError(key,error) {
+        const code=String(error && (error.code||error.message) || 'Lỗi kết nối');
+        idecoSetCustomerState(key,'error',/permission/i.test(code)?'không có quyền đọc dữ liệu':code);
+        console.warn('Không tải được danh sách khách hàng:',key,code);
+    }
+    function idecoBeginCustomerLoad(key) {
+        clearTimeout(idecoCustomerTimers[key]);idecoSetCustomerState(key,'loading');
+        idecoCustomerTimers[key]=setTimeout(()=>idecoCustomerLoadError(key,{message:'kết nối chậm hoặc gián đoạn, vui lòng tải lại'}),15000);
+    }
+    function loadCustomerDataFromFirebase() {
+        idecoBeginCustomerLoad('company');
+        try {
+            const ref=database.ref('customerData');
+            if(idecoCompanyListener)ref.off('value',idecoCompanyListener);
+            idecoCompanyListener=snap=>{
+                try {
+                    const rows=idecoCustomerRows(snap.val());
+                    customerDatabase=rows;
+                    idecoCustomerSync.company.count=rows.length;
+                    idecoSetCustomerState('company','ready');
+                    renderCustomerTable(customerDatabase);
+                    renderZaloCustomerList(zaloCustSearch ? zaloCustSearch.value : '');
+                } catch(e){idecoCustomerLoadError('company',e);}
+            };
+            ref.on('value',idecoCompanyListener,e=>idecoCustomerLoadError('company',e));
+        } catch(e){idecoCustomerLoadError('company',e);}
+    }
+    function idecoLoadUploadedCustomers() {
+        idecoBeginCustomerLoad('uploaded');
+        try {
+            const ref=database.ref('zaloUploadedDSKH');
+            if(idecoUploadedListener)ref.off('value',idecoUploadedListener);
+            idecoUploadedListener=snap=>{
+                try {
+                    const raw=snap.val();
+                    if(raw!=null && typeof raw!=='object')throw new Error('Định dạng file khách hàng không hợp lệ');
+                    const files=Object.entries(raw||{}).filter(([k,v])=>v&&typeof v==='object').map(([k,v])=>({
+                        ...v,id:v.id||k,customers:idecoCustomerRows(v.customers)
+                    })).sort((a,b)=>(a.at||0)-(b.at||0));
+                    zaloUploadedFiles=files;rebuildUploadedCustomers();
+                    idecoCustomerSync.uploaded.count=zaloUploadedCustomers.length;
+                    idecoSetCustomerState('uploaded','ready');
+                    renderUploadedFilesBar();
+                    renderZaloUploadList(zaloCustSearch ? zaloCustSearch.value : '');
+                    idecoUpdateCustomerStatus();
+                } catch(e){idecoCustomerLoadError('uploaded',e);}
+            };
+            ref.on('value',idecoUploadedListener,e=>idecoCustomerLoadError('uploaded',e));
+        } catch(e){idecoCustomerLoadError('uploaded',e);}
+    }
+    function idecoReloadCustomers() {
+        loadCustomerDataFromFirebase();idecoLoadUploadedCustomers();
+    }
+    function idecoInitCustomerSync() {
+        ['zaloCustListWrap','customerTableContainer','zaloUploadFilesBar'].forEach(id=>{
+            const target=document.getElementById(id);if(!target)return;
+            const bar=document.createElement('div');bar.className='ideco-customer-sync';
+            const status=document.createElement('span');status.setAttribute('data-customer-sync-status','');status.setAttribute('role','status');
+            const button=document.createElement('button');button.type='button';button.textContent='↻ Tải lại khách hàng';
+            button.addEventListener('click',idecoReloadCustomers);bar.append(status,button);target.before(bar);
+        });
+        idecoReloadCustomers();
+        window.addEventListener('online',idecoReloadCustomers);
+    }
+    document.addEventListener('DOMContentLoaded',idecoInitCustomerSync,{once:true});
     function showCustomerSuggestions(event) {
         const val = event.target.value.toLowerCase(); customerSuggestions.innerHTML = ''; if(val.length<1) return;
-        customerDatabase.filter(c=>c.tenKhachHang.toLowerCase().includes(val)).forEach(c=>{
+        customerDatabase.filter(c=>String(c.tenKhachHang||'').toLowerCase().includes(val)).forEach(c=>{
             const opt = document.createElement('option'); opt.value = c.tenKhachHang; customerSuggestions.appendChild(opt);
         });
-        const match = customerDatabase.find(c=>c.tenKhachHang.toLowerCase()===val);
+        const match = customerDatabase.find(c=>String(c.tenKhachHang||'').toLowerCase()===val);
         if(match){ customerContactInput.value=match.nguoiPhuTrach; customerPhoneInput.value=match.dienThoai; customerAddressInput.value=match.diaChi; }
     }
     
@@ -5690,17 +5877,7 @@ const IdecoPrice = (()=>{
         });
         zaloUploadedCustomers = flat;
     }
-    // Lắng nghe Firebase real-time: mọi máy thấy cùng danh sách file DSKH
-    try {
-        database.ref('zaloUploadedDSKH').on('value', snap => {
-            const val = snap.val();
-            // Firebase lưu dạng object {id: file} → chuyển về mảng, sắp theo thời gian upload
-            zaloUploadedFiles = val ? Object.keys(val).map(k => val[k]).sort((a,b)=>(a.at||0)-(b.at||0)) : [];
-            rebuildUploadedCustomers();
-            renderUploadedFilesBar();
-            renderZaloUploadList(zaloCustSearch ? zaloCustSearch.value : '');
-        });
-    } catch(e) { console.warn('zaloUploadedDSKH listener:', e); }
+    // Hai nguồn khách hàng được khởi tạo độc lập sau khi giao diện sẵn sàng.
     let zaloRenderedList = [];             // Danh sách đang hiển thị trong bảng (để tra theo data-ridx)
     const zaloUploadInput = document.getElementById('zaloUploadInput');
     const zaloClearUploadBtn = document.getElementById('zaloClearUploadBtn');
@@ -5800,7 +5977,7 @@ const IdecoPrice = (()=>{
         let totalCust = 0, okFiles = 0, failNames = [];
         for (const file of files) {
             try {
-                const aoa = await readExcelFile(file);
+                const aoa = await idecoReadCustomerExcel(file);
                 const parsed = parseCustomerAoa(aoa);
                 if (!parsed.length) { failNames.push(file.name); continue; }
                 const id = 'f' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
@@ -6353,7 +6530,8 @@ const IdecoPrice = (()=>{
                 String(c.tenKhachHang||'').toLowerCase().includes(kw) ||
                 String(c.nguoiPhuTrach||'').toLowerCase().includes(kw) ||
                 String(c.dienThoai||'').toLowerCase().includes(kw) ||
-                String(c.diaChi||'').toLowerCase().includes(kw));
+                String(c.diaChi||'').toLowerCase().includes(kw) ||
+                String(c.nhanVienPhuTrach||'').toLowerCase().includes(kw));
         }
         // Khách vừa thêm mới đưa lên đầu
         if (zaloLastAddedPhone) {
@@ -6361,11 +6539,11 @@ const IdecoPrice = (()=>{
         }
         if (!list.length) {
             zaloRenderedList = [];
-            zaloCustListBody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#888;padding:14px">' +
+            zaloCustListBody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#888;padding:14px">' +
                 ((customerDatabase && customerDatabase.length) ? 'Không tìm thấy khách hàng phù hợp.' : 'Chưa có dữ liệu khách hàng công ty. Hãy tải danh sách KH ở tab Database, hoặc khai KH mới / upload Excel ở khung bên dưới.') + '</td></tr>';
             return;
         }
-        zaloRenderedList = list.slice(0, 300);
+        zaloRenderedList = list;
         let html = '';
         zaloRenderedList.forEach((c, ridx) => {
             const isNew = zaloLastAddedPhone && String(c.dienThoai) === zaloLastAddedPhone;
@@ -6379,13 +6557,14 @@ const IdecoPrice = (()=>{
                 '<td>' + zaloEsc(c.nguoiPhuTrach) + '</td>' +
                 '<td>' + (c.dienThoai ? '<span class="zalo-phone-link" data-ridx="' + ridx + '" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Bấm để gửi báo giá qua Zalo (tự load thông tin KH này lên báo giá trước khi gửi)">' + zaloEsc(c.dienThoai) + '</span>' : '<span style="color:#aaa">—</span>') + '</td>' +
                 '<td>' + zaloAddressLink(c.diaChi) + '</td>' +
+                '<td>' + zaloEsc(c.nhanVienPhuTrach || '—') + '</td>' +
                 '<td style="white-space:nowrap">' + (c.dienThoai ? '<button class="zalo-send-btn" data-mode="img" data-ridx="' + ridx + '" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Copy ảnh báo giá rồi dán Ctrl+V vào Zalo">🖼 Ảnh</button> <button class="zalo-send-btn" data-mode="pdf" data-ridx="' + ridx + '" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Tải file PDF báo giá rồi kéo vào Zalo — phù hợp danh mục dài">📄 PDF</button> ' : '') + '<button class="zalo-claim-btn' + (dbClaim ? ' claimed' : '') + '" data-ridx="' + ridx + '" title="' + (dbClaim ? 'Đã ghi nhận NV ' + zaloEsc(dbClaim.staff) + ' gửi — bấm để sửa/xóa' : 'Ghi nhận tên NV đã gửi cho KH này') + '">' + (dbClaim ? '👤 NV: ' + zaloEsc(dbClaim.staff) : '👤 Tên NV') + '</button></td>' +
                 '</tr>';
         });
         zaloCustListBody.innerHTML = html;
     }
 
-    // Hiển thị DSKH upload từ Excel — bảng RIÊNG (màu cam) trong khung "Khách hàng mới", chỉ lưu localStorage
+    // Hiển thị DSKH upload từ Excel — bảng RIÊNG (màu cam) trong khung "Khách hàng mới", đồng bộ Firebase real-time
     function renderZaloUploadList(filter) {
         const wrap = document.getElementById('zaloUploadListWrap');
         const body = document.getElementById('zaloUploadListBody');
@@ -6521,9 +6700,14 @@ const IdecoPrice = (()=>{
             }
         }
         const newCust = { tenKhachHang: name, nguoiPhuTrach: contact, dienThoai: phone, diaChi: address };
-        customerDatabase.push(newCust);
-        zaloLastAddedPhone = phone;
-        try { await database.ref('customerData').set(customerDatabase); } catch(e) { console.warn('Lưu Firebase lỗi:', e); }
+        try {
+            const saved=await database.ref('customerData').transaction(current=>{
+                const rows=idecoCustomerRows(current);rows.push(newCust);return rows;
+            },undefined,false);
+            if(!saved.committed)throw new Error('Chưa lưu được khách hàng.');
+            customerDatabase=idecoCustomerRows(saved.snapshot.val());
+            zaloLastAddedPhone=phone;
+        }catch(e){alert('Chưa lưu Firebase: '+e.message);return;}
         zaloNewName.value = ''; zaloNewContact.value = ''; zaloNewPhone.value = ''; zaloNewAddress.value = '';
         zaloCustSearch.value = '';
         // Tự động load KH mới lên bảng báo giá luôn (quy trình mới: chọn KH → load → gửi)
@@ -6960,7 +7144,7 @@ const IdecoPrice = (()=>{
         pc7InitRealtime();
         loadDataFromFirebase(); 
         loadProductImages(); 
-        loadCustomerDataFromFirebase(); 
+        // Khách hàng có luồng khởi tạo riêng, không phụ thuộc tải bảng giá.
         // DSKH upload giờ đồng bộ real-time qua Firebase (listener zaloUploadedDSKH ở trên) — không cần load local
         // ===== Báo cáo tuần =====
         const rBtn = _rp('reportBtn');
@@ -6974,7 +7158,7 @@ const IdecoPrice = (()=>{
         const dBtn = document.getElementById('excelDskhBtn');
         const dOv = document.getElementById('dskhOverlay');
         const dClose = document.getElementById('dskhCloseBtn');
-        if (dBtn && dOv) dBtn.addEventListener('click', () => { renderUploadedFilesBar(); dOv.style.display = 'flex'; });
+        if (dBtn && dOv) dBtn.addEventListener('click', () => { renderUploadedFilesBar(); dOv.style.display = 'flex'; idecoReloadCustomers(); });
         if (dClose && dOv) dClose.addEventListener('click', () => { dOv.style.display = 'none'; });
         if (dOv) dOv.addEventListener('click', e => { if (e.target === dOv) dOv.style.display = 'none'; });
         document.addEventListener('keydown', e => { if (e.key === 'Escape' && dOv && dOv.style.display === 'flex') dOv.style.display = 'none'; });
@@ -8630,7 +8814,13 @@ const IdecoPrice = (()=>{
 
 <!-- IDECO: Tra cứu trực tiếp giá thuốc Cục Quản lý Dược -->
 <style>
-#idecoDavDialog{box-sizing:border-box;width:96vw;max-width:none;height:94vh;height:94dvh;max-height:none;margin:auto;padding:0;border:0;border-radius:16px;background:#fff;color:#18334a;box-shadow:0 20px 80px #0005;overflow:hidden}
+.ideco-dav-row{display:block;position:static!important;margin:7px 0 0;padding:6px 9px;border:1px solid #087f8c;border-radius:7px;background:#eefafb;color:#075c68;font:600 12px/1.4 Arial,sans-serif;cursor:pointer;white-space:nowrap}
+.ideco-dav-row:hover{background:#d7f2f4}
+#idecoDavDialog .dav-query{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 16px;background:#f5fafb}
+#idecoDavName{flex:1;min-width:150px;border:1px solid #9dbec5;border-radius:7px;padding:9px 10px;font-size:15px;color:#18334a;background:white}
+#idecoDavDialog .dav-query button{border-color:#087f8c}
+#idecoDavCopyStatus{display:block;margin-top:5px;color:#075c68}
+#idecoDavDialog{box-sizing:border-box;width:96vw;max-width:none;height:94vh;height:94dvh;max-height:none;margin:auto;padding:0;border:2px solid #b62435;resize:both;border-radius:16px;background:#fff;color:#18334a;box-shadow:0 20px 80px #0005;overflow:hidden}
 #idecoDavDialog::backdrop{background:rgba(9,23,40,.72)}
 #idecoDavDialog[open]{display:flex;flex-direction:column}
 #idecoDavDialog.dav-max{width:100vw;height:100vh;height:100dvh;border-radius:0}
@@ -8651,44 +8841,329 @@ const IdecoPrice = (()=>{
 </style>
 <dialog id="idecoDavDialog" aria-labelledby="idecoDavTitle">
  <div class="dav-head"><h2 id="idecoDavTitle">🔎 Tra cứu giá thuốc · Bộ Y tế</h2><div class="dav-actions">
+ <button type="button" id="idecoDavExternal">↗ Mở trang riêng</button>
  <button type="button" id="idecoDavReload">↻ Tải lại</button>
  <button type="button" id="idecoDavExpand" aria-pressed="false">⛶ Phóng to</button>
  <button type="button" id="idecoDavClose" autofocus>✕ Đóng</button>
  </div></div>
- <div class="dav-note">Nhập <b>tên thuốc hoặc số đăng ký</b> vào ô tìm kiếm của trang bên dưới, rồi bấm <b>Tìm kiếm</b>. Chọn <b>Tra cứu nâng cao</b> để lọc thêm thông tin.</div>
+ <div class="dav-query"><label for="idecoDavName"><b>Tên thuốc cần tra cứu</b></label><input id="idecoDavName" type="text" autocomplete="off"><button type="button" id="idecoDavCopy">📋 Sao chép tên thuốc</button></div>
+ <div class="dav-note">Tên thuốc đã được lấy từ dòng Anh/Chị chọn. Bấm <b>Sao chép tên thuốc</b>, dán vào ô tìm kiếm của website bên dưới rồi bấm <b>Tìm kiếm</b>. Website Bộ Y tế chưa hỗ trợ tự điền từ ứng dụng này.<span id="idecoDavCopyStatus" role="status" aria-live="polite"></span></div>
  <div class="dav-body"><iframe id="idecoDavFrame" title="Trang tra cứu giá thuốc Cục Quản lý Dược – Bộ Y tế" sandbox="allow-forms allow-scripts allow-same-origin allow-downloads" referrerpolicy="strict-origin-when-cross-origin"></iframe><div class="dav-loading" id="idecoDavLoading" role="status" hidden>Đang yêu cầu tải trang Bộ Y tế…</div></div>
- <details><summary>Trang trống hoặc không tải được?</summary><p>Thử bấm Tải lại và kiểm tra kết nối Internet. Nếu trình duyệt báo “refused to connect” hoặc từ chối hiển thị trong khung, website nguồn đang chặn nhúng; ứng dụng HTML không thể tự bỏ giới hạn này.</p><div class="dav-source">Nguồn: https://dichvucong.dav.gov.vn/congbogiathuocbackup/index</div></details>
+ <details><summary>Trang trống hoặc không tải được?</summary><p>Thử bấm Tải lại và kiểm tra kết nối Internet. Nếu trình duyệt báo “refused to connect” hoặc từ chối hiển thị trong khung, website nguồn đang chặn nhúng; ứng dụng HTML không thể tự bỏ giới hạn này.</p><div class="dav-source">Nguồn: https://dichvucong.dav.gov.vn/congbogiathuoc/</div></details>
 </dialog>
 <script id="idecoDavScript">
 (function(){
  'use strict';
- const url='https://dichvucong.dav.gov.vn/congbogiathuocbackup/index';
+ const url='https://dichvucong.dav.gov.vn/congbogiathuoc/';
  const dialog=document.getElementById('idecoDavDialog');
  const frame=document.getElementById('idecoDavFrame');
  const status=document.getElementById('idecoDavLoading');
  const expand=document.getElementById('idecoDavExpand');
- let started=false, timer, opener, oldOverflow='';
+ const nameInput=document.getElementById('idecoDavName');
+ const copyStatus=document.getElementById('idecoDavCopyStatus');
+ let timer, opener, oldOverflow='';
  function load(){
    clearTimeout(timer);status.hidden=false;status.textContent='Đang yêu cầu tải trang Bộ Y tế…';
-   frame.src=url;started=true;
-   timer=setTimeout(function(){status.textContent='Nếu trang chưa hiển thị, bấm Tải lại hoặc xem hướng dẫn bên dưới.';},20000);
+   frame.src=url;
+   timer=setTimeout(function(){status.textContent='Nếu trang chưa hiển thị, bấm Mở trang riêng ở phía trên.';},15000);
  }
  frame.addEventListener('load',function(){clearTimeout(timer);status.hidden=true;});
- frame.addEventListener('error',function(){clearTimeout(timer);status.hidden=false;status.textContent='Không tải được trang. Thử Tải lại hoặc xem hướng dẫn bên dưới.';});
- document.querySelectorAll('[data-dav-open]').forEach(function(button){
-   button.addEventListener('click',function(){
-     if(dialog.open)return;
-     opener=button;oldOverflow=document.body.style.overflow;
-     dialog.showModal();document.body.style.overflow='hidden';
-     if(!started)load();
-   });
+ frame.addEventListener('error',function(){clearTimeout(timer);status.hidden=false;status.textContent='Không tải được trang. Bấm Mở trang riêng để tiếp tục tra cứu.';});
+ function fallbackCopy(){
+   const active=document.activeElement;
+   nameInput.focus();nameInput.select();
+   let ok=false;try{ok=document.execCommand('copy');}catch(_){}
+   if(ok&&active)active.focus();
+   return ok;
+ }
+ document.getElementById('idecoDavCopy').addEventListener('click',async function(){
+   if(!nameInput.value.trim()){copyStatus.textContent='Vui lòng nhập tên thuốc cần tra cứu.';nameInput.focus();return;}
+   let ok=false;
+   try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(nameInput.value);ok=true;}}catch(_){}
+   if(!ok)ok=fallbackCopy();
+   copyStatus.textContent=ok?'Đã sao chép. Dán vào ô tìm kiếm bên dưới (Ctrl+V hoặc nhấn giữ → Dán).':'Tên thuốc đã được chọn. Nhấn Ctrl+C hoặc nhấn giữ → Sao chép, rồi dán vào ô tìm kiếm bên dưới.';
  });
+ window.idecoOpenDav=function(name,button){
+   nameInput.value=String(name||'').trim();copyStatus.textContent='';
+   opener=button||document.activeElement;
+   if(!dialog.open){oldOverflow=document.body.style.overflow;dialog.showModal();document.body.style.overflow='hidden';}
+   // Mỗi thuốc mở lại trang gốc để tránh hiển thị kết quả của thuốc trước.
+   load();
+ };
+ document.getElementById('idecoDavExternal').addEventListener('click',function(){window.open(url,'_blank','noopener,noreferrer');});
  document.getElementById('idecoDavReload').addEventListener('click',load);
  document.getElementById('idecoDavClose').addEventListener('click',function(){dialog.close();});
  expand.addEventListener('click',function(){
    const max=dialog.classList.toggle('dav-max');expand.setAttribute('aria-pressed',String(max));expand.textContent=max?'⛶ Thu gọn':'⛶ Phóng to';
  });
- dialog.addEventListener('close',function(){document.body.style.overflow=oldOverflow;if(opener&&opener.isConnected)opener.focus();});
+ dialog.addEventListener('close',function(){clearTimeout(timer);frame.src='about:blank';status.hidden=true;document.body.style.overflow=oldOverflow;if(opener&&opener.isConnected)opener.focus();});
+})();
+</script>
+
+<style>
+#zaloCustListWrap,#zaloUploadListWrap{max-height:440px;overflow:auto;scrollbar-gutter:stable}
+.zalo-cust-table{table-layout:fixed;border-collapse:separate;border-spacing:0}
+.zalo-cust-table td{overflow-wrap:anywhere;line-height:1.45;white-space:normal!important}
+.zalo-cust-table th{white-space:normal!important;padding-right:16px;box-sizing:border-box}
+.zalo-cust-table td .zalo-address-link{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.5;max-height:3em;text-decoration:none;color:#325e83}
+.zalo-cust-table td .zalo-address-link:hover{color:#0068ff;text-decoration:underline}
+.zalo-cust-table tbody tr:nth-child(even){background:#f6f9ff}
+.ideco-col-grip{position:absolute;right:0;top:0;bottom:0;width:10px;cursor:col-resize;touch-action:none;border-right:2px solid #ffffff80;z-index:4}
+.ideco-col-grip:hover,.ideco-col-grip:focus{background:#ffffff60;outline:2px solid #ffd768}
+.ideco-batch-pick{display:grid;grid-template-columns:22px 26px 1fr;align-items:center;gap:5px;font-size:11px;color:#536773;margin:0 0 7px;cursor:pointer;line-height:1.2}
+.ideco-batch-pick input{width:18px;height:18px;margin:0;cursor:pointer;accent-color:#0068ff}
+.ideco-batch-order{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#e7edf4;color:#617181;font-size:11px;font-weight:800}
+.ideco-batch-pick.is-picked .ideco-batch-order{background:#0068ff;color:#fff}
+.ideco-batch-pick.is-picked{color:#0052cc;font-weight:800}
+.ideco-delete-cust{background:#fff0f0!important;color:#b42318!important;border:1px solid #f3b7b3!important;border-radius:6px!important;padding:5px 8px!important;margin-left:4px!important;font-size:12px!important;cursor:pointer!important}
+.ideco-delete-cust:hover{background:#ffe1df!important}
+#idecoBatch{padding:14px;border:1px solid #b7d5e9;border-radius:12px;background:#fff;margin:14px 0;color:#173454;box-shadow:0 5px 18px rgba(20,72,112,.08)}
+#idecoBatch .batch-title{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#idecoBatch .batch-title strong{font-size:15px}
+#idecoBatch .batch-count{display:inline-flex;align-items:center;gap:5px;background:#eaf3ff;color:#0052cc;border:1px solid #b8d7ff;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:800}
+#idecoBatch .batch-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0}
+#idecoBatch button,#idecoBatch select{position:static!important;padding:8px 10px;border:1px solid #b7cce0;border-radius:7px;background:white;color:#17466c;font-size:13px}
+#idecoBatch button{cursor:pointer;font-weight:700}#idecoBatch button:disabled{opacity:.5;cursor:not-allowed}
+#idecoBatch #batchStart{background:#0068ff;color:#fff;border-color:#0068ff}
+#idecoBatch #batchStop{color:#b32436;border-color:#e4b1b8}
+#idecoBatch #batchClear{color:#6b4d00;border-color:#e8d28b;background:#fff9e8}
+#idecoBatch .batch-note{font-size:12px;color:#536773;margin:5px 0;line-height:1.6}
+#batchSelectedList{font-size:12px;max-height:145px;overflow:auto;margin:6px 0;padding-left:22px}
+#batchSelectedList li{padding:2px 0}
+#batchStatus{display:block;background:#eef7ff;border-radius:7px;padding:9px;overflow-wrap:anywhere;margin-top:8px}
+#batchCountdown{display:none;align-items:center;gap:10px;margin-top:9px;padding:10px 12px;border:1px solid #b8d7ff;border-radius:9px;background:#f7fbff;color:#17466c;font-weight:800}
+#batchCountdown.show{display:flex}
+#batchCountdownNum{display:inline-flex;align-items:center;justify-content:center;min-width:42px;height:42px;border-radius:50%;background:#0068ff;color:#fff;font-size:20px;font-weight:900;box-shadow:0 3px 10px rgba(0,104,255,.25)}
+#batchCountdownText{font-size:13px;line-height:1.4}
+#batchCountdown.done{border-color:#a7dfb4;background:#effaf2;color:#1e7e34}
+#batchCountdown.done #batchCountdownNum{background:#1e7e34}
+body.ideco-resizing{cursor:col-resize!important;user-select:none}
+@media(max-width:640px){#idecoBatch{padding:10px}#idecoBatch button{min-height:40px}.ideco-batch-pick{grid-template-columns:22px 24px 1fr}}
+</style>
+<script id="idecoCustomerLayoutBatch">
+(function(){
+'use strict';
+const configs=[
+ {id:'zaloCustListWrap',widths:[112,240,145,145,230,150,285],list:()=>zaloRenderedList,source:'db'},
+ {id:'zaloUploadListWrap',widths:[112,240,145,145,230,285],list:()=>zaloUploadRenderedList,source:'upload'}
+];
+let queue=[],index=0,running=false,busy=false,paused=false,runId=0,timer=null,fallbackTimer=null,countdownInterval=null,zaloWindow=null;
+let preparedBlob=null,preparedIndex=-1;
+const selected=new Map();
+const section=document.createElement('section');
+section.id='idecoBatch';section.setAttribute('data-html2canvas-ignore','true');section.setAttribute('aria-label','Gửi Zalo lần lượt');
+section.innerHTML=`<div class="batch-title"><strong>📲 Gửi báo giá Zalo lần lượt</strong><span class="batch-count" id="batchCountBadge">Đã chọn 0/10 khách</span></div>
+<div class="batch-row">
+<label>Khoảng cách <select id="batchDelay">${Array.from({length:9},(_,i)=>'<option value="'+(i+2)+'"'+(i===3?' selected':'')+'>'+(i+2)+' giây</option>').join('')}</select></label>
+<button id="batchStart" type="button">▶ Gửi khách đã tích</button>
+<button id="batchResume" type="button" hidden>Tiếp tục khách này</button>
+<button id="batchStop" type="button" disabled>■ Dừng</button>
+<button id="batchClear" type="button">☐ Bỏ chọn tất cả</button>
+</div>
+<div class="batch-note"><b>Cách dùng:</b> tích ô vuông ngay trên từng dòng khách hàng theo đúng thứ tự muốn gửi (tối đa 10). Số trong vòng tròn là thứ tự gửi. Sau đó chọn 2–10 giây và bấm <b>Gửi khách đã tích</b>. Hệ thống sẽ đếm ngược từng giây về 0 rồi tự mở khách kế tiếp.</div>
+<details open><summary id="batchPreviewTitle">Danh sách sẽ gửi: 0 khách</summary><ol id="batchSelectedList"></ol></details>
+<span id="batchStatus" role="status" aria-live="polite">Chưa chọn khách hàng. Tích ô vuông ở bảng bên dưới.</span>
+<div id="batchCountdown" aria-live="polite"><span id="batchCountdownNum">–</span><span id="batchCountdownText">Chưa chạy</span></div>
+<div class="batch-note">Mỗi lượt: ứng dụng tự điền đúng khách lên báo giá → copy ảnh báo giá vào clipboard → mở trực tiếp <b>zalo.me/SĐT</b> đúng khách → đếm ngược về 0 → tự chuyển sang khách kế tiếp. Anh/Chị chỉ cần <b>Ctrl+V / Dán</b> rồi bấm Gửi trong Zalo. Trình duyệt có thể yêu cầu cho phép Clipboard hoặc Pop-up.</div>
+<details><summary>Chỉnh độ rộng bảng</summary><div class="batch-note">Kéo mép phải tiêu đề cột. Địa chỉ được thu gọn hai dòng; rê chuột để xem đầy đủ.</div><button id="batchResetCols" type="button">Đặt lại độ rộng cột</button></details>`;
+const firstWrap=document.getElementById('zaloCustListWrap');if(firstWrap)firstWrap.before(section);
+const $=id=>document.getElementById(id);const say=text=>{const el=$('batchStatus');if(el)el.textContent=text;};
+function phone(c){const raw=String(c&&c.dienThoai||'').replace(/[\s.()+-]/g,'');return /^\d{9,15}$/.test(raw)?zaloNormalizePhone(raw):null;}
+function keyOf(c){return phone(c)||('name:'+norm(c&&c.tenKhachHang)+'|'+norm(c&&c.diaChi));}
+function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D').toLowerCase().replace(/\s+/g,' ').trim();}
+function escapeHtml(s){return String(s==null?'':s).replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m]));}
+function selectedArray(){return Array.from(selected.values());}
+function refreshSelectionUi(){
+ const arr=selectedArray();
+ if($('batchCountBadge'))$('batchCountBadge').textContent='Đã chọn '+arr.length+'/10 khách';
+ if($('batchSelectedList')){
+  $('batchSelectedList').innerHTML=arr.map((x,i)=>'<li><b>'+(i+1)+'.</b> '+escapeHtml(x.customer.tenKhachHang||'Khách hàng')+' · '+escapeHtml(x.customer.dienThoai||'')+'</li>').join('');
+ }
+ if($('batchPreviewTitle'))$('batchPreviewTitle').textContent='Danh sách sẽ gửi: '+arr.length+' khách';
+ document.querySelectorAll('.ideco-batch-check').forEach(cb=>{
+  const k=cb.dataset.key,entry=selected.get(k),lab=cb.closest('.ideco-batch-pick'),badge=lab&&lab.querySelector('.ideco-batch-order');
+  cb.checked=!!entry;
+  if(lab)lab.classList.toggle('is-picked',!!entry);
+  if(badge)badge.textContent=entry?String(arr.indexOf(entry)+1):'–';
+ });
+ if(!running&&!busy) say(arr.length?'Đã chọn '+arr.length+' khách. Kiểm tra thứ tự rồi bấm “Gửi khách đã tích”.':'Chưa chọn khách hàng. Tích ô vuông ở bảng bên dưới.');
+}
+function decorate(config){
+ const wrap=$(config.id);if(!wrap)return;
+ const list=config.list()||[];
+ wrap.querySelectorAll('tbody tr[data-ridx]').forEach(row=>{
+  const c=list[Number(row.dataset.ridx)];if(!c)return;
+  row.querySelectorAll('.zalo-address-link').forEach(a=>a.title=String(c.diaChi||'')+' — Bấm để mở Google Maps');
+  const first=row.cells&&row.cells[0];
+  if(first){
+   let label=first.querySelector('.ideco-batch-pick');
+   const k=keyOf(c),p=phone(c);
+   if(!label){
+    label=document.createElement('label');label.className='ideco-batch-pick';
+    label.innerHTML='<input class="ideco-batch-check" type="checkbox"><span class="ideco-batch-order">–</span><span>Gửi tự động</span>';
+    first.prepend(label);
+   }
+   const cb=label.querySelector('.ideco-batch-check');cb.dataset.key=k;cb.dataset.source=config.source;cb.dataset.ridx=String(row.dataset.ridx);cb.disabled=!p;cb.title=p?'Tích chọn khách này để gửi lần lượt':'Khách chưa có SĐT hợp lệ';
+  }
+  const last=row.cells&&row.cells[row.cells.length-1];
+  if(last&&!last.querySelector('.ideco-delete-cust')){
+   const del=document.createElement('button');del.type='button';del.className='ideco-delete-cust';del.textContent='🗑 Xóa KH';del.title='Xóa khách hàng này khỏi dữ liệu đồng bộ';del.dataset.source=config.source;del.dataset.ridx=String(row.dataset.ridx);last.append(del);
+  }
+ });
+ refreshSelectionUi();
+}
+function resizeTable(config,reset){
+ const wrap=$(config.id);if(!wrap)return;const table=wrap.querySelector('table');if(!table)return;
+ const ths=Array.from(table.querySelectorAll('thead th')),key='ideco_customer_widths_v2_'+config.id;
+ let widths=config.widths.slice();try{const saved=JSON.parse(localStorage.getItem(key)||'null');if(!reset&&Array.isArray(saved)&&saved.length===ths.length)widths=saved.map((v,i)=>Number.isFinite(v)?Math.max(80,Math.min(650,v)):widths[i]);if(reset)localStorage.removeItem(key);}catch(_){}
+ let cols=table.querySelector('colgroup');if(!cols){cols=document.createElement('colgroup');ths.forEach(()=>cols.append(document.createElement('col')));table.prepend(cols);}else{while(cols.children.length<ths.length)cols.append(document.createElement('col'));}
+ function apply(){Array.from(cols.children).slice(0,ths.length).forEach((c,i)=>c.style.width=widths[i]+'px');ths.forEach((th,i)=>th.style.width=widths[i]+'px');table.style.width=widths.reduce((a,b)=>a+b,0)+'px';}
+ function save(){try{localStorage.setItem(key,JSON.stringify(widths));}catch(_){}}
+ ths.forEach((th,i)=>{
+  const prev=th.querySelector('.ideco-col-grip');if(prev)prev.remove();
+  const grip=document.createElement('span');grip.className='ideco-col-grip';grip.tabIndex=0;grip.role='separator';grip.setAttribute('aria-orientation','vertical');grip.setAttribute('aria-label','Đổi độ rộng cột '+th.textContent);grip.title='Kéo để đổi độ rộng · phím ← → để điều chỉnh';th.append(grip);
+  grip.addEventListener('click',e=>e.stopPropagation());
+  grip.addEventListener('keydown',e=>{if(e.key!=='ArrowLeft'&&e.key!=='ArrowRight')return;e.preventDefault();widths[i]=Math.min(650,Math.max(80,widths[i]+(e.key==='ArrowRight'?16:-16)));apply();save();});
+  grip.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();const start=e.clientX,original=widths[i];document.body.classList.add('ideco-resizing');function move(ev){widths[i]=Math.min(650,Math.max(80,original+ev.clientX-start));apply();}function end(){document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',end);document.removeEventListener('pointercancel',end);document.body.classList.remove('ideco-resizing');save();}document.addEventListener('pointermove',move);document.addEventListener('pointerup',end);document.addEventListener('pointercancel',end);});
+ });apply();
+}
+function removeMatch(rows,c){
+ const targetPhone=phone(c),targetName=norm(c&&c.tenKhachHang),targetAddr=norm(c&&c.diaChi);
+ return (rows||[]).filter(x=>{
+  const xp=phone(x);if(targetPhone&&xp)return xp!==targetPhone;
+  return !(norm(x&&x.tenKhachHang)===targetName && norm(x&&x.diaChi)===targetAddr);
+ });
+}
+async function deleteCustomer(c){
+ if(!c)return;const label=(c.tenKhachHang||'khách hàng')+(c.dienThoai?' — '+c.dienThoai:'');
+ if(!confirm('Xóa “'+label+'” khỏi dữ liệu đồng bộ?\n\nSau khi xóa, khách này sẽ không tự xuất hiện lại khi tải trang.'))return;
+ try{
+  await database.ref('customerData').transaction(current=>{if(current==null)return current;return removeMatch(idecoCustomerRows(current),c);},undefined,false);
+  await database.ref('zaloUploadedDSKH').transaction(current=>{
+   if(!current||typeof current!=='object')return current;
+   const out={...current};Object.keys(out).forEach(k=>{const f=out[k];if(!f||typeof f!=='object')return;const rows=removeMatch(idecoCustomerRows(f.customers),c);out[k]={...f,customers:rows};});return out;
+  },undefined,false);
+  selected.delete(keyOf(c));refreshSelectionUi();if(typeof unselectCustomerFromQuote==='function'&&zaloSelectedPhone===phone(c))unselectCustomerFromQuote();
+  say('Đã xóa '+(c.tenKhachHang||'khách hàng')+' khỏi dữ liệu đồng bộ.');
+ }catch(e){alert('Chưa xóa được khách hàng: '+(e&&e.message||e));}
+}
+async function purgeLegacyCustomers(){
+ const targets=new Set(['cong ty cp duoc pham ngoc tuyet','nha thuoc bach lien']);
+ const clean=rows=>(rows||[]).filter(c=>!targets.has(norm(c&&c.tenKhachHang)));
+ try{
+  await database.ref('customerData').transaction(current=>{if(current==null)return current;return clean(idecoCustomerRows(current));},undefined,false);
+  await database.ref('zaloUploadedDSKH').transaction(current=>{if(!current||typeof current!=='object')return current;const out={...current};Object.keys(out).forEach(k=>{const f=out[k];if(f&&typeof f==='object')out[k]={...f,customers:clean(idecoCustomerRows(f.customers))};});return out;},undefined,false);
+ }catch(e){console.warn('Dọn dữ liệu khách cũ:',e);}
+}
+function controls(){
+ if($('batchDelay'))$('batchDelay').disabled=running||busy;
+ if($('batchStart'))$('batchStart').disabled=running||busy||selected.size===0;
+ if($('batchStop'))$('batchStop').disabled=!running&&!busy;
+ if($('batchClear'))$('batchClear').disabled=running||busy||selected.size===0;
+ if($('batchResume')){$('batchResume').hidden=!paused;$('batchResume').disabled=busy;}
+}
+function pause(message){paused=true;clearTimeout(timer);controls();say(message+' Bấm “Tiếp tục khách này” để thử lại, hoặc Dừng.');}
+function setCountdownUi(num,text,done){
+ const box=$('batchCountdown'),n=$('batchCountdownNum'),t=$('batchCountdownText');
+ if(!box||!n||!t)return;
+ box.classList.add('show');box.classList.toggle('done',!!done);
+ n.textContent=String(num);t.textContent=text||'';
+}
+function hideCountdown(){const box=$('batchCountdown');if(box){box.classList.remove('show','done');}clearInterval(countdownInterval);countdownInterval=null;}
+function ensureZaloWindow(firstCustomer){
+ try{
+  if(!zaloWindow||zaloWindow.closed){
+   const firstPhone=firstCustomer&&phone(firstCustomer);
+   const initialUrl=firstPhone?'https://zalo.me/'+firstPhone:'https://chat.zalo.me/';
+   zaloWindow=window.open(initialUrl,'IDECO_ZALO_SIMPLE');
+  }
+  if(zaloWindow&&!zaloWindow.closed){try{zaloWindow.focus();}catch(_){}}
+ }catch(_){zaloWindow=null;}
+ return zaloWindow;
+}
+function openChat(c,token){
+ clearTimeout(fallbackTimer);const p=phone(c);if(!p)return false;
+ const url='https://zalo.me/'+p;
+ const tab=ensureZaloWindow(c);
+ if(!tab){pause('Trình duyệt đang chặn cửa sổ Zalo cho '+(c.tenKhachHang||p)+'. Hãy cho phép Pop-up cho trang này.');return false;}
+ try{
+  // Điều hướng trực tiếp tới link Zalo của đúng khách; dùng lại 1 cửa sổ để Chrome không chặn các lượt sau.
+  tab.location.href=url;
+  tab.focus();
+  return true;
+ }catch(e){
+  try{window.open(url,'IDECO_ZALO_SIMPLE');return true;}catch(_){pause('Không mở được link Zalo của '+(c.tenKhachHang||p)+'.');return false;}
+ }
+}
+function finishBatch(){
+ clearTimeout(timer);clearTimeout(fallbackTimer);clearInterval(countdownInterval);countdownInterval=null;
+ running=false;busy=false;paused=false;preparedBlob=null;preparedIndex=-1;controls();
+ setCountdownUi(0,'✅ ĐÃ GỬI HOÀN THÀNH '+queue.length+'/'+queue.length+' KHÁCH ĐÃ CHỌN',true);
+ say('✅ Đã gửi hoàn thành '+queue.length+' khách hàng theo đúng thứ tự đã chọn.');
+}
+function startCountdown(seconds,token,currentCustomer){
+ clearTimeout(timer);clearInterval(countdownInterval);
+ let remain=Math.max(0,Math.floor(seconds));
+ const label=currentCustomer&&(currentCustomer.tenKhachHang||currentCustomer.dienThoai)||'khách hiện tại';
+ const update=()=>setCountdownUi(remain, remain>0 ? ('Còn '+remain+' giây → tự chuyển sang khách tiếp theo. Hiện tại: '+label) : '0 giây → đang chuyển khách tiếp theo...', false);
+ update();
+ countdownInterval=setInterval(()=>{
+  if(token!==runId||!running){clearInterval(countdownInterval);countdownInterval=null;return;}
+  remain--;
+  if(remain<=0){
+   remain=0;update();clearInterval(countdownInterval);countdownInterval=null;
+   timer=setTimeout(()=>{if(token!==runId||!running)return;if(index>=queue.length)finishBatch();else step();},180);
+  }else update();
+ },1000);
+}
+async function step(){
+ if(!running||busy||paused)return;
+ const token=runId,c=queue[index];
+ if(!c){finishBatch();return;}
+ busy=true;controls();hideCountdown();
+ say('Lượt '+(index+1)+'/'+queue.length+' · Đang chuẩn bị báo giá: '+(c.tenKhachHang||c.dienThoai));
+ try{
+  loadCustomerToQuote(c);
+  if(!navigator.clipboard||!window.ClipboardItem)throw new Error('Chrome chưa cho phép copy ảnh tự động. Hãy chạy trang bằng HTTPS/localhost và cho phép Clipboard');
+  const thisIndex=index;
+  const blobPromise=preparedIndex===index&&preparedBlob?Promise.resolve(preparedBlob):withTimeout(renderQuoteImageBlob(),25000,'Tạo ảnh báo giá quá lâu').then(blob=>{if(token!==runId)throw new Error('Đã dừng');preparedBlob=blob;preparedIndex=thisIndex;return blob;});
+  blobPromise.catch(()=>{});
+  await navigator.clipboard.write([new ClipboardItem({'image/png':blobPromise})]);
+  if(token!==runId||!running)return;
+  const opened=openChat(c,token);
+  if(!opened)return;
+  say('Lượt '+(index+1)+'/'+queue.length+' · ✅ Đã copy báo giá và mở Zalo: '+(c.tenKhachHang||c.dienThoai)+'. Hãy Dán/Ctrl+V rồi Gửi.');
+  index++;preparedBlob=null;preparedIndex=-1;
+  const delay=Math.max(2,Math.min(10,Number($('batchDelay').value)||5));
+  startCountdown(delay,token,c);
+ }catch(e){if(token===runId&&running)pause('Chưa copy/mở được '+(c.tenKhachHang||c.dienThoai)+': '+(e&&e.message||'trình duyệt chặn clipboard')+'.');}
+ finally{busy=false;controls();}
+}
+document.addEventListener('click',e=>{
+ const cb=e.target.closest('.ideco-batch-check');if(cb){e.stopPropagation();return;}
+ const del=e.target.closest('.ideco-delete-cust');if(del){e.preventDefault();e.stopImmediatePropagation();const cfg=configs.find(x=>x.source===del.dataset.source);const c=cfg&&(cfg.list()||[])[Number(del.dataset.ridx)];deleteCustomer(c);return;}
+ if((running||busy)&&e.target.closest('#zaloCustListWrap tbody,#zaloUploadListWrap tbody')&&!e.target.closest('.zalo-address-link')){e.preventDefault();e.stopImmediatePropagation();say('Đang chạy danh sách. Bấm Dừng trước khi thay đổi khách đã chọn.');}
+},true);
+document.addEventListener('change',e=>{
+ const cb=e.target.closest('.ideco-batch-check');if(!cb)return;e.stopPropagation();
+ const cfg=configs.find(x=>x.source===cb.dataset.source),c=cfg&&(cfg.list()||[])[Number(cb.dataset.ridx)];if(!c)return;
+ const k=keyOf(c);
+ if(cb.checked){if(!phone(c)){cb.checked=false;say('Khách này chưa có số điện thoại hợp lệ.');return;}if(!selected.has(k)&&selected.size>=10){cb.checked=false;say('Tối đa 10 khách. Bỏ chọn một khách trước khi thêm khách khác.');return;}if(!selected.has(k))selected.set(k,{customer:{...c},source:cfg.source});}
+ else selected.delete(k);
+ refreshSelectionUi();controls();
+},true);
+$('batchStart').addEventListener('click',()=>{
+ if(!selected.size){say('Hãy tích ít nhất 1 khách hàng.');return;}
+ if(selected.size>10){say('Tối đa 10 khách hàng.');return;}
+ if(!document.querySelector('#quoteTableContainer tbody tr')){say('Vui lòng tạo bảng báo giá sản phẩm trước khi bắt đầu.');return;}
+ queue=selectedArray().map(x=>({...x.customer}));index=0;running=true;paused=false;preparedBlob=null;preparedIndex=-1;runId++;hideCountdown();ensureZaloWindow(queue[0]);controls();step();
+});
+$('batchResume').addEventListener('click',()=>{if(!running||busy)return;paused=false;controls();step();});
+$('batchStop').addEventListener('click',()=>{runId++;clearTimeout(timer);clearTimeout(fallbackTimer);clearInterval(countdownInterval);countdownInterval=null;running=false;paused=false;preparedBlob=null;preparedIndex=-1;controls();setCountdownUi('■','Đã dừng. Không chuyển sang khách tiếp theo.',false);say('Đã dừng. Không chuyển sang khách tiếp theo.');});
+$('batchClear').addEventListener('click',()=>{if(running||busy)return;selected.clear();refreshSelectionUi();controls();});
+$('batchResetCols').addEventListener('click',()=>configs.forEach(c=>resizeTable(c,true)));
+configs.forEach(c=>{resizeTable(c,false);decorate(c);const body=$(c.id)&&$(c.id).querySelector('tbody');if(body)new MutationObserver(()=>decorate(c)).observe(body,{childList:true});});
+controls();refreshSelectionUi();purgeLegacyCustomers();
 })();
 </script>
 
