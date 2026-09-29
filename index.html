@@ -2271,6 +2271,31 @@ const IdecoPrice = (()=>{
         return -1;
     }
 
+
+    // V2: Nhãn cũ có thể đã được lưu như một phần của tên trong Firebase/Excel.
+    function cleanDrugName(value){
+        if(typeof value !== 'string') return value;
+        return value.normalize('NFC')
+            .replace(/🆕\uFE0F?\s*(?:MỚI)?/giu, ' ')
+            .replace(/(^|[\s\[({–—-])MỚI(?=$|[\s\])}–—-])/giu, '$1')
+            .replace(/\[\s*\]|\(\s*\)|\{\s*\}/g, '')
+            .replace(/\s+[–—-]\s*$/g, '')
+            .replace(/\s+/g, ' ').trim();
+    }
+    function cleanDrugData(data){
+        if(!Array.isArray(data) || !Array.isArray(data[0])) return data;
+        const ni=pc7FindCol(data[0], 'name');
+        if(ni<0) return data;
+        for(let i=1;i<data.length;i++){
+            if(Array.isArray(data[i])) data[i][ni]=cleanDrugName(data[i][ni]);
+        }
+        return data;
+    }
+    function cleanUploadedDrugNames(){
+        uploadedFiles.forEach(function(file){ if(file) cleanDrugData(file.data); });
+        cleanDrugData(currentData);
+    }
+
     // ===== NHẬN DIỆN HEADER THÔNG MINH =====
     function pc7LooksLikeHeader(row){
         if(!row || !row.length) return false;
@@ -3830,6 +3855,7 @@ const IdecoPrice = (()=>{
         return out;
     }
     function displayAllData(){
+        cleanUploadedDrugNames();
         if (editingRowState.index !== null) { handleEditRow(); }
         if(uploadedFiles.length===0){
             currentData=[]; headersCache=[]; currentProductSourceMeta=new Map();
@@ -4256,6 +4282,7 @@ const IdecoPrice = (()=>{
     }
 
     function createTable(data, sourceIndexes=null){
+        cleanDrugData(data);
         if(!data.length){ tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị.</p>'; columnToolbar.style.display='none'; return; }
         headersCache = data[0] || [];
         const visibleIdx = visibleColumnIndexes();
@@ -4480,7 +4507,7 @@ const IdecoPrice = (()=>{
         }
         
         updateFilteredSection();
-        // Bổ sung nhãn MỚI/CẬP NHẬT 7 ngày sau khi bảng render xong.
+        // Bổ sung trạng thái cập nhật/báo giá, không gắn nhãn mới vào tên thuốc.
         try { pc7DecorateTable(); } catch(e) {}
     }
     function renderSelectedOnly(){
@@ -4598,6 +4625,7 @@ const IdecoPrice = (()=>{
     }
     // ========== LƯU/TẢI FIREBASE ==========
     async function saveDataToFirebase(){
+        cleanUploadedDrugNames();
         const userAddedFile = uploadedFiles.find(f => f.name === "User Added Data");
         if(userAddedFile){
             userAddedFile.data = userAddedFile.data.filter((row, index) => {
@@ -4683,7 +4711,8 @@ const IdecoPrice = (()=>{
         return database.ref('priceData').once('value').then(snapshot=>{
             const data = snapshot.val();
             if(data && data.files){ 
-                uploadedFiles = normalizeFilesFromFirebase(data.files);   // [VÁ v2] object → mảng, tránh lệch chỉ số dòng
+                uploadedFiles = normalizeFilesFromFirebase(data.files);
+                cleanUploadedDrugNames();   // [VÁ v2] object → mảng, tránh lệch chỉ số dòng
                 // Tự động thêm cột Mã sp nếu data cũ chưa có
                 injectMaSpIfMissing(uploadedFiles);
                 filesList.innerHTML = '';
@@ -4731,6 +4760,7 @@ const IdecoPrice = (()=>{
     }
     // Dựng 1 sheet chuẩn: đúng kiểu số, có định dạng, độ rộng cột, auto filter
     function xlBuildSheet(aoa){
+        cleanDrugData(aoa);
         const ws = XLSX.utils.aoa_to_sheet(aoa);
         const head = aoa[0] || [];
         const kinds = head.map(xlColKind);
