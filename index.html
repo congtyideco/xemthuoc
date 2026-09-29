@@ -1307,7 +1307,7 @@
 // Đọc dữ liệu thuần, không đưa nhãn trạng thái/nút tra cứu vào tên thuốc.
 window.idecoPlainCellText = function(td) {
     if (!td) return '';
-    if (td.dataset.davSourceName !== undefined) return td.dataset.davSourceName;
+    if (td.dataset.davSourceName !== undefined) return window.idecoCleanDrugName ? window.idecoCleanDrugName(td.dataset.davSourceName) : td.dataset.davSourceName;
     const copy = td.cloneNode(true);
     copy.querySelectorAll('.pc7-badge, .ideco-dav-row').forEach(function(el){ el.remove(); });
     return String(copy.textContent || '').replace(/\u00a0/g, ' ').trim();
@@ -2276,7 +2276,8 @@ const IdecoPrice = (()=>{
     function cleanDrugName(value){
         if(typeof value !== 'string') return value;
         return value.normalize('NFC')
-            .replace(/🆕\uFE0F?\s*(?:MỚI)?/giu, ' ')
+            .replace(/(?:🆕|✅|🔎|🔍|🔄)\uFE0F?/gu, ' ')
+            .replace(/ĐÃ\s+BÁO\s+GIÁ|TRA\s+CỨU\s+(?:KÊ\s+KHAI|GIÁ)(?:\s+THUỐC)?|CẬP\s+NHẬT/giu, ' ')
             .replace(/(^|[\s\[({–—-])MỚI(?=$|[\s\])}–—-])/giu, '$1')
             .replace(/\[\s*\]|\(\s*\)|\{\s*\}/g, '')
             .replace(/\s+[–—-]\s*$/g, '')
@@ -2290,6 +2291,25 @@ const IdecoPrice = (()=>{
             if(Array.isArray(data[i])) data[i][ni]=cleanDrugName(data[i][ni]);
         }
         return data;
+    }
+    window.idecoCleanDrugName = cleanDrugName;
+    window.idecoCleanDrugData = cleanDrugData;
+    // Chỉ sửa ô tên thuốc; giữ nguyên khóa file, dòng, giá và các trường khác.
+    function cleanStoredDrugNames(root){
+        let count=0;
+        if(!root || !root.files) return count;
+        Object.keys(root.files).forEach(function(fk){
+            const file=root.files[fk], rows=file && file.data;
+            if(!rows || !rows[0]) return;
+            const ni=pc7FindCol(fbToArray(rows[0]), 'name');
+            if(ni<0) return;
+            Object.keys(rows).forEach(function(rk){
+                if(rk==='0' || !rows[rk]) return;
+                const old=rows[rk][ni], clean=cleanDrugName(old);
+                if(clean!==old){ rows[rk][ni]=clean; count++; }
+            });
+        });
+        return count;
     }
     function cleanUploadedDrugNames(){
         uploadedFiles.forEach(function(file){ if(file) cleanDrugData(file.data); });
@@ -4708,8 +4728,23 @@ const IdecoPrice = (()=>{
 
     function loadDataFromFirebase(){
         loadingIndicator.style.display = 'block'; tableContainer.innerHTML = ''; filesList.innerHTML = '';
-        return database.ref('priceData').once('value').then(snapshot=>{
-            const data = snapshot.val();
+        return database.ref('priceData').once('value').then(async snapshot=>{
+            let data = snapshot.val();
+            // Dọn dữ liệu cũ trên server để các ứng dụng poster cùng đọc được tên sạch.
+            if(data && cleanStoredDrugNames(JSON.parse(JSON.stringify(data)))>0){
+                try {
+                    const result=await database.ref('priceData').transaction(function(live){
+                        if(!live || !cleanStoredDrugNames(live)) return;
+                        live.syncVersion=Date.now();
+                        live.lastUpdated=new Date().toISOString();
+                        return live;
+                    }, undefined, false);
+                    data=result.snapshot.val();
+                } catch(error){
+                    console.error('Không lưu được tên thuốc đã làm sạch:',error);
+                    alert('Tên thuốc trên màn hình và Excel sẽ được làm sạch, nhưng chưa lưu được lên Firebase. Vui lòng kiểm tra quyền ghi/kết nối rồi tải lại để ứng dụng poster nhận tên đúng.');
+                }
+            }
             if(data && data.files){ 
                 uploadedFiles = normalizeFilesFromFirebase(data.files);
                 cleanUploadedDrugNames();   // [VÁ v2] object → mảng, tránh lệch chỉ số dòng
@@ -4730,7 +4765,7 @@ const IdecoPrice = (()=>{
     // CÁCH SỬA: đọc đúng .value của mọi input/select/textarea trong ô, xuất y hệt những gì đang thấy trên bảng.
     function xlReadCellText(td){
         if (!td) return '';
-        if (td.dataset.davSourceName !== undefined) return td.dataset.davSourceName;
+        if (td.dataset.davSourceName !== undefined) return window.idecoCleanDrugName ? window.idecoCleanDrugName(td.dataset.davSourceName) : td.dataset.davSourceName;
         const ctrl = td.querySelector('input, select, textarea');
         if (ctrl){
             if (ctrl.type === 'checkbox' || ctrl.type === 'radio') return '';   // cột "Chọn" — không xuất
@@ -7725,6 +7760,7 @@ const IdecoPrice = (()=>{
             im = im ? im.querySelector('img') : null;
             return im && im.src ? im.src : null;
         });
+        window.idecoCleanDrugData([heads].concat(rows));
         return { heads: heads, rows: rows, imgs: imgs, imgIdx: imgIdx };
     }
 
@@ -7735,6 +7771,7 @@ const IdecoPrice = (()=>{
         var onProgress = opts.onProgress || function () { };
         var data = opts.data || readQuoteTable();
         if (!data) return Promise.reject(new Error('Không tìm thấy bảng dữ liệu báo giá.'));
+        window.idecoCleanDrugData([data.heads].concat(data.rows));
         if (typeof ExcelJS === 'undefined') return Promise.reject(new Error('Thư viện ExcelJS chưa tải xong, vui lòng thử lại sau vài giây.'));
 
         var hasAnyImg = data.imgs.some(function (s) { return !!s; });
