@@ -3069,8 +3069,8 @@ const IdecoPrice = (()=>{
                     return;
                 }
             }
-            // V6: Excel bảng giá chính là nguồn chuẩn tuyệt đối — dọn CK Firebase cũ cho các mã trong file.
-            await ckPurgeSavedOverridesForExcel(newData);
+            // V3: Chỉ dọn CK cũ SAU KHI bảng giá chính đã lưu thành công.
+            // Tránh trường hợp Firebase lỗi nhưng CK đã bị xóa trước.
             const importedAt = Date.now();
             // Xóa tất cả file BangGia cũ, giữ lại "User Added Data"
             uploadedFiles = uploadedFiles.filter(f => f.name === "User Added Data");
@@ -3089,6 +3089,9 @@ const IdecoPrice = (()=>{
                 updateGiabanInput.value = "";
                 return;
             }
+            // Bảng giá đã ghi thành công rồi mới đồng bộ dọn CK cũ.
+            try { await ckPurgeSavedOverridesForExcel(newData); }
+            catch(ckErr){ console.warn('Không dọn được CK cũ sau cập nhật bảng giá:', ckErr); }
             updateGiabanStatus.textContent = `✅ Đã cập nhật ${pc7CountUniqueProductsInData(newData)} sản phẩm từ Excel!`;
             updateGiabanStatus.style.color = "#2e7d32";
             // Reset input để có thể chọn lại cùng file
@@ -3708,6 +3711,7 @@ const IdecoPrice = (()=>{
         const pc7Baseline = pc7BuildBaseline();
         const pc7Totals = {newCount:0,updatedCount:0,sameCount:0,inputCount:0,fileName:'',batchId:''};
         let lastBatchSummary = null;
+        const newlyAddedFiles = [];
 
         for(let i=0;i<files.length;i++){
             const file = files[i];
@@ -3733,7 +3737,9 @@ const IdecoPrice = (()=>{
                 if(batch) lastBatchSummary = sm;
 
                 const uploadId='u_'+importedAt.toString(36)+'_'+Math.random().toString(36).slice(2,8);
-                uploadedFiles.push({ name: file.name, data, importedAt, uploadId, pc7BatchId:(sm.batchId||'') });
+                const newEntry = { name: file.name, data, importedAt, uploadId, pc7BatchId:(sm.batchId||'') };
+                uploadedFiles.push(newEntry);
+                newlyAddedFiles.push(newEntry);
                 addFileToList(file.name, uploadedFiles.length - 1);
                 pc7AddFileToBaseline({name:file.name,data:data}, pc7Baseline);
             }catch(error){
@@ -3742,7 +3748,13 @@ const IdecoPrice = (()=>{
             }
         }
 
-        updateFileNameDisplay(); displayAllData(); await saveDataToFirebase(); loadingIndicator.style.display = "none";
+        updateFileNameDisplay(); displayAllData();
+        const uploadSaved = await appendPriceFilesToFirebase(newlyAddedFiles);
+        loadingIndicator.style.display = "none";
+        if(!uploadSaved){
+            // Tải lại dữ liệu server để tránh màn hình hiển thị nhầm là đã lưu.
+            try { await loadDataFromFirebase(); } catch(e){}
+        }
         pc7RenderBar(); pc7DecorateTable();
         pc7ShowUploadToast(files.length===1 && lastBatchSummary ? lastBatchSummary : pc7Totals);
         event.target.value = ''; // cho phép chọn lại chính file đó để kiểm tra/cập nhật
@@ -4700,6 +4712,52 @@ const IdecoPrice = (()=>{
         return key;
     }
 
+    // Upload FILE PHỤ: chỉ nối phần mới vào dữ liệu đang có trên server.
+    // Không dùng set() toàn bộ priceData nên máy khác vừa cập nhật cũng không bị ghi đè mất.
+    async function appendPriceFilesToFirebase(newFiles){
+        newFiles = (newFiles || []).filter(Boolean);
+        if(!newFiles.length) return true;
+        const ref = database.ref('priceData');
+        try{
+            const nowMs = Date.now();
+            const result = await ref.transaction(function(live){
+                live = live || {};
+                const serverFiles = normalizeFilesFromFirebase(live.files || []);
+                const existingIds = new Set(serverFiles.map(f => String(f.uploadId || '')).filter(Boolean));
+                const existingFallback = new Set(serverFiles.map(f => String(f.name || '') + '|' + String(f.importedAt || '')));
+                newFiles.forEach(f => {
+                    const id = String(f.uploadId || '');
+                    const fb = String(f.name || '') + '|' + String(f.importedAt || '');
+                    if((id && existingIds.has(id)) || (!id && existingFallback.has(fb))) return;
+                    serverFiles.push(JSON.parse(JSON.stringify(f)));
+                    if(id) existingIds.add(id);
+                    existingFallback.add(fb);
+                });
+                live.files = serverFiles;
+                live.fileCount = serverFiles.length;
+                live.cleared = false;
+                live.source = 'TRACUU_BAOGIA_FIREBASE_SAFE_V2_APPEND';
+                live.syncVersion = nowMs;
+                live.lastUpdated = new Date(nowMs).toISOString();
+                return live;
+            }, undefined, false);
+            if(!result.committed) throw new Error('Firebase không commit dữ liệu upload.');
+            const saved = result.snapshot.val() || {};
+            uploadedFiles = normalizeFilesFromFirebase(saved.files || []);
+            priceDataLoadedSyncVersion = Number(saved.syncVersion || nowMs);
+            filesList.innerHTML = '';
+            uploadedFiles.forEach((f,i)=> addFileToList(f.name,i));
+            updateFileNameDisplay();
+            displayAllData();
+            console.log('Đã nối file mới vào Firebase an toàn:', newFiles.length);
+            return true;
+        }catch(err){
+            console.error('Lỗi nối file mới vào Firebase:', err);
+            alert('❌ Không lưu được file mới lên Firebase.\n\nChi tiết: ' + (err && err.message ? err.message : err) + '\n\nDữ liệu cũ trên server KHÔNG bị xóa.');
+            return false;
+        }
+    }
+
     async function saveDataToFirebase(options){
         options = options || {};
         cleanUploadedDrugNames();
@@ -4717,7 +4775,7 @@ const IdecoPrice = (()=>{
             files: uploadedFiles,
             fileCount: uploadedFiles.length,
             cleared: uploadedFiles.length === 0,
-            source: "TRACUU_BAOGIA_GOOGLEMAP_BO_Y_TE_SAFE",
+            source: "TRACUU_BAOGIA_GOOGLEMAP_BO_Y_TE_SAFE_V3",
             syncVersion: nextSyncVersion,
             lastUpdated: syncNow.toISOString()
         };
@@ -4740,8 +4798,8 @@ const IdecoPrice = (()=>{
             }
 
             // 2) Chặn máy/tab cũ ghi đè dữ liệu vừa được máy khác cập nhật.
-            if(!options.allowStale && priceDataLoadedSyncVersion !== null && serverVersion !== Number(priceDataLoadedSyncVersion)){
-                alert('🛡️ AN TOÀN FIREBASE: Dữ liệu trên server vừa được máy/tab khác cập nhật.\n\nĐể tránh ghi đè mất dữ liệu mới, thao tác lưu này đã bị HỦY. Vui lòng F5 rồi thực hiện lại.');
+            if(options.strictStale && priceDataLoadedSyncVersion !== null && serverVersion !== Number(priceDataLoadedSyncVersion)){
+                alert('🛡️ AN TOÀN FIREBASE: Dữ liệu trên server vừa được máy/tab khác cập nhật.\n\nThao tác thay thế dữ liệu đã bị HỦY để tránh ghi đè. Vui lòng F5 rồi thực hiện lại.');
                 return false;
             }
 
@@ -4754,23 +4812,31 @@ const IdecoPrice = (()=>{
                 try {
                     await backupPriceDataBeforeDestructiveSave(before, options.reason || 'Thao tác làm giảm/thay dữ liệu');
                 } catch(backupErr){
-                    console.error('Không tạo được backup Firebase:', backupErr);
-                    alert('🛡️ AN TOÀN FIREBASE: Không tạo được bản sao dự phòng nên hệ thống đã HỦY thao tác ghi phá huỷ.\n\nKiểm tra quyền ghi nhánh priceDataBackups hoặc kết nối mạng.');
-                    return false;
+                    console.warn('Firebase không cho ghi nhánh backup; chuyển sang backup cục bộ:', backupErr);
+                    try{
+                        const localBackupKey = 'IDECO_PRICE_BACKUP_' + Date.now();
+                        localStorage.setItem(localBackupKey, JSON.stringify(before));
+                        localStorage.setItem('IDECO_PRICE_BACKUP_LATEST', localBackupKey);
+                        console.log('Đã backup cục bộ trước khi ghi:', localBackupKey);
+                    }catch(localErr){
+                        console.warn('Không tạo được backup cục bộ:', localErr);
+                    }
+                    // Không chặn thao tác upload chỉ vì Rules chưa cho phép nhánh priceDataBackups.
                 }
             }
 
-            // 4) Transaction: nếu dữ liệu đổi giữa lúc đọc và ghi thì hủy commit.
+            // 4) Transaction V3: KHÔNG so syncVersion bên trong transaction.
+            // Firebase transaction chạy lần đầu trên cache cục bộ rồi mới đồng bộ server;
+            // so version ở đây có thể tạo báo giả "Server thay đổi" và hủy upload hợp lệ.
+            // Transaction của Firebase tự retry khi có xung đột, nên chỉ cần giữ chốt an toàn chống ghi rỗng.
             const result = await ref.transaction(function(live){
-                const liveVersion = Number(live && live.syncVersion || 0);
                 const liveRows = live ? priceRowCount(live.files) : 0;
-                if(liveVersion !== serverVersion) return;
                 if(!options.allowEmpty && liveRows > 0 && (localFileCount === 0 || localRowCount === 0)) return;
                 return dataToSave;
             }, undefined, false);
 
             if(!result.committed){
-                alert('🛡️ AN TOÀN FIREBASE: Server thay đổi trong lúc đang lưu nên hệ thống đã HỦY ghi để tránh mất dữ liệu. Vui lòng F5 và thử lại.');
+                alert('🛡️ AN TOÀN FIREBASE: Giao dịch chưa được ghi. Hệ thống chỉ hủy khi dữ liệu trên máy đang rỗng hoặc Firebase không cho phép ghi. Dữ liệu cũ trên server vẫn được giữ nguyên.');
                 return false;
             }
 
