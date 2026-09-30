@@ -1496,7 +1496,8 @@ window.idecoPlainCellText = function(td) {
             <div id="productChange7dBar" aria-live="polite">
                 <div class="pc7-summary-row">
                     <span class="pc7-title">📣 THAY ĐỔI 7 NGÀY</span>
-                    <span class="pc7-chip pc7-total" id="pc7TrackedCount">📦 Trong đợt: 0</span>
+                    <span class="pc7-chip pc7-total" id="pc7LiveStoredCount" title="Tổng Mã SP thực tế đang có trong bảng dữ liệu đã hợp nhất">💾 Tổng đang lưu: 0 SP</span>
+                    <span class="pc7-chip pc7-total" id="pc7TrackedCount" title="Số Mã SP thuộc các đợt Excel còn hiệu lực 7 ngày; đây KHÔNG phải tổng dữ liệu đang lưu">📦 Theo dõi 7 ngày: 0</span>
                     <span class="pc7-chip pc7-new" id="pc7NewCount">🆕 Mới thêm: 0</span>
                     <span class="pc7-chip pc7-wait" id="pc7UnquotedCount">⏳ Chưa báo giá: 0</span>
                     <span class="pc7-chip pc7-upd" id="pc7UpdatedCount">🔄 Cập nhật: 0</span>
@@ -1920,7 +1921,7 @@ const IdecoPrice = (()=>{
   if(tier && /^(ck|chietkhau)/.test(k)) return 'discount'+tier;
   if(tier && /^(gia|muatren)/.test(k)) return 'price'+tier;
   if(/^(dongia|giaban)/.test(k)&&!tier) return 'price';
-  const aliases={code:['masp','masanpham','mahang','sku','productcode'],name:['tenthuoc','tensanpham','tenhang','hanghoa'],category:['nhom','nhomdieutri','loaidieutri'],manufacturer:['nsx','nhasanxuat'],use:['congdung','congdungchinh']};
+  const aliases={code:['masp','masanpham','mahang','mahhoa','mahh','masku','sku','productcode'],name:['tenthuoc','tensanpham','tenhang','hanghoa','productname','name','ten'],category:['nhom','nhomdieutri','loaidieutri','nhombenh'],manufacturer:['nsx','nhasanxuat','manufacturer'],use:['congdung','congdungchinh','chidinh']};
   for(const [f,ks] of Object.entries(aliases)) if(ks.includes(k)) return f;
   return k;
  }
@@ -2746,10 +2747,11 @@ const IdecoPrice = (()=>{
         const nTracked=trackedKeys.size;
         const nWait=unquotedKeys.size;
         bar.style.display=(list.length||batches.length)?'block':'none';
-        const t=document.getElementById('pc7TrackedCount'),
+        const live=document.getElementById('pc7LiveStoredCount'), t=document.getElementById('pc7TrackedCount'),
               a=document.getElementById('pc7NewCount'), b=document.getElementById('pc7UnquotedCount'),
               c=document.getElementById('pc7UpdatedCount'), d=document.getElementById('pc7BatchCount');
-        if(t)t.textContent='📦 Trong đợt: '+nTracked;
+        if(live) live.textContent='💾 Tổng đang lưu: '+pc7CurrentUniqueProductCount()+' SP';
+        if(t)t.textContent='📦 Theo dõi 7 ngày: '+nTracked;
         if(a)a.textContent='🆕 Mới thêm: '+nNew;
         if(b)b.textContent='⏳ Chưa báo giá: '+nWait;
         if(c)c.textContent='🔄 Cập nhật: '+nUpd;
@@ -3709,6 +3711,8 @@ const IdecoPrice = (()=>{
 
         // Baseline được chụp TRƯỚC khi nạp file phụ: dùng để biết SP nào thật sự mới / đã thay đổi.
         const pc7Baseline = pc7BuildBaseline();
+        const baselineStartKeys = new Set(pc7Baseline.keys());
+        const uploadedInputKeys = new Set();
         const pc7Totals = {newCount:0,updatedCount:0,sameCount:0,inputCount:0,fileName:'',batchId:''};
         let lastBatchSummary = null;
         const newlyAddedFiles = [];
@@ -3716,13 +3720,16 @@ const IdecoPrice = (()=>{
         for(let i=0;i<files.length;i++){
             const file = files[i];
             try{
-                const data = await readExcelFile(file);
+                let data = await readExcelFile(file);
                 autoFillStt(data); // Tự động điền số thứ tự nối tiếp
+                // V5: chuẩn hóa file phụ về đúng header bảng chính TRƯỚC KHI tracker và Firebase cùng sử dụng.
+                data = pc7NormalizeAuxDataToMaster(data);
+                pc7KeySetFromData(data).forEach(k=>uploadedInputKeys.add(k));
                 const importedAt = Date.now();
-                // V6 an toàn dữ liệu: Excel mới phải thắng mọi CK Firebase cũ của các mã có trong file.
+                // Excel mới phải thắng mọi CK Firebase cũ của các mã có trong file.
                 await ckPurgeSavedOverridesForExcel(data);
 
-                // 1) So sánh dữ liệu; 2) ghi tracker SP; 3) tạo MỘT ĐỢT 7 NGÀY RIÊNG cho file này.
+                // Tracker và dữ liệu lưu dùng CÙNG một data đã chuẩn hóa -> không còn lệch đếm với bảng chính.
                 const sm = await pc7TrackAuxFile(file.name, data, pc7Baseline);
                 const batch = await pc7CreateBatch(file.name, sm);
                 if(batch) sm.batchId = batch.batchId || '';
@@ -3737,7 +3744,7 @@ const IdecoPrice = (()=>{
                 if(batch) lastBatchSummary = sm;
 
                 const uploadId='u_'+importedAt.toString(36)+'_'+Math.random().toString(36).slice(2,8);
-                const newEntry = { name: file.name, data, importedAt, uploadId, pc7BatchId:(sm.batchId||'') };
+                const newEntry = { name: file.name, data, importedAt, uploadId, pc7BatchId:(sm.batchId||''), sourceType:'aux' };
                 uploadedFiles.push(newEntry);
                 newlyAddedFiles.push(newEntry);
                 addFileToList(file.name, uploadedFiles.length - 1);
@@ -3754,6 +3761,24 @@ const IdecoPrice = (()=>{
         if(!uploadSaved){
             // Tải lại dữ liệu server để tránh màn hình hiển thị nhầm là đã lưu.
             try { await loadDataFromFirebase(); } catch(e){}
+        } else {
+            // V5: kiểm toán chính xác sau commit: file phụ bao nhiêu SP, bao nhiêu SP mới, tổng bảng phải là bao nhiêu.
+            try{
+                displayAllData();
+                const actualKeys=pc7KeySetFromData(currentData||[]);
+                const expectedKeys=new Set(baselineStartKeys); uploadedInputKeys.forEach(k=>expectedKeys.add(k));
+                let trulyNew=0; uploadedInputKeys.forEach(k=>{ if(!baselineStartKeys.has(k)) trulyNew++; });
+                const inputUnique=uploadedInputKeys.size;
+                const updateOrSame=Math.max(0,inputUnique-trulyNew);
+                const missing=[]; expectedKeys.forEach(k=>{ if(!actualKeys.has(k)) missing.push(k); });
+                const actualProducts=actualKeys.size;
+                console.info('[IDECO V5] AUDIT upload:',{before:baselineStartKeys.size,inputUnique,trulyNew,updateOrSame,expected:expectedKeys.size,actual:actualProducts,missing:missing.length});
+                if(typeof zaloToast==='function') zaloToast(
+                    '✅ ĐÃ LƯU FIREBASE · File phụ: <b>'+inputUnique+' SP</b> · Mới thực sự: <b>'+trulyNew+'</b> · Trùng/cập nhật: <b>'+updateOrSame+'</b> · Tổng bảng: <b>'+actualProducts+' SP</b>.',9000);
+                if(missing.length){
+                    alert('⚠️ KIỂM TRA DỮ LIỆU V5\n\nTheo Mã SP/Tên thuốc, sau upload bảng phải có '+expectedKeys.size+' SP nhưng hiện chỉ có '+actualProducts+' SP.\nThiếu '+missing.length+' mã.\n\nMột số khóa thiếu: '+missing.slice(0,12).join(', ')+'\n\nVui lòng gửi file Excel phụ này cho em để dò đúng từng mã.');
+                }
+            }catch(e){ console.warn('Không kiểm tra được tổng SP sau upload:',e); }
         }
         pc7RenderBar(); pc7DecorateTable();
         pc7ShowUploadToast(files.length===1 && lastBatchSummary ? lastBatchSummary : pc7Totals);
@@ -3886,24 +3911,84 @@ const IdecoPrice = (()=>{
     }
     function pc7MapRowToMaster(row, sourceHeader, masterHeader){
         row=row||[]; sourceHeader=sourceHeader||[]; masterHeader=masterHeader||[];
-        // Cấu trúc cùng số cột: giữ NGUYÊN vị trí/giá trị Excel để tránh sai lệch CK, giá, hàm lượng.
+        // V4: map cột theo tên chuẩn + alias rộng. Không được làm mất Mã SP/Tên thuốc của file phụ.
         if(sourceHeader.length===masterHeader.length && sourceHeader.every((h,i)=>IdecoPrice.field(h)===IdecoPrice.field(masterHeader[i]))){
             const out=new Array(masterHeader.length).fill('');
             for(let i=0;i<masterHeader.length;i++) out[i]=(row[i]===undefined||row[i]===null)?'':row[i];
             return out;
         }
+
         const srcMap=new Map();
-        sourceHeader.forEach((h,i)=>{ const k=IdecoPrice.field(h); if(k&&!srcMap.has(k)) srcMap.set(k,i); });
+        sourceHeader.forEach((h,i)=>{
+            const canon=IdecoPrice.field(h);
+            const rawKey=pc7HeaderKey(h);
+            if(canon && !srcMap.has(canon)) srcMap.set(canon,i);
+            if(rawKey && !srcMap.has('raw:'+rawKey)) srcMap.set('raw:'+rawKey,i);
+        });
+
         const out=new Array(masterHeader.length).fill('');
         masterHeader.forEach((h,i)=>{
-            const k=IdecoPrice.field(h); let si=srcMap.has(k)?srcMap.get(k):-1;
-            // alias quan trọng
-            if(si<0 && (k==='masp'||k==='masanpham')) si=pc7FindCol(sourceHeader,'code');
-            if(si<0 && (k==='tenthuoc'||k==='tensanpham'||k==='tenhang')) si=pc7FindCol(sourceHeader,'name');
+            const canon=IdecoPrice.field(h);
+            const rawKey=pc7HeaderKey(h);
+            let si=srcMap.has(canon)?srcMap.get(canon):-1;
+            if(si<0 && rawKey && srcMap.has('raw:'+rawKey)) si=srcMap.get('raw:'+rawKey);
+
+            // Alias quan trọng: pc7FindCol nhận được nhiều biến thể hơn IdecoPrice.field.
+            if(si<0 && canon==='code') si=pc7FindCol(sourceHeader,'code');
+            if(si<0 && canon==='name') si=pc7FindCol(sourceHeader,'name');
+
+            // Nếu cùng vị trí và tên cột gần giống, ưu tiên giữ dữ liệu thay vì bỏ trắng.
+            if(si<0 && i<sourceHeader.length){
+                const a=pc7HeaderKey(sourceHeader[i]), b=rawKey;
+                if(a && b && (a===b || a.includes(b) || b.includes(a))) si=i;
+            }
             if(si>=0) out[i]=(row[si]===undefined||row[si]===null)?'':row[si];
         });
         return out;
     }
+
+    // ===== V5: CHUẨN HÓA FILE PHỤ VỀ ĐÚNG CẤU TRÚC BẢNG CHÍNH TRƯỚC KHI LƯU =====
+    // Mục tiêu: tracker nhìn thấy SP nào thì priceData/files cũng phải lưu được đúng SP đó.
+    function pc7NormalizeAuxDataToMaster(data){
+        if(!Array.isArray(data) || !data.length) return data;
+        const srcHeader=(data[0]||[]).slice();
+        let masterHeader=null;
+        for(const f of (uploadedFiles||[])){
+            if(f && Array.isArray(f.data) && Array.isArray(f.data[0]) && f.data[0].length){ masterHeader=f.data[0].slice(); break; }
+        }
+        if(!masterHeader || !masterHeader.length) masterHeader=srcHeader.slice();
+        const out=[masterHeader.slice()];
+        const mc=pc7FindCol(masterHeader,'code'), mn=pc7FindCol(masterHeader,'name');
+        for(let i=1;i<data.length;i++){
+            const raw=data[i]||[];
+            if(!raw.some(c=>String(c==null?'':c).trim()!=='')) continue;
+            if(pc7IsGroupRow(raw)){
+                const g=new Array(masterHeader.length).fill('');
+                g[0]=String(raw.find(c=>String(c==null?'':c).trim()!=='')||'');
+                out.push(g); continue;
+            }
+            const id=pc7Identity(raw,srcHeader);
+            if(!id) continue;
+            const mapped=pc7MapRowToMaster(raw,srcHeader,masterHeader);
+            if(mc>=0 && !String(mapped[mc]??'').trim() && id.code) mapped[mc]=id.code;
+            if(mn>=0 && !String(mapped[mn]??'').trim() && id.name) mapped[mn]=id.name;
+            out.push(mapped);
+        }
+        return out;
+    }
+    function pc7KeySetFromData(data){
+        const set=new Set();
+        if(!Array.isArray(data)||data.length<2) return set;
+        const h=data[0]||[];
+        for(let i=1;i<data.length;i++){
+            const id=pc7Identity(data[i]||[],h); if(id) set.add(id.key);
+        }
+        return set;
+    }
+    function pc7CurrentUniqueProductCount(){
+        return pc7KeySetFromData(currentData||[]).size;
+    }
+
     function displayAllData(){
         cleanUploadedDrugNames();
         if (editingRowState.index !== null) { handleEditRow(); }
@@ -3935,12 +4020,22 @@ const IdecoPrice = (()=>{
                     if(firstDataFile) sequence.push({type:'group',row:pc7MapRowToMaster(raw,sourceHeader,masterHeader)});
                     continue;
                 }
+                // V4 QUAN TRỌNG: nhận diện SP trên DÒNG GỐC của chính file đó trước khi map cột.
+                // Tracker 7 ngày cũng dùng cách này, vì vậy bộ đếm và bảng dữ liệu chính luôn đồng nhất.
+                const sourceId=pc7Identity(raw,sourceHeader);
+                if(!sourceId) continue; // loại ghi chú/footer Excel, không tính là sản phẩm
                 const mapped=pc7MapRowToMaster(raw,sourceHeader,masterHeader);
-                const id=pc7Identity(mapped,masterHeader);
-                if(!id) continue; // loại ghi chú/footer Excel, không tính là sản phẩm
-                if(!seenSeq.has(id.key)){ seenSeq.add(id.key); sequence.push({type:'product',key:id.key}); }
-                latest.set(id.key,mapped); // file sau ghi đè giá trị cũ
-                sourceMeta.set(id.key,{fileIndex,rowIndexInFile:ri,fileName:f.name||'',importedAt,uploadId:f.uploadId||'',pc7BatchId:f.pc7BatchId||''});
+
+                // Nếu header file phụ dùng alias lạ, bảo đảm Mã SP/Tên thuốc vẫn được mang sang bảng chính.
+                const masterCodeIdx=pc7FindCol(masterHeader,'code');
+                const masterNameIdx=pc7FindCol(masterHeader,'name');
+                if(masterCodeIdx>=0 && !String(mapped[masterCodeIdx]??'').trim() && sourceId.code) mapped[masterCodeIdx]=sourceId.code;
+                if(masterNameIdx>=0 && !String(mapped[masterNameIdx]??'').trim() && sourceId.name) mapped[masterNameIdx]=sourceId.name;
+
+                const key=sourceId.key;
+                if(!seenSeq.has(key)){ seenSeq.add(key); sequence.push({type:'product',key:key}); }
+                latest.set(key,mapped); // file sau ghi đè giá trị cũ
+                sourceMeta.set(key,{fileIndex,rowIndexInFile:ri,fileName:f.name||'',importedAt,uploadId:f.uploadId||'',pc7BatchId:f.pc7BatchId||''});
             }
             firstDataFile=false;
         });
@@ -4736,7 +4831,7 @@ const IdecoPrice = (()=>{
                 live.files = serverFiles;
                 live.fileCount = serverFiles.length;
                 live.cleared = false;
-                live.source = 'TRACUU_BAOGIA_FIREBASE_SAFE_V2_APPEND';
+                live.source = 'TRACUU_BAOGIA_FIREBASE_SAFE_V5_APPEND';
                 live.syncVersion = nowMs;
                 live.lastUpdated = new Date(nowMs).toISOString();
                 return live;
@@ -4775,7 +4870,7 @@ const IdecoPrice = (()=>{
             files: uploadedFiles,
             fileCount: uploadedFiles.length,
             cleared: uploadedFiles.length === 0,
-            source: "TRACUU_BAOGIA_GOOGLEMAP_BO_Y_TE_SAFE_V3",
+            source: "TRACUU_BAOGIA_GOOGLEMAP_BO_Y_TE_SAFE_V5",
             syncVersion: nextSyncVersion,
             lastUpdated: syncNow.toISOString()
         };
