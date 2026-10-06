@@ -2906,7 +2906,7 @@ const IdecoPrice = (()=>{
     // Lưu cả vị trí thật trong uploadedFiles. currentData là bảng đã gộp/đánh lại STT
     // nên không thể chỉ dựa vào index hoặc tham chiếu của dòng đang hiển thị.
     let editingRowState = { index: null, originalData: [], sourceLocation: null, originalIdentityKey: '' }; 
-    const REMOVE_BG_API_KEY = "iHt8DKCwKg4Va63ACXopN7nm"; 
+    const REMOVE_BG_API_KEY = "XHmVRHAdZaChWzXrExa8wG9s"; // remove.bg key moi 06/10/2026 
     // MẶC ĐỊNH LÀ LANDSCAPE
     let currentPaperOrientation = 'landscape';
     
@@ -5789,15 +5789,71 @@ const IdecoPrice = (()=>{
     function resetImageUpload() { currentImageFile=null; imageUploadInput.value=''; imagePreview.style.display='none'; removeBgBtn.disabled=true; }
     async function removeImageBackground() {
         if(!currentImageFile) return;
-        processingStatus.textContent="Đang xử lý...";
-        const fd = new FormData(); fd.append('image_file', currentImageFile); fd.append('size','auto');
+
+        const oldBtnText = removeBgBtn.textContent;
+        removeBgBtn.disabled = true;
+        removeBgBtn.textContent = "Đang tách nền...";
+        processingStatus.textContent = "Đang gửi ảnh đến remove.bg...";
+
+        const fd = new FormData();
+        fd.append('image_file', currentImageFile, currentImageFile.name || 'image.png');
+        fd.append('size', 'auto');
+
         try {
-            const res = await fetch('https://api.remove.bg/v1.0/removebg', { method:'POST', headers:{'X-Api-Key':REMOVE_BG_API_KEY}, body:fd });
-            if(res.ok){
+            const res = await fetch('https://api.remove.bg/v1.0/removebg', {
+                method: 'POST',
+                headers: { 'X-Api-Key': REMOVE_BG_API_KEY },
+                body: fd
+            });
+
+            if (res.ok) {
                 const blob = await res.blob();
-                const r = new FileReader(); r.onload=e=>{ imagePreview.src=e.target.result; processingStatus.textContent="Xong!"; }; r.readAsDataURL(blob);
-            } else processingStatus.textContent="Lỗi API";
-        } catch(e){ processingStatus.textContent="Lỗi mạng"; }
+                const baseName = (currentImageFile.name || 'image').replace(/\.[^.]+$/, '');
+
+                // Cập nhật currentImageFile thành ảnh đã tách nền để nút Lưu dùng đúng ảnh kết quả.
+                try {
+                    currentImageFile = new File([blob], baseName + '-no-bg.png', {
+                        type: blob.type || 'image/png',
+                        lastModified: Date.now()
+                    });
+                } catch (_) {
+                    currentImageFile = blob;
+                }
+
+                const r = new FileReader();
+                r.onload = e => {
+                    imagePreview.src = e.target.result;
+                    imagePreview.style.display = 'block';
+                    processingStatus.textContent = "✅ Tách nền thành công — ảnh đã sẵn sàng để lưu.";
+                };
+                r.readAsDataURL(blob);
+                return;
+            }
+
+            let apiMessage = '';
+            try {
+                const err = await res.json();
+                apiMessage = err?.errors?.map(x => x.title || x.detail || x.code).filter(Boolean).join('; ') || '';
+            } catch (_) {}
+
+            if (res.status === 402) {
+                processingStatus.textContent = "❌ remove.bg hết credit / không đủ credit (HTTP 402). Hãy thay API key hoặc nạp thêm credit.";
+            } else if (res.status === 403) {
+                processingStatus.textContent = "❌ API key remove.bg không hợp lệ hoặc bị từ chối (HTTP 403).";
+            } else if (res.status === 429) {
+                processingStatus.textContent = "⚠️ remove.bg đang giới hạn số lần gọi (HTTP 429). Vui lòng thử lại sau.";
+            } else if (res.status === 400) {
+                processingStatus.textContent = "❌ Ảnh/định dạng gửi lên không hợp lệ (HTTP 400)" + (apiMessage ? ": " + apiMessage : "");
+            } else {
+                processingStatus.textContent = "❌ Lỗi remove.bg HTTP " + res.status + (apiMessage ? ": " + apiMessage : "");
+            }
+        } catch(e) {
+            console.error('remove.bg error:', e);
+            processingStatus.textContent = "❌ Không kết nối được remove.bg. Kiểm tra Internet/CORS/Firewall rồi thử lại.";
+        } finally {
+            removeBgBtn.disabled = !currentImageFile;
+            removeBgBtn.textContent = oldBtnText;
+        }
     }
     function saveProductImage() {
         const n = productSelect.value;
