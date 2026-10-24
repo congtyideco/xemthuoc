@@ -636,6 +636,43 @@
         .quote-page.zalo-capturing .quote-table th { background: #4285f4 !important; color: #ffffff !important; outline: none !important; }
         #zaloToast { position: fixed; left: 50%; bottom: 30px; transform: translateX(-50%); background: #222; color: #fff; padding: 12px 22px; border-radius: 8px; font-size: 15px; z-index: 3000; display: none; max-width: 90%; text-align: center; box-shadow: 0 4px 16px rgba(0,0,0,.35); }
         @media (max-width: 768px) { .zalo-toolbar input { min-width: 130px; } .zalo-cust-table { font-size: 12px; } }
+        /* ===== V2: BẢNG KHÁCH HÀNG GỬI ZALO — cột cố định, địa chỉ gọn 2 dòng ===== */
+        .zalo-send-panel{ max-width:none !important; margin-left:0 !important; margin-right:0 !important; }
+        .zalo-cust-table-wrap{ max-height:470px; border:1px solid #d6e4ff; border-radius:12px; box-shadow:0 2px 10px rgba(0,82,204,.06); }
+        .zalo-cust-table{ table-layout:fixed; min-width:1000px; font-size:13.5px; border-collapse:separate; border-spacing:0; }
+        .zalo-cust-table th{ padding:11px 12px !important; font-size:12.5px; font-weight:800; letter-spacing:.3px; text-transform:uppercase; white-space:nowrap; background:linear-gradient(180deg,#1a73ff,#0059e6) !important; border-right:1px solid rgba(255,255,255,.15); }
+        .zalo-cust-table th:nth-child(1){ width:88px !important; text-align:center; }
+        .zalo-cust-table th:nth-child(2){ width:200px !important; }
+        .zalo-cust-table th:nth-child(3){ width:130px !important; }
+        .zalo-cust-table th:nth-child(4){ width:132px !important; }
+        .zalo-cust-table th:nth-child(5){ width:auto !important; }
+        .zalo-cust-table th:nth-child(6){ width:228px !important; text-align:center; }
+        .zalo-cust-table td{ padding:10px 12px !important; vertical-align:middle !important; line-height:1.45; border-bottom:1px solid #edf2fb; overflow:hidden; }
+        .zalo-cust-table tbody tr:nth-child(even) td{ background:#f8fbff; }
+        .zalo-cust-table tbody tr:hover td{ background:#eaf3ff !important; }
+        .zalo-cust-table td:nth-child(1){ text-align:center; }
+        .zalo-cust-table td:nth-child(2) > b{ display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; color:#0f2a55; font-size:14px; }
+        .zalo-cust-table td:nth-child(2) .zalo-sent-badge,
+        .zalo-cust-table td:nth-child(2) .zalo-claim-badge,
+        .zalo-cust-table td:nth-child(2) .zalo-upload-badge{ margin:4px 4px 0 0; }
+        .zalo-cust-table td:nth-child(3){ color:#3b4a63; display:table-cell; }
+        .zalo-cust-table td:nth-child(4){ white-space:nowrap; }
+        .zalo-phone-link{ display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; background:#e8f1ff; border:1px solid #b9d3ff; color:#0052cc !important; text-decoration:none !important; font-size:13.5px; font-variant-numeric:tabular-nums; transition:.15s; }
+        .zalo-phone-link::before{ content:"💬"; font-size:13px; }
+        .zalo-phone-link:hover{ background:#0068ff; color:#fff !important; border-color:#0068ff; box-shadow:0 4px 12px rgba(0,104,255,.3); }
+        .zalo-address-link{ display:-webkit-box !important; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; overflow-wrap:normal !important; word-break:normal !important; text-decoration:none !important; color:#1e4f9c !important; font-size:13px; }
+        .zalo-address-link:hover{ text-decoration:underline !important; }
+        .zalo-cust-table td:nth-child(6){ white-space:normal !important; text-align:center; }
+        .zalo-cust-table td:nth-child(6) button{ margin:2px 1px; padding:6px 8px; font-size:12.5px; border-radius:7px; vertical-align:middle; }
+        .zalo-cust-table .zalo-claim-btn{ max-width:236px; overflow:hidden; text-overflow:ellipsis; }
+        .zalo-pick-btn{ padding:7px 10px; border-radius:8px; }
+        .zalo-openmode{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:-6px 0 14px; padding:9px 14px; background:#eef6ff; border:1px solid #cfe2ff; border-left:5px solid #0068ff; border-radius:10px; font-size:13px; color:#0b3d91; }
+        .zalo-openmode b{ font-weight:800; }
+        .zalo-openmode select{ padding:7px 10px; border:1px solid #9fc3ff; border-radius:7px; font-size:13px; font-weight:600; color:#0b3d91; background:#fff; cursor:pointer; }
+        .zalo-openmode .zom-reset{ border:1px solid #9fc3ff; background:#fff; color:#0b3d91; border-radius:7px; padding:6px 10px; font-size:12px; font-weight:700; cursor:pointer; }
+        .zalo-openmode .zom-note{ font-size:12px; color:#4a6fa5; font-style:italic; flex:1; min-width:220px; }
+        #zaloToast a.zt-btn{ display:inline-block; margin:8px 4px 0; padding:7px 14px; border-radius:8px; background:#0068ff; color:#fff; font-weight:700; text-decoration:none; }
+        #zaloToast a.zt-btn.web{ background:#fff; color:#0052cc; }
         /* ========= CSS MỚI: ẨN CÁC NÚT KHI IN ========= */
         @media print {
             .view-price-btn, 
@@ -1858,6 +1895,16 @@ window.idecoPlainCellText = function(td) {
                     <button id="zaloMyStaffSave" class="zms-save">💾 Lưu tên</button>
                     <span class="zms-status" id="zaloMyStaffStatus"></span>
                     <span class="zms-note">Lưu 1 lần — mọi lần bấm gửi sẽ tự gắn tên này vào Báo cáo, không cần nhập lại.</span>
+                </div>
+                <div class="zalo-openmode" id="zaloOpenModeBar">
+                    <span>💬 <b>Bấm số điện thoại mở chat Zalo bằng:</b></span>
+                    <select id="zaloOpenModeSel">
+                        <option value="auto">Tự động — Zalo PC (đang đăng nhập), dự phòng Zalo Web</option>
+                        <option value="app">Chỉ Zalo PC (không mở thêm tab web)</option>
+                        <option value="web">Zalo Web trên trình duyệt</option>
+                    </select>
+                    <button type="button" class="zom-reset" id="zaloOpenModeReset" title="Quên trạng thái đã nhận diện Zalo PC trên máy này">↺ Dò lại Zalo PC</button>
+                    <span class="zom-note">Lần đầu trình duyệt hỏi "Mở Zalo?" → tick <b>Luôn cho phép</b> để lần sau mở thẳng.</span>
                 </div>
                 <div class="zalo-sec-title zalo-sec-db">🤝 Khách hàng đang hợp tác <span class="zst-sub">(lấy từ cơ sở dữ liệu công ty)</span></div>
                 <div class="zalo-cust-table-wrap" id="zaloCustListWrap">
@@ -6674,15 +6721,65 @@ const IdecoPrice = (()=>{
         ]);
     }
 
-    function openZaloChat(intlPhone) {
-        // Mở Zalo PC/app qua deep link; nếu không có app thì mở zalo.me trên web
-        const start = Date.now();
-        window.location.href = 'zalo://conversation?phone=' + intlPhone;
+    // ===== V2: MỞ CHAT ZALO NHANH & CHÍNH XÁC =====
+    // - Dùng số dạng 0xxxxxxxxx (Zalo PC & zalo.me đều nhận đúng tài khoản).
+    // - Kích hoạt deep link zalo:// bằng thẻ <a> ẩn (không làm trang bị điều hướng).
+    // - Nhận biết Zalo PC đã mở qua sự kiện blur/visibilitychange; ghi nhớ trên máy
+    //   → các lần sau mở thẳng Zalo PC, KHÔNG bung thêm tab web thừa.
+    const ZALO_MODE_KEY = 'zaloOpenMode_v2', ZALO_APP_OK_KEY = 'zaloAppOK_v2';
+    function zaloLocalPhone(p){
+        let d = String(p || '').replace(/\D/g, '');
+        if (d.startsWith('84') && d.length >= 11) d = '0' + d.slice(2);
+        else if (d && !d.startsWith('0')) d = '0' + d;
+        return d;
+    }
+    function zaloOpenMode(){ try { return localStorage.getItem(ZALO_MODE_KEY) || 'auto'; } catch(e){ return 'auto'; } }
+    function zaloFallbackButtons(local){
+        return '<br><a class="zt-btn" href="zalo://conversation?phone=' + local + '">💬 Mở Zalo PC</a>' +
+               '<a class="zt-btn web" href="https://zalo.me/' + local + '" target="_blank" rel="noopener">🌐 Mở Zalo Web</a>';
+    }
+    function zaloToastAppend(html, ms){
+        const t = document.getElementById('zaloToast');
+        const cur = (t && t.style.display === 'block') ? t.innerHTML : '';
+        zaloToast((cur ? cur + '<br>' : '') + html, ms || 10000);
+    }
+    function zaloOpenWeb(local){
+        const w = window.open('https://zalo.me/' + local, '_blank');
+        if (w) { try { w.opener = null; } catch(e){} return true; }
+        zaloToastAppend('⚠️ Trình duyệt chặn mở tab mới.' + zaloFallbackButtons(local), 12000);
+        return false;
+    }
+    function openZaloChat(phone){
+        const local = zaloLocalPhone(phone);
+        if (!/^0\d{9,10}$/.test(local)) { zaloToast('⚠️ Số điện thoại không hợp lệ cho Zalo: <b>' + zaloEsc(phone) + '</b>', 6000); return; }
+        const mode = zaloOpenMode();
+        if (mode === 'web') { zaloOpenWeb(local); return; }
+
+        let left = false;
+        const onBlur = () => { left = true; };
+        const onVis = () => { if (document.hidden) left = true; };
+        window.addEventListener('blur', onBlur);
+        document.addEventListener('visibilitychange', onVis);
+
+        const a = document.createElement('a');
+        a.href = 'zalo://conversation?phone=' + local;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        let known = false; try { known = localStorage.getItem(ZALO_APP_OK_KEY) === '1'; } catch(e){}
         setTimeout(() => {
-            if (document.hasFocus() && Date.now() - start < 3000) {
-                window.open('https://zalo.me/' + intlPhone, '_blank');
+            window.removeEventListener('blur', onBlur);
+            document.removeEventListener('visibilitychange', onVis);
+            if (left) { try { localStorage.setItem(ZALO_APP_OK_KEY, '1'); } catch(e){} return; }
+            // Zalo PC đã từng mở được hoặc chọn "Chỉ Zalo PC" → không bung tab web, chỉ đưa nút dự phòng
+            if (mode === 'app' || known) {
+                zaloToastAppend('ℹ️ Nếu Zalo PC chưa hiện cửa sổ chat, bấm:' + zaloFallbackButtons(local), 10000);
+                return;
             }
-        }, 1600);
+            zaloOpenWeb(local);
+        }, known ? 1200 : 2200);
     }
 
     function sendQuoteViaZalo(phone, name, btnEl) {
@@ -6760,7 +6857,7 @@ const IdecoPrice = (()=>{
         const value = String(address == null ? '' : address).trim();
         if (!value) return '<span style="color:#aaa">—</span>';
         const url = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(value);
-        return '<a class="zalo-address-link" href="' + zaloEsc(url) + '" target="_blank" rel="noopener noreferrer" title="Tra cứu địa chỉ này trên Google Maps (mở tab mới)"><span aria-hidden="true">📍</span> ' + zaloEsc(value) + '</a>';
+        return '<a class="zalo-address-link" href="' + zaloEsc(url) + '" target="_blank" rel="noopener noreferrer" title="' + zaloEsc(value) + '\n— Bấm để xem trên Google Maps"><span aria-hidden="true">📍</span> ' + zaloEsc(value) + '</a>';
     }
 
     function renderZaloCustomerList(filter) {
@@ -6797,7 +6894,7 @@ const IdecoPrice = (()=>{
                 '<td style="white-space:nowrap"><button class="zalo-pick-btn' + (isSelected ? ' picked' : '') + '" data-ridx="' + ridx + '" title="Bấm để load KH này lên báo giá — bấm lại lần nữa để BỎ CHỌN">' + (isSelected ? '✓ Đã chọn' : '📋 Chọn') + '</button></td>' +
                 '<td><b>' + zaloEsc(c.tenKhachHang) + '</b>' + (sent ? '<span class="zalo-sent-badge">✓ đã gửi hôm nay</span>' : '') + (dbClaim ? '<span class="zalo-claim-badge" title="NV đã ghi nhận gửi' + (dbClaim.at ? ' — ' + new Date(dbClaim.at).toLocaleString('vi-VN') : '') + '">👤 NV ' + zaloEsc(dbClaim.staff) + ' đã gửi</span>' : '') + '</td>' +
                 '<td>' + zaloEsc(c.nguoiPhuTrach) + '</td>' +
-                '<td>' + (c.dienThoai ? '<span class="zalo-phone-link" data-ridx="' + ridx + '" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Bấm để gửi báo giá qua Zalo (tự load thông tin KH này lên báo giá trước khi gửi)">' + zaloEsc(c.dienThoai) + '</span>' : '<span style="color:#aaa">—</span>') + '</td>' +
+                '<td>' + (c.dienThoai ? '<span class="zalo-phone-link" data-ridx="' + ridx + '" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Bấm để mở ngay chat Zalo với khách hàng này">' + zaloEsc(c.dienThoai) + '</span>' : '<span style="color:#aaa">—</span>') + '</td>' +
                 '<td>' + zaloAddressLink(c.diaChi) + '</td>' +
                 '<td style="white-space:nowrap">' + (c.dienThoai ? '<button class="zalo-send-btn" data-mode="img" data-ridx="' + ridx + '" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Copy ảnh báo giá rồi dán Ctrl+V vào Zalo">🖼 Ảnh</button> <button class="zalo-send-btn" data-mode="pdf" data-ridx="' + ridx + '" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Tải file PDF báo giá rồi kéo vào Zalo — phù hợp danh mục dài">📄 PDF</button> ' : '') + '<button class="zalo-claim-btn' + (dbClaim ? ' claimed' : '') + '" data-ridx="' + ridx + '" title="' + (dbClaim ? 'Đã ghi nhận NV ' + zaloEsc(dbClaim.staff) + ' gửi — bấm để sửa/xóa' : 'Ghi nhận tên NV đã gửi cho KH này') + '">' + (dbClaim ? '👤 NV: ' + zaloEsc(dbClaim.staff) : '👤 Tên NV') + '</button></td>' +
                 '</tr>';
@@ -6842,7 +6939,7 @@ const IdecoPrice = (()=>{
                 '<td style="white-space:nowrap"><button class="zalo-pick-btn' + (isSelected ? ' picked' : '') + '" data-ridx="' + ridx + '">' + (isSelected ? '✓ Đã chọn' : '📋 Chọn') + '</button></td>' +
                 '<td><b>' + zaloEsc(c.tenKhachHang) + '</b><span class="zalo-upload-badge">📁 upload</span>' + (sent ? '<span class="zalo-sent-badge">✓ đã gửi hôm nay</span>' : '') + (claim ? '<span class="zalo-claim-badge" title="Nhân viên đã ghi nhận gửi cho KH này' + (claim.at ? ' — ' + new Date(claim.at).toLocaleString('vi-VN') : '') + '">👤 NV ' + zaloEsc(claim.staff) + ' đã gửi</span>' : '') + '</td>' +
                 '<td>' + (c.nguoiPhuTrach ? zaloEsc(c.nguoiPhuTrach) : '<span style="color:#bbb">—</span>') + '</td>' +
-                '<td>' + (c.dienThoai ? '<span class="zalo-phone-link" data-ridx="' + ridx + '" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Bấm để gửi báo giá qua Zalo (tự load thông tin KH này lên báo giá trước khi gửi)">' + zaloEsc(c.dienThoai) + '</span>' : '<span style="color:#aaa">—</span>') + '</td>' +
+                '<td>' + (c.dienThoai ? '<span class="zalo-phone-link" data-ridx="' + ridx + '" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Bấm để mở ngay chat Zalo với khách hàng này">' + zaloEsc(c.dienThoai) + '</span>' : '<span style="color:#aaa">—</span>') + '</td>' +
                 '<td>' + zaloAddressLink(c.diaChi) + '</td>' +
                 '<td style="white-space:nowrap">' + (c.dienThoai ? '<button class="zalo-send-btn" data-mode="img" data-ridx="' + ridx + '" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Copy ảnh báo giá rồi dán Ctrl+V vào Zalo">🖼 Ảnh</button> <button class="zalo-send-btn" data-mode="pdf" data-ridx="' + ridx + '" data-phone="' + zaloEsc(c.dienThoai) + '" data-name="' + zaloEsc(c.tenKhachHang) + '" title="Tải file PDF báo giá rồi kéo vào Zalo — phù hợp danh mục dài">📄 PDF</button> ' : '') + '<button class="zalo-claim-btn' + (claim ? ' claimed' : '') + '" data-ridx="' + ridx + '" title="' + (claim ? 'Đã ghi nhận NV ' + zaloEsc(claim.staff) + ' gửi — bấm để sửa/xóa' : 'Ghi nhận tên NV đã gửi cho KH này (đồng bộ mọi máy để NV khác không khai thác nhầm)') + '">' + (claim ? '👤 NV: ' + zaloEsc(claim.staff) : '👤 Tên NV') + '</button></td>' +
                 '</tr>';
@@ -6862,7 +6959,16 @@ const IdecoPrice = (()=>{
             openClaimPopup(list[parseInt(claimEl.dataset.ridx)]);
             return;
         }
-        const sendEl = e.target.closest('.zalo-send-btn, .zalo-phone-link');
+        // V2: bấm SỐ ĐIỆN THOẠI → mở ngay chat Zalo đúng khách (giữ thao tác người dùng để trình duyệt không chặn)
+        const phoneEl = e.target.closest('.zalo-phone-link');
+        if (phoneEl) {
+            const pc = list[parseInt(phoneEl.dataset.ridx)] || { tenKhachHang: phoneEl.dataset.name, dienThoai: phoneEl.dataset.phone };
+            if (zaloNormalizePhone(phoneEl.dataset.phone || '') !== zaloSelectedPhone) loadCustomerToQuote(pc);
+            zaloToast('💬 Đang mở chat Zalo với <b>' + zaloEsc(pc.tenKhachHang || '') + '</b> — <b>' + zaloEsc(zaloLocalPhone(phoneEl.dataset.phone)) + '</b>.<br>Muốn gửi kèm báo giá: bấm <b>🖼 Ảnh</b> hoặc <b>📄 PDF</b> ở cùng hàng.', 7000);
+            openZaloChat(phoneEl.dataset.phone);
+            return;
+        }
+        const sendEl = e.target.closest('.zalo-send-btn');
         if (sendEl) {
             const cust = list[parseInt(sendEl.dataset.ridx)] || { tenKhachHang: sendEl.dataset.name, dienThoai: sendEl.dataset.phone };
             // BẮT BUỘC có tên NV của máy này trước khi gửi (phục vụ Báo cáo)
@@ -7434,6 +7540,13 @@ const IdecoPrice = (()=>{
         }
         if (myStaffSave) myStaffSave.addEventListener('click', saveMyStaff);
         if (myStaffInput) myStaffInput.addEventListener('keydown', e => { if (e.key === 'Enter') saveMyStaff(); });
+        const zSel = document.getElementById('zaloOpenModeSel');
+        if (zSel) {
+            zSel.value = zaloOpenMode();
+            zSel.addEventListener('change', () => { try { localStorage.setItem(ZALO_MODE_KEY, zSel.value); } catch(e){} zaloToast('💬 Đã lưu cách mở Zalo trên máy này.', 3000); });
+        }
+        const zReset = document.getElementById('zaloOpenModeReset');
+        if (zReset) zReset.addEventListener('click', () => { try { localStorage.removeItem(ZALO_APP_OK_KEY); } catch(e){} zaloToast('↺ Đã đặt lại — lần bấm số kế tiếp sẽ dò lại Zalo PC.', 3500); });
         const setBtn = document.getElementById('settingsBtn');
         if (setBtn) setBtn.addEventListener('click', ()=>{ if (typeof window.openAdminSettings === 'function') window.openAdminSettings(); });
     });
