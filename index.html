@@ -362,6 +362,11 @@
         #ckSaveBar .cksb-reset:hover{ background:#fff3e0; }
         #ckSaveBar .cksb-reset:disabled{ opacity:.45; cursor:default; }
         #ckSaveBar .cksb-note{ font-size:12px; color:#8a6100; font-style:italic; flex:1; min-width:220px; }
+        /* IDECO: Chỉnh trực tiếp giá bán và quy cách */
+        .ideco-master-input{box-sizing:border-box;min-width:92px;width:100%;max-width:190px;border:1.5px solid #90caf9;background:#eff8ff;border-radius:7px;padding:7px 9px;color:#153961;font-size:13px;font-weight:650;}
+        .ideco-master-input:focus{outline:none;border-color:#00897b;box-shadow:0 0 0 3px rgba(0,137,123,.14);background:#fff;}
+        .ideco-master-input.ideco-price-input{text-align:right;min-width:105px;}
+        .ideco-master-input.ideco-spec-input{min-width:115px;max-width:280px;text-align:left;}
         /* Ô Giá mua được tính tự động */
         .price-table td.gia-mua-auto{ background:#fff8e1; color:#c47b00 !important; font-weight:700; text-align:right; white-space:nowrap; }
         
@@ -1675,9 +1680,9 @@ window.idecoPlainCellText = function(td) {
                 </div>
                 <div id="ckSaveBar" style="display:none;">
                     <span class="cksb-status" id="ckSaveStatus"></span>
-                    <button id="ckSaveBtn" class="cksb-save">💾 Lưu chiết khấu</button>
-                    <button id="ckResetBtn" class="cksb-reset" title="Bỏ các chỉnh sửa chưa lưu, quay về chiết khấu đã lưu">↩ Hoàn tác chưa lưu</button>
-                    <span class="cksb-note">Chưa bấm Lưu thì chiết khấu chỉ dùng tạm cho báo giá; lần vào lại sẽ lấy mức đã lưu.</span>
+                    <button id="ckSaveBtn" class="cksb-save">💾 Lưu giá bán · quy cách · chiết khấu</button>
+                    <button id="ckResetBtn" class="cksb-reset" title="Bỏ các chỉnh sửa chưa lưu, quay về dữ liệu đã lưu">↩ Hoàn tác chưa lưu</button>
+                    <span class="cksb-note">Chỉnh trực tiếp ô Giá bán, Quy cách hoặc CK; giá mua tự tính lại. Bấm Lưu để đồng bộ Firebase cho các máy.</span>
                 </div>
                 <div class="table-container" id="tableContainer"></div>
             </div>
@@ -2026,6 +2031,49 @@ const IdecoPrice = (()=>{
     // ===== Chiết khấu ĐÃ LƯU (đồng bộ mọi máy), khóa theo Mã sp: { maSpKey: {6: %, 12: %} } =====
     let ckSaved = {};
     let ckDirty = false; // có chỉnh chiết khấu chưa lưu hay không
+    // Giá bán và Quy cách ghi ở nhánh riêng theo mã SP, không thay thế cả priceData/files.
+    let idecoSavedProductFields = {};
+    const idecoPendingProductFields = new Map();
+    const idecoBaseProductFields = new Map();
+    let idecoProductFieldsSaving = false;
+    function idecoFieldCol(kind){
+        return (headersCache||[]).findIndex(h=>{
+            const v=IdecoPrice.norm(h);
+            return kind==='price' ? (v==='dongia'||v==='giaban'||v==='giabanle'||v==='giabanledegx')
+                : (v==='quycach'||v==='quycachdonggoi'||v==='donggoi'||v==='quycachsp');
+        });
+    }
+    function idecoProductKey(row){
+        const idx=getMaSpColIdx();
+        return idx>=0 && row ? ckMaKey(row[idx]) : '';
+    }
+    function idecoEffectiveField(key,field,original){
+        const pending=idecoPendingProductFields.get(key);
+        if(pending && Object.prototype.hasOwnProperty.call(pending,field)) return pending[field];
+        const saved=idecoSavedProductFields[key];
+        return saved && Object.prototype.hasOwnProperty.call(saved,field) ? saved[field] : original;
+    }
+    function idecoApplyProductFields(row){
+        if(!row) return;
+        const key=idecoProductKey(row); if(!key) return;
+        const priceIdx=idecoFieldCol('price'), specIdx=idecoFieldCol('spec');
+        let base=idecoBaseProductFields.get(key);
+        if(!base){base={}; if(priceIdx>=0)base.price=row[priceIdx]; if(specIdx>=0)base.spec=row[specIdx]; idecoBaseProductFields.set(key,base);}
+        if(priceIdx>=0) row[priceIdx]=idecoEffectiveField(key,'price',base.price);
+        if(specIdx>=0) row[specIdx]=idecoEffectiveField(key,'spec',base.spec);
+    }
+    // Đồng bộ thời gian thực: thay đổi trên máy khác sẽ cập nhật bảng và giá mua.
+    try {
+        database.ref('priceProductFieldsV1').on('value',snap=>{
+            idecoSavedProductFields=snap.val()||{};
+            if(!idecoPendingProductFields.size && typeof currentData!=='undefined' && currentData.length){
+                for(let i=1;i<currentData.length;i++) if(!isGroupHeaderRow(currentData[i])) idecoApplyProductFields(currentData[i]);
+                try{redrawWithFilters();}catch(e){console.warn('priceProductFieldsV1 redraw',e);}
+            }
+            if(typeof updateCkSaveBar==='function') updateCkSaveBar();
+        });
+    } catch(e){console.warn('priceProductFieldsV1 listener',e);}
+
     // --- Khoá Firebase phải KHÔNG chứa . # $ / [ ] và ký tự điều khiển ---
     // Mã sp thực tế có dạng "TH_ AGICARDI_2.5" → phải mã hoá dấu chấm, nếu không Firebase báo
     // "value argument contains an invalid key". Mã hoá bằng token trong ngoặc đơn (ký tự hợp lệ)
@@ -2088,8 +2136,8 @@ const IdecoPrice = (()=>{
             ckSaved = snap.val() || {};
             // Nạp lại chiết khấu đã lưu vào bảng (bỏ các chỉnh tạm chưa lưu) và vẽ lại
             if (typeof redrawWithFilters === 'function' && typeof currentData !== 'undefined' && currentData && currentData.length) {
-                if (typeof ckDiscount !== 'undefined') ckDiscount = {}; // xóa chỉnh tạm → lấy lại giá trị đã lưu/gốc
-                ckDirty = false;
+                if (!ckDirty && typeof ckDiscount !== 'undefined') ckDiscount = {}; // xóa chỉnh tạm → lấy lại giá trị đã lưu/gốc
+                if (!ckDirty) ckDirty = false;
                 if (typeof updateCkSaveBar === 'function') updateCkSaveBar();
                 try { redrawWithFilters(); } catch(e){}
             }
@@ -4093,6 +4141,7 @@ const IdecoPrice = (()=>{
             else if(latest.has(token.key)) currentData.push(latest.get(token.key));
         });
         currentProductSourceMeta=sourceMeta;
+        idecoBaseProductFields.clear();
 
         selectedRowIdx.clear(); showingOnlySelected=false; searchInput.value='';
         ckBase={}; ckDiscount={}; // rowIdx thay đổi sau gộp → tuyệt đối không tái dùng cache cũ
@@ -4330,17 +4379,18 @@ const IdecoPrice = (()=>{
     function updateCkSaveBar(){
         const bar = document.getElementById('ckSaveBar');
         if (!bar) return;
-        const hasCk = getCkColIdx(6) !== -1 || getCkColIdx(12) !== -1;
+        const hasCk = getCkColIdx(6) !== -1 || getCkColIdx(12) !== -1 || idecoFieldCol('price') !== -1 || idecoFieldCol('spec') !== -1;
         if (!hasCk || !currentData || !currentData.length){ bar.style.display = 'none'; return; }
         bar.style.display = 'flex';
         const status = document.getElementById('ckSaveStatus');
         const saveBtn = document.getElementById('ckSaveBtn');
         const resetBtn = document.getElementById('ckResetBtn');
-        bar.classList.toggle('dirty', ckDirty);
-        bar.classList.toggle('saved', !ckDirty);
-        if (status) status.textContent = ckDirty ? '● Có thay đổi chiết khấu chưa lưu' : '✓ Chiết khấu đang khớp bản đã lưu';
-        if (saveBtn) saveBtn.disabled = !ckDirty;
-        if (resetBtn) resetBtn.disabled = !ckDirty;
+        const anyDirty = ckDirty || idecoPendingProductFields.size > 0;
+        bar.classList.toggle('dirty', anyDirty);
+        bar.classList.toggle('saved', !anyDirty);
+        if (status) status.textContent = anyDirty ? '● Có thay đổi giá bán / quy cách / chiết khấu chưa lưu' : '✓ Dữ liệu đã đồng bộ';
+        if (saveBtn) saveBtn.disabled = !anyDirty || idecoProductFieldsSaving;
+        if (resetBtn) resetBtn.disabled = !anyDirty || idecoProductFieldsSaving;
     }
     // ===== HIỂN THỊ CHIẾT KHẤU KÈM DẤU % NGAY TRÊN BẢNG (15 → 15%) =====
     // Giá trị LƯU TRỮ/TÍNH TOÁN vẫn là số trần (15) — chỉ phần nhìn thấy mới có dấu %.
@@ -4353,8 +4403,10 @@ const IdecoPrice = (()=>{
     async function saveCkDiscounts(){
         const table = document.querySelector('.price-table');
         if (!table){ return; }
-        const inputs = table.querySelectorAll('input.ck-input');
-        if (!inputs.length){ if (typeof zaloToast==='function') zaloToast('Không có ô chiết khấu để lưu.',3000); return; }
+        const invalidPrice=Array.from(table.querySelectorAll('.ideco-price-input')).find(i=>i.validationMessage || !Number.isFinite(parsePriceNumber(i.value)) || parsePriceNumber(i.value)<=0);
+        if(invalidPrice){invalidPrice.focus();alert('Giá bán phải là số VNĐ lớn hơn 0.');return;}
+        const inputs = ckDirty ? table.querySelectorAll('input.ck-input') : [];
+        if (!inputs.length && !idecoPendingProductFields.size){ return; }
         // Gộp theo Mã sp: { maKey: {6, 12} } — bỏ ô không có Mã sp
         const payload = {};
         const ckSaveNow = Date.now();
@@ -4394,30 +4446,44 @@ const IdecoPrice = (()=>{
         const saveBtn = document.getElementById('ckSaveBtn');
         if (saveBtn){ saveBtn.disabled = true; saveBtn.textContent = '⏳ Đang lưu...'; }
         try {
+            // Ghi đúng các trường đã sửa, để Firebase không ghi đè danh mục/cập nhật ở máy khác.
+            const productChanges={};
+            for(const [key,fields] of idecoPendingProductFields){
+                if(!ckKeyIsValid(key)) throw new Error('Mã sản phẩm không hợp lệ: '+key);
+                if(Object.prototype.hasOwnProperty.call(fields,'price')) productChanges[key+'/price']=fields.price;
+                if(Object.prototype.hasOwnProperty.call(fields,'spec')) productChanges[key+'/spec']=fields.spec;
+                productChanges[key+'/_updatedAt']=firebase.database.ServerValue.TIMESTAMP;
+            }
+            idecoProductFieldsSaving=true;
+            if(Object.keys(productChanges).length) await database.ref('priceProductFieldsV1').update(productChanges);
             const changes={};
             Object.keys(payload).forEach(k=>{Object.keys(payload[k]).forEach(m=>{changes[k+'/'+m]=payload[k][m];});});
             Object.keys(cleared).forEach(k=>{Object.keys(cleared[k]).forEach(m=>{changes[k+'/'+m]=null;});});
             legacyToDrop.forEach(k=>{if(ckKeyIsValid(k)&&payload[ckMaKey(k)]) changes[k]=null;});
             if(Object.keys(changes).length) await database.ref('ckSavedDiscounts').update(changes);
             ckSaved = merged; ckDirty = false;
+            idecoPendingProductFields.clear();
             let note = '';
             if (noKeyCount)  note += ' (Bỏ qua ' + noKeyCount + ' ô không có Mã sp)';
             if (badKeyCount) note += ' (Bỏ qua ' + badKeyCount + ' ô có Mã sp không hợp lệ)';
-            if (typeof zaloToast==='function') zaloToast('💾 Đã lưu ' + Object.keys(merged).length + ' mã sp lên Firebase — các máy khác sẽ tự cập nhật.' + note, 5000);
+            if (typeof zaloToast==='function') zaloToast('💾 Đã lưu thay đổi giá bán, quy cách và chiết khấu lên Firebase — các máy khác sẽ tự cập nhật.' + note, 5000);
         } catch(err){
             console.error('saveCkDiscounts:', err, 'keys:', Object.keys(merged));
-            if (typeof zaloToast==='function') zaloToast('⚠️ Lỗi lưu chiết khấu: ' + (err&&err.message||err), 8000);
+            if (typeof zaloToast==='function') zaloToast('⚠️ Lỗi lưu dữ liệu: ' + (err&&err.message||err), 8000);
         } finally {
-            if (saveBtn){ saveBtn.textContent = '💾 Lưu chiết khấu'; }
+            idecoProductFieldsSaving=false;
+            if (saveBtn){ saveBtn.textContent = '💾 Lưu giá bán · quy cách · chiết khấu'; }
             updateCkSaveBar();
         }
     }
     // Bỏ chỉnh sửa tạm chưa lưu → quay lại chiết khấu đã lưu / gốc
     function resetCkTemp(){
         ckDiscount = {}; ckDirty = false;
+        idecoPendingProductFields.clear();
+        for(let i=1;i<currentData.length;i++) if(!isGroupHeaderRow(currentData[i])) idecoApplyProductFields(currentData[i]);
         updateCkSaveBar();
         try { redrawWithFilters(); } catch(e){}
-        if (typeof zaloToast==='function') zaloToast('↩ Đã bỏ các thay đổi chưa lưu, quay về chiết khấu đã lưu.', 3500);
+        if (typeof zaloToast==='function') zaloToast('↩ Đã hoàn tác thay đổi chưa lưu.', 3500);
     }
     // Tính lại "Giá mua từ n hộp" cho 1 hàng dựa trên đơn giá & % chiết khấu đã nhập
     function recomputeGiaMuaForRow(tr, rowData, rowIdx, idxs){
@@ -4523,6 +4589,7 @@ const IdecoPrice = (()=>{
             const tr = document.createElement("tr");
             const rowIdx = sourceIndexes ? sourceIndexes[i-1] : i;
             tr.dataset.rowIndex = rowIdx;
+            if(!isGroupHeaderRow(rowData)) idecoApplyProductFields(rowData);
 
             // Nhận diện HÀNG TIÊU ĐỀ NHÓM (ví dụ "◆ NHÓM: TIM MẠCH..."): chỉ có 1 ô đầu có nội dung
             const nonEmpty = rowData.filter(c => String(c).trim().length>0);
@@ -4544,6 +4611,43 @@ const IdecoPrice = (()=>{
                 if(columnWidths[colIdx]){ td.style.width = columnWidths[colIdx] + 'px'; }
                 if(maSpColIdx !== -1 && colIdx === maSpColIdx) td.dataset.col = 'masp';
                 if (pickedQuoteCols.has(headersCache[colIdx])) td.classList.add('col-picked-cell');
+
+                // ===== GIÁ BÁN / QUY CÁCH — chỉnh trực tiếp, tính lại giá mua =====
+                if(colIdx===idecoFieldCol('price') || colIdx===idecoFieldCol('spec')){
+                    const field=colIdx===idecoFieldCol('price') ? 'price' : 'spec';
+                    const key=idecoProductKey(rowData);
+                    const inp=document.createElement('input'); inp.type='text';
+                    inp.className='ideco-master-input '+(field==='price'?'ideco-price-input':'ideco-spec-input');
+                    inp.inputMode=field==='price'?'numeric':'text';
+                    inp.value=field==='price'&&String(rowData[colIdx]??'').trim()!==''
+                        ? formatPriceVN(parsePriceNumber(rowData[colIdx])) : String(rowData[colIdx]??'');
+                    inp.title=field==='price'?'Chỉnh giá bán (VNĐ), bấm Lưu để đồng bộ Firebase':'Chỉnh quy cách đóng gói, bấm Lưu để đồng bộ Firebase';
+                    if(!key){inp.disabled=true;inp.title='Sản phẩm cần có mã SP để lưu';}
+                    inp.addEventListener('input',()=>{
+                        if(!key)return;
+                        let val=inp.value.trim();
+                        if(field==='price'){
+                            const num=parsePriceNumber(val);
+                            if(!val || !Number.isFinite(num) || num<=0){inp.setCustomValidity('Giá bán phải là số dương');inp.reportValidity();return;}
+                            val=num;
+                        }
+                        inp.setCustomValidity('');
+                        const pending=idecoPendingProductFields.get(key)||{};
+                        pending[field]=val;idecoPendingProductFields.set(key,pending);
+                        rowData[colIdx]=val;
+                        if(currentData[rowIdx])currentData[rowIdx][colIdx]=val;
+                        recomputeGiaMuaForRow(tr,rowData,rowIdx,gmIdxs);
+                        updateCkSaveBar();
+                    });
+                    inp.addEventListener('blur',()=>{
+                        if(field==='price' && !inp.validationMessage){
+                            const num=parsePriceNumber(inp.value);
+                            if(Number.isFinite(num)&&num>0)inp.value=formatPriceVN(num);
+                        }
+                    });
+                    inp.addEventListener('click',e=>e.stopPropagation());
+                    td.appendChild(inp);tr.appendChild(td);return;
+                }
 
                 // ===== Ô CHIẾT KHẤU (CK ≥ 6 hộp / CK ≥ 12 hộp): cho nhập %, khóa trần theo mức thêm tối đa =====
                 if (colIdx === ck6Idx || colIdx === ck12Idx) {
