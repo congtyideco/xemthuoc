@@ -1680,9 +1680,9 @@ window.idecoPlainCellText = function(td) {
                 </div>
                 <div id="ckSaveBar" style="display:none;">
                     <span class="cksb-status" id="ckSaveStatus"></span>
-                    <button id="ckSaveBtn" class="cksb-save">💾 Lưu giá bán · quy cách · chiết khấu</button>
+                    <button id="ckSaveBtn" class="cksb-save">💾 Lưu thay đổi danh mục · giá · CK</button>
                     <button id="ckResetBtn" class="cksb-reset" title="Bỏ các chỉnh sửa chưa lưu, quay về dữ liệu đã lưu">↩ Hoàn tác chưa lưu</button>
-                    <span class="cksb-note">Chỉnh trực tiếp ô Giá bán, Quy cách hoặc CK; giá mua tự tính lại. Bấm Lưu để đồng bộ Firebase cho các máy.</span>
+                    <span class="cksb-note">Chỉnh trực tiếp Giá bán, Quy cách, Hoạt chất, Hàm lượng, Công dụng, Nhóm điều trị hoặc CK. Giá mua tự tính lại theo giá bán và CK; bấm Lưu để đồng bộ Firebase.</span>
                 </div>
                 <div class="table-container" id="tableContainer"></div>
             </div>
@@ -2039,8 +2039,15 @@ const IdecoPrice = (()=>{
     function idecoFieldCol(kind){
         return (headersCache||[]).findIndex(h=>{
             const v=IdecoPrice.norm(h);
-            return kind==='price' ? (v==='dongia'||v==='giaban'||v==='giabanle'||v==='giabanledegx')
-                : (v==='quycach'||v==='quycachdonggoi'||v==='donggoi'||v==='quycachsp');
+            const aliases={
+                price:['dongia','giaban','giabanle','giabanledegx'],
+                spec:['quycach','quycachdonggoi','donggoi','quycachsp'],
+                ingredient:['hoatchat','thanhphanhoatchat','hoatchatchinh'],
+                strength:['hamluong','nongdo','hamluongnongdo'],
+                usage:['congdung','congdungchinh','chidinh','congdungchidinh'],
+                group:['nhomdieutri','nhombenh','nhom','loaidieutri']
+            };
+            return (aliases[kind]||[]).includes(v);
         });
     }
     function idecoProductKey(row){
@@ -2056,11 +2063,14 @@ const IdecoPrice = (()=>{
     function idecoApplyProductFields(row){
         if(!row) return;
         const key=idecoProductKey(row); if(!key) return;
-        const priceIdx=idecoFieldCol('price'), specIdx=idecoFieldCol('spec');
+        const editable=['price','spec','ingredient','strength','usage','group'];
         let base=idecoBaseProductFields.get(key);
-        if(!base){base={}; if(priceIdx>=0)base.price=row[priceIdx]; if(specIdx>=0)base.spec=row[specIdx]; idecoBaseProductFields.set(key,base);}
-        if(priceIdx>=0) row[priceIdx]=idecoEffectiveField(key,'price',base.price);
-        if(specIdx>=0) row[specIdx]=idecoEffectiveField(key,'spec',base.spec);
+        if(!base){
+            base={};
+            editable.forEach(field=>{const idx=idecoFieldCol(field);if(idx>=0)base[field]=row[idx];});
+            idecoBaseProductFields.set(key,base);
+        }
+        editable.forEach(field=>{const idx=idecoFieldCol(field);if(idx>=0)row[idx]=idecoEffectiveField(key,field,base[field]);});
     }
     // Đồng bộ thời gian thực: thay đổi trên máy khác sẽ cập nhật bảng và giá mua.
     try {
@@ -2068,7 +2078,7 @@ const IdecoPrice = (()=>{
             idecoSavedProductFields=snap.val()||{};
             if(!idecoPendingProductFields.size && typeof currentData!=='undefined' && currentData.length){
                 for(let i=1;i<currentData.length;i++) if(!isGroupHeaderRow(currentData[i])) idecoApplyProductFields(currentData[i]);
-                try{redrawWithFilters();}catch(e){console.warn('priceProductFieldsV1 redraw',e);}
+                try{populateGroupFilter();redrawWithFilters();}catch(e){console.warn('priceProductFieldsV1 redraw',e);}
             }
             if(typeof updateCkSaveBar==='function') updateCkSaveBar();
         });
@@ -4319,7 +4329,7 @@ const IdecoPrice = (()=>{
                 // Khớp theo cột "Nhóm điều trị" HOẶC theo nhóm của mục tiêu đề đang đứng dưới
                 const byCol = gIdx !== -1 && normGroup(row[gIdx]) === grpNorm;
                 const bySection = normGroup(curSectionGroup) === grpNorm;
-                ok = byCol || bySection;
+                ok = (gIdx !== -1 && String(row[gIdx]??'').trim()) ? byCol : bySection;
             }
             if(ok && term){
                 ok = row.some(c => String(c).toLowerCase().includes(term));
@@ -4379,7 +4389,7 @@ const IdecoPrice = (()=>{
     function updateCkSaveBar(){
         const bar = document.getElementById('ckSaveBar');
         if (!bar) return;
-        const hasCk = getCkColIdx(6) !== -1 || getCkColIdx(12) !== -1 || idecoFieldCol('price') !== -1 || idecoFieldCol('spec') !== -1;
+        const hasCk = getCkColIdx(6) !== -1 || getCkColIdx(12) !== -1 || ['price','spec','ingredient','strength','usage','group'].some(f=>idecoFieldCol(f)!==-1);
         if (!hasCk || !currentData || !currentData.length){ bar.style.display = 'none'; return; }
         bar.style.display = 'flex';
         const status = document.getElementById('ckSaveStatus');
@@ -4388,7 +4398,7 @@ const IdecoPrice = (()=>{
         const anyDirty = ckDirty || idecoPendingProductFields.size > 0;
         bar.classList.toggle('dirty', anyDirty);
         bar.classList.toggle('saved', !anyDirty);
-        if (status) status.textContent = anyDirty ? '● Có thay đổi giá bán / quy cách / chiết khấu chưa lưu' : '✓ Dữ liệu đã đồng bộ';
+        if (status) status.textContent = anyDirty ? '● Có thay đổi thông tin sản phẩm / giá / chiết khấu chưa lưu' : '✓ Dữ liệu đã đồng bộ';
         if (saveBtn) saveBtn.disabled = !anyDirty || idecoProductFieldsSaving;
         if (resetBtn) resetBtn.disabled = !anyDirty || idecoProductFieldsSaving;
     }
@@ -4452,6 +4462,7 @@ const IdecoPrice = (()=>{
                 if(!ckKeyIsValid(key)) throw new Error('Mã sản phẩm không hợp lệ: '+key);
                 if(Object.prototype.hasOwnProperty.call(fields,'price')) productChanges[key+'/price']=fields.price;
                 if(Object.prototype.hasOwnProperty.call(fields,'spec')) productChanges[key+'/spec']=fields.spec;
+                ['ingredient','strength','usage','group'].forEach(f=>{if(Object.prototype.hasOwnProperty.call(fields,f))productChanges[key+'/'+f]=fields[f];});
                 productChanges[key+'/_updatedAt']=firebase.database.ServerValue.TIMESTAMP;
             }
             idecoProductFieldsSaving=true;
@@ -4463,16 +4474,17 @@ const IdecoPrice = (()=>{
             if(Object.keys(changes).length) await database.ref('ckSavedDiscounts').update(changes);
             ckSaved = merged; ckDirty = false;
             idecoPendingProductFields.clear();
+            populateGroupFilter();
             let note = '';
             if (noKeyCount)  note += ' (Bỏ qua ' + noKeyCount + ' ô không có Mã sp)';
             if (badKeyCount) note += ' (Bỏ qua ' + badKeyCount + ' ô có Mã sp không hợp lệ)';
-            if (typeof zaloToast==='function') zaloToast('💾 Đã lưu thay đổi giá bán, quy cách và chiết khấu lên Firebase — các máy khác sẽ tự cập nhật.' + note, 5000);
+            if (typeof zaloToast==='function') zaloToast('💾 Đã lưu giá bán, quy cách, hoạt chất, hàm lượng, công dụng, nhóm điều trị và chiết khấu lên Firebase — các máy khác sẽ tự cập nhật.' + note, 5000);
         } catch(err){
             console.error('saveCkDiscounts:', err, 'keys:', Object.keys(merged));
             if (typeof zaloToast==='function') zaloToast('⚠️ Lỗi lưu dữ liệu: ' + (err&&err.message||err), 8000);
         } finally {
             idecoProductFieldsSaving=false;
-            if (saveBtn){ saveBtn.textContent = '💾 Lưu giá bán · quy cách · chiết khấu'; }
+            if (saveBtn){ saveBtn.textContent = '💾 Lưu thay đổi danh mục · giá · CK'; }
             updateCkSaveBar();
         }
     }
@@ -4481,6 +4493,7 @@ const IdecoPrice = (()=>{
         ckDiscount = {}; ckDirty = false;
         idecoPendingProductFields.clear();
         for(let i=1;i<currentData.length;i++) if(!isGroupHeaderRow(currentData[i])) idecoApplyProductFields(currentData[i]);
+        populateGroupFilter();
         updateCkSaveBar();
         try { redrawWithFilters(); } catch(e){}
         if (typeof zaloToast==='function') zaloToast('↩ Đã hoàn tác thay đổi chưa lưu.', 3500);
@@ -4613,15 +4626,18 @@ const IdecoPrice = (()=>{
                 if (pickedQuoteCols.has(headersCache[colIdx])) td.classList.add('col-picked-cell');
 
                 // ===== GIÁ BÁN / QUY CÁCH — chỉnh trực tiếp, tính lại giá mua =====
-                if(colIdx===idecoFieldCol('price') || colIdx===idecoFieldCol('spec')){
-                    const field=colIdx===idecoFieldCol('price') ? 'price' : 'spec';
+                const editableField=['price','spec','ingredient','strength','usage','group'].find(f=>colIdx===idecoFieldCol(f));
+                if(editableField){
+                    const field=editableField;
                     const key=idecoProductKey(rowData);
                     const inp=document.createElement('input'); inp.type='text';
                     inp.className='ideco-master-input '+(field==='price'?'ideco-price-input':'ideco-spec-input');
+                    if(['usage','ingredient','group'].includes(field)){inp.style.minWidth='145px';inp.style.maxWidth='360px';}
                     inp.inputMode=field==='price'?'numeric':'text';
                     inp.value=field==='price'&&String(rowData[colIdx]??'').trim()!==''
                         ? formatPriceVN(parsePriceNumber(rowData[colIdx])) : String(rowData[colIdx]??'');
-                    inp.title=field==='price'?'Chỉnh giá bán (VNĐ), bấm Lưu để đồng bộ Firebase':'Chỉnh quy cách đóng gói, bấm Lưu để đồng bộ Firebase';
+                    const fieldLabels={price:'Giá bán (VNĐ)',spec:'Quy cách',ingredient:'Hoạt chất',strength:'Hàm lượng',usage:'Công dụng',group:'Nhóm điều trị'};
+                    inp.title='Chỉnh '+fieldLabels[field]+' — bấm Lưu để đồng bộ Firebase';
                     if(!key){inp.disabled=true;inp.title='Sản phẩm cần có mã SP để lưu';}
                     inp.addEventListener('input',()=>{
                         if(!key)return;
@@ -4636,7 +4652,7 @@ const IdecoPrice = (()=>{
                         pending[field]=val;idecoPendingProductFields.set(key,pending);
                         rowData[colIdx]=val;
                         if(currentData[rowIdx])currentData[rowIdx][colIdx]=val;
-                        recomputeGiaMuaForRow(tr,rowData,rowIdx,gmIdxs);
+                        if(field==='price') recomputeGiaMuaForRow(tr,rowData,rowIdx,gmIdxs);
                         updateCkSaveBar();
                     });
                     inp.addEventListener('blur',()=>{
