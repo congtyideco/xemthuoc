@@ -5241,6 +5241,37 @@ const IdecoPrice = (()=>{
             loadingIndicator.style.display = 'none';
         }).catch(error=>{ console.error('Lỗi khi tải dữ liệu:', error); loadingIndicator.style.display = 'none'; tableContainer.innerHTML = '<p>Lỗi khi tải dữ liệu từ server. Vui lòng thử lại sau.</p>'; });
     }
+    // ===== [ĐỒNG BỘ 2 CHIỀU] Tự tải lại khi máy khác / app tổng (tab Giá đại lý GT) lưu priceData =====
+    // Trước đây app chỉ đọc priceData 1 lần lúc mở → thay đổi từ nơi khác không hiện, và lần lưu
+    // tiếp theo từ máy này có thể ghi đè mất. Nay theo dõi syncVersion và nạp lại khi đang rảnh.
+    (function watchPriceDataSync(){
+        let timer = null;
+        function isBusy(){
+            try {
+                if (editingRowState && editingRowState.index !== null) return true;
+                if (typeof ckDirty !== 'undefined' && ckDirty) return true;
+                if (typeof idecoPendingProductFields !== 'undefined' && idecoPendingProductFields.size) return true;
+            } catch(e){}
+            return false;
+        }
+        function check(v){
+            if (!v || priceDataLoadedSyncVersion === null) return;
+            if (Number(v) === Number(priceDataLoadedSyncVersion)) return;
+            if (isBusy()){ clearTimeout(timer); timer = setTimeout(()=>check(v), 4000); return; }
+            const prevSearch = (typeof searchInput !== 'undefined' && searchInput) ? searchInput.value : '';
+            Promise.resolve(loadDataFromFirebase()).then(()=>{
+                if (prevSearch && searchInput){ searchInput.value = prevSearch; searchInput.dispatchEvent(new Event('input')); }
+                if (typeof zaloToast === 'function') zaloToast('🔄 Bảng giá vừa được cập nhật từ máy khác — đã tải lại.');
+            });
+        }
+        try {
+            database.ref('priceData/syncVersion').on('value', snap => {
+                const v = Number(snap.val() || 0);
+                clearTimeout(timer);
+                timer = setTimeout(()=>check(v), 1500); // chờ để lần lưu của chính máy này cập nhật version trước
+            });
+        } catch(e){ console.warn('watchPriceDataSync:', e); }
+    })();
     // ========== XUẤT EXCEL VIEW (v2 — GIỮ ĐỦ CỘT CHIẾT KHẤU) ==========
     // LỖI CŨ: ô chiết khấu được render bằng <input class="ck-input"> nên td.textContent = ''
     //         → file Excel xuất ra bị TRỐNG TRẮNG cột chiết khấu.
