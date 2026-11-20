@@ -1263,6 +1263,35 @@
         #matchExcelStatus.loading{ color:#e08a00; font-weight:700; }
     </style>
 
+<style id="idecoTierBandStyle">
+/* ===== IDECO: KHUNG GIÁ BÁN LẺ — SP giá lẻ < ngưỡng: bậc 1 = từ 15 hộp, bậc 2 = từ 50 hộp (giữ nguyên CK) ===== */
+.price-table th .tier-sub{display:block;margin-top:4px;padding:2px 6px;border-radius:999px;background:rgba(255,255,255,.2);font-size:9.5px;font-weight:800;letter-spacing:.1px;text-transform:none;line-height:1.3}
+.price-table td.tier-low-price{box-shadow:inset 4px 0 0 #7c3aed}
+.price-table td[data-tierq]{background:#f4eeff!important}
+.price-table tbody tr:nth-child(even) td[data-tierq]{background:#eee5ff!important}
+.price-table td[data-tierq]::before{content:"từ " attr(data-tierq) " hộp";display:block;width:max-content;margin:0 0 4px auto;padding:1px 7px;border-radius:999px;background:#6d28d9;color:#fff;font:800 10px/1.5 'Segoe UI',Arial,sans-serif;letter-spacing:.2px}
+.price-table td[data-tierq]:has(.ck-input)::before{margin:0 auto 4px}
+.price-table td[data-tierq] .ck-input{border-color:#7c3aed;color:#6d28d9}
+#tierPolicyBar{display:none;align-items:center;gap:8px 10px;flex-wrap:wrap;margin:0 0 8px;padding:8px 12px;background:linear-gradient(90deg,#f5f0ff,#fbf9ff);border:1px solid #ddd0fb;border-left:5px solid #7c3aed;border-radius:10px;font-size:12.5px;color:#3b2a63;flex-shrink:0}
+#tierPolicyBar .tpb-title{font-weight:900;color:#4c1d95;letter-spacing:.3px}
+#tierPolicyBar .tpb-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:999px;font-weight:600;white-space:nowrap}
+#tierPolicyBar .tpb-chip.std{background:#e8f0fe;color:#1a3d7c;border:1px solid #c5d8ff}
+#tierPolicyBar .tpb-chip.low{background:#6d28d9;color:#fff;border:1px solid #6d28d9}
+#tierPolicyBar .tpb-th{display:inline-flex;align-items:center;gap:6px}
+#tierPolicyBar .tpb-th label{font-weight:800;color:#4c1d95}
+#tierPolicyBar .tpb-th input{width:100px;padding:5px 8px;border:1.5px solid #b9a2f5;border-radius:7px;font-size:13px;font-weight:800;color:#4c1d95;text-align:right;font-variant-numeric:tabular-nums;background:#fff}
+#tierPolicyBar .tpb-th input:focus{outline:none;border-color:#6d28d9;box-shadow:0 0 0 3px rgba(109,40,217,.15)}
+#tierPolicyBar .tpb-th button{border:1px solid #6d28d9;background:#6d28d9;color:#fff;border-radius:7px;padding:5px 11px;font-size:12px;font-weight:800;cursor:pointer}
+#tierPolicyBar .tpb-th button:disabled{opacity:.4;cursor:default}
+#tierPolicyBar .tpb-seg{display:inline-flex;border:1px solid #cfbdfa;border-radius:9px;overflow:hidden;margin-left:auto}
+#tierPolicyBar .tpb-seg button{border:0;background:#fff;color:#5b21b6;padding:6px 11px;font-size:12px;font-weight:700;cursor:pointer;border-right:1px solid #e4d9fc}
+#tierPolicyBar .tpb-seg button:last-child{border-right:0}
+#tierPolicyBar .tpb-seg button.on{background:#6d28d9;color:#fff}
+#tierPolicyBar .tpb-seg button span{font-weight:600;opacity:.85;margin-left:3px}
+#tierPolicyBar button:focus-visible{outline:3px solid #ffb83d;outline-offset:1px}
+#quoteTierNote{margin-top:6px;font-style:italic;color:#4c1d95}
+@media(max-width:800px){#tierPolicyBar .tpb-seg{margin-left:0}}
+</style>
 <style id="idecoMedFinderIntegrationStyle">
 .ideco-img-smart-box{display:flex;align-items:center;justify-content:space-between;gap:14px;background:linear-gradient(135deg,#e8f8f4,#f4fffb);border:1px solid #9adbc9;border-radius:10px;padding:12px 14px;margin:10px 0 12px}
 .ideco-img-smart-title{font-size:13px;font-weight:900;color:#00695c;letter-spacing:.25px}
@@ -1411,6 +1440,10 @@ window.idecoPlainCellText = function(td) {
                     <span class="lg-unit">% (thêm so với mức gốc)</span>
                 </div>
                 <p class="lg-hint" id="lgCkHint">Người dùng chỉ được nhập tối đa = mức chiết khấu gốc + số % này. Để trống hoặc nhập <b>0</b> để bỏ giới hạn.</p>
+
+                <div class="lg-sect">📐 Khung giá bán lẻ (6/12 → 15/50 hộp)</div>
+                <div class="lg-field lg-field-inline"><input type="text" id="lgTierTh" inputmode="numeric" placeholder="80,000" style="width:120px" /><span class="lg-unit">đ — ngưỡng giá bán lẻ</span></div>
+                <p class="lg-hint">SP có giá bán lẻ <b>dưới ngưỡng</b>: giữ nguyên mức CK, nhưng bậc 1 áp dụng từ <b>15 hộp</b> (thay 6), bậc 2 từ <b>50 hộp</b> (thay 12). Nhập <b>0</b> để tắt.</p>
 
                 <div class="lg-error" id="lgChangeError"></div>
                 <div class="lg-error" id="lgChangeOk" style="color:#00a884"></div>
@@ -1702,6 +1735,23 @@ window.idecoPlainCellText = function(td) {
                     <button id="ckSaveBtn" class="cksb-save">💾 Lưu thay đổi danh mục · giá · CK</button>
                     <button id="ckResetBtn" class="cksb-reset" title="Bỏ các chỉnh sửa chưa lưu, quay về dữ liệu đã lưu">↩ Hoàn tác chưa lưu</button>
                     <span class="cksb-note">Chỉnh trực tiếp Giá bán, Quy cách, Hoạt chất, Hàm lượng, Công dụng, Nhóm điều trị hoặc CK. Giá mua tự tính lại theo giá bán và CK; bấm Lưu để đồng bộ Firebase.</span>
+                </div>
+                <div id="tierPolicyBar" aria-label="Khung giá bán lẻ theo số hộp">
+                    <span class="tpb-title">📐 KHUNG GIÁ BÁN LẺ</span>
+                    <span class="tpb-chip std">Giá lẻ ≥ <b class="tpbThTxt">80,000</b>đ → mua từ <b>6</b> · <b>12</b> hộp</span>
+                    <span class="tpb-chip low">Giá lẻ &lt; <b class="tpbThTxt">80,000</b>đ → mua từ <b>15</b> · <b>50</b> hộp (giữ nguyên CK)</span>
+                    <span class="tpb-th">
+                        <label for="tpbThInput">Ngưỡng:</label>
+                        <input id="tpbThInput" type="text" inputmode="numeric" list="tpbThPresets" autocomplete="off" title="Nhập ngưỡng giá bán lẻ, ví dụ 80,000 hoặc 50,000">
+                        <datalist id="tpbThPresets"><option value="50,000"><option value="60,000"><option value="80,000"><option value="100,000"></datalist>
+                        <b>đ</b>
+                        <button type="button" id="tpbThApply" disabled>Áp dụng</button>
+                    </span>
+                    <div class="tpb-seg" role="group" aria-label="Lọc theo khung giá bán lẻ">
+                        <button type="button" data-tpf="" class="on" aria-pressed="true">Tất cả<span id="tpbAll"></span></button>
+                        <button type="button" data-tpf="low" aria-pressed="false">Giá &lt; <b class="tpbThK">80k</b> · 15/50 hộp<span id="tpbLow"></span></button>
+                        <button type="button" data-tpf="high" aria-pressed="false">Giá ≥ <b class="tpbThK">80k</b> · 6/12 hộp<span id="tpbHigh"></span></button>
+                    </div>
                 </div>
                 <div class="table-container" id="tableContainer"></div>
             </div>
@@ -2172,6 +2222,95 @@ const IdecoPrice = (()=>{
             }
         });
     } catch(e){ console.warn('ckSavedDiscounts listener:', e); }
+    // ============ IDECO: KHUNG GIÁ BÁN LẺ ============
+    // SP có giá bán lẻ (Đơn giá) < ngưỡng: GIỮ NGUYÊN mức CK của cột 6 hộp / 12 hộp,
+    // nhưng số hộp tối thiểu đổi thành 15 hộp (bậc 1) và 50 hộp (bậc 2).
+    // Ngưỡng lưu ở appAccessConfig/tierPolicy — ứng dụng Báo giá điện tử đọc cùng nhánh này.
+    const TIER_ADMIN_PASS = 'minhtriet1973';
+    let tierPolicy = { threshold: 80000 };
+    let tierPriceFilter = '';               // '' | 'low' | 'high'
+    function tierFmt(n){ n = Number(n); return Number.isFinite(n) ? Math.round(n).toLocaleString('en-US') : ''; }
+    function tierParseMoney(v){ const t = String(v == null ? '' : v).trim(); if (t === '') return 0; return IdecoPrice.money(t); }
+    function tierEnabled(){ return Number(tierPolicy.threshold) > 0; }
+    function tierRetailPrice(row){ const i = getDonGiaColIdx(); return (i >= 0 && row) ? parsePriceNumber(row[i]) : NaN; }
+    function tierEligible(row){
+        if (!tierEnabled() || !row || isGroupHeaderRow(row)) return false;
+        const p = tierRetailPrice(row);
+        return Number.isFinite(p) && p > 0 && p < Number(tierPolicy.threshold);
+    }
+    function tierQty(row, step){ return tierEligible(row) ? (step === 12 ? 50 : 15) : step; }
+    // Cột CK/Giá mua của bậc 6 & 12 hộp → { colIdx: step }
+    function tierStepCols(){
+        const m = {};
+        [[getCkColIdx(6),6],[getGiaMuaColIdx(6),6],[getCkColIdx(12),12],[getGiaMuaColIdx(12),12]].forEach(([i,st]) => { if (i >= 0) m[i] = st; });
+        return m;
+    }
+    function tierRenderBar(){
+        const bar = document.getElementById('tierPolicyBar'); if (!bar) return;
+        if (!tierEnabled() || typeof currentData === 'undefined' || currentData.length < 2 || getDonGiaColIdx() < 0){ bar.style.display = 'none'; return; }
+        bar.style.display = 'flex';
+        const th = Number(tierPolicy.threshold);
+        bar.querySelectorAll('.tpbThTxt').forEach(el => el.textContent = tierFmt(th));
+        const k = th % 1000 === 0 ? (th / 1000).toLocaleString('en-US') + 'k' : tierFmt(th);
+        bar.querySelectorAll('.tpbThK').forEach(el => el.textContent = k);
+        const inp = document.getElementById('tpbThInput');
+        if (inp && document.activeElement !== inp){ inp.value = tierFmt(th); document.getElementById('tpbThApply').disabled = true; }
+        let low = 0, high = 0;
+        for (let i = 1; i < currentData.length; i++){
+            const row = currentData[i]; if (!row || isGroupHeaderRow(row)) continue;
+            const p = tierRetailPrice(row); if (!Number.isFinite(p) || p <= 0) continue;
+            if (p < th) low++; else high++;
+        }
+        document.getElementById('tpbAll').textContent = ' (' + tierFmt(low + high) + ')';
+        document.getElementById('tpbLow').textContent = ' (' + tierFmt(low) + ')';
+        document.getElementById('tpbHigh').textContent = ' (' + tierFmt(high) + ')';
+    }
+    function tierSetFilter(v, rerender){
+        tierPriceFilter = v || '';
+        document.querySelectorAll('#tierPolicyBar .tpb-seg button').forEach(b => {
+            const on = (b.dataset.tpf || '') === tierPriceFilter; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on));
+        });
+        if (rerender){ showingOnlySelected = false; applyFilters(); }
+    }
+    try {
+        database.ref('appAccessConfig/tierPolicy').on('value', snap => {
+            const v = snap.val();
+            tierPolicy = { threshold: v ? (Number(v.threshold) || 0) : 80000 };
+            if (!tierEnabled() && tierPriceFilter) tierSetFilter('', false);
+            if (typeof currentData === 'undefined' || !currentData.length) return;
+            try { redrawWithFilters(); } catch(e){}
+            tierRenderBar();
+        });
+    } catch(e){ console.warn('tierPolicy listener:', e); }
+    (function wireTierBar(){
+        document.querySelectorAll('#tierPolicyBar .tpb-seg button').forEach(b => b.addEventListener('click', () => tierSetFilter(b.dataset.tpf || '', true)));
+        const inp = document.getElementById('tpbThInput'), btn = document.getElementById('tpbThApply');
+        if (!inp || !btn) return;
+        // Gõ 80000 → tự hiển thị 80,000
+        inp.addEventListener('input', () => {
+            const digits = inp.value.replace(/\D/g, '');
+            inp.value = digits ? Number(digits).toLocaleString('en-US') : '';
+            btn.disabled = tierParseMoney(inp.value) === Number(tierPolicy.threshold);
+        });
+        inp.addEventListener('keydown', e => {
+            if (e.key === 'Enter' && !btn.disabled) btn.click();
+            if (e.key === 'Escape'){ inp.value = tierFmt(tierPolicy.threshold); btn.disabled = true; inp.blur(); }
+        });
+        btn.addEventListener('click', async () => {
+            const th = tierParseMoney(inp.value);
+            if (!Number.isFinite(th) || th < 1000){ alert('Ngưỡng giá bán lẻ không hợp lệ. Ví dụ: 80,000 hoặc 50,000.'); inp.focus(); return; }
+            const pass = prompt('Ngưỡng mới: SP giá bán lẻ dưới ' + tierFmt(th) + 'đ sẽ áp dụng mua từ 15 hộp / 50 hộp (giữ nguyên CK).\nÁp dụng cho mọi máy và ứng dụng Báo giá điện tử.\n\nNhập mật khẩu quản trị để xác nhận:');
+            if (pass === null) return;
+            if (pass !== TIER_ADMIN_PASS){ alert('❌ Sai mật khẩu quản trị. Chưa thay đổi ngưỡng.'); return; }
+            btn.disabled = true; btn.textContent = 'Đang lưu...';
+            try {
+                await database.ref('appAccessConfig/tierPolicy').set({ threshold: th });
+                if (typeof zaloToast === 'function') zaloToast('📐 Đã đổi ngưỡng: giá bán lẻ dưới <b>' + tierFmt(th) + 'đ</b> áp dụng mua từ 15 / 50 hộp — đồng bộ mọi máy.', 5000);
+            } catch(err){ alert('Lỗi lưu Firebase: ' + (err && err.message || err)); btn.disabled = false; }
+            finally { btn.textContent = 'Áp dụng'; }
+        });
+    })();
+
     // ============ CỔNG ĐĂNG NHẬP BẢO MẬT ============
     (function initLoginGate(){
         const DEFAULT_LOGIN_PASS = 'ideco@2026';
@@ -2260,6 +2399,7 @@ const IdecoPrice = (()=>{
                 changeErr.textContent=''; changeOk.textContent='';
                 adminInput.value=''; newInput.value=''; new2Input.value='';
                 if (ckMaxInput) ckMaxInput.value = (ckMaxExtra === null || ckMaxExtra === undefined) ? '' : String(ckMaxExtra);
+                { const a=document.getElementById('lgTierTh'); if(a) a.value = tierFmt(tierPolicy.threshold) || '0'; }
                 setTimeout(()=>adminInput.focus(),100);
             }
         }
@@ -2268,6 +2408,13 @@ const IdecoPrice = (()=>{
         function applySettings(){
             changeErr.textContent=''; changeOk.textContent='';
             if (adminInput.value !== ADMIN_PASS){ changeErr.textContent='❌ Sai mật khẩu quản trị.'; adminInput.select(); return; }
+            let tierNextTh = null;
+            { const a=document.getElementById('lgTierTh');
+              if (a){
+                const th = tierParseMoney(a.value);
+                if (!Number.isFinite(th) || th < 0){ changeErr.textContent='Ngưỡng giá bán lẻ không hợp lệ (VD: 80,000).'; a.focus(); return; }
+                if (th !== (Number(tierPolicy.threshold)||0)) tierNextTh = th;
+              } }
             const np = (newInput.value || '').trim();
             const wantChangePass = (np !== '' || (new2Input.value||'').trim() !== '');
             const tasks = [];
@@ -2298,6 +2445,10 @@ const IdecoPrice = (()=>{
                 msgs.push(ckVal === null ? 'bỏ giới hạn chiết khấu' : ('khóa chiết khấu +' + ckVal + '%'));
             }
 
+            if (tierNextTh !== null){
+                tasks.push(database.ref('appAccessConfig/tierPolicy').set({ threshold: tierNextTh }));
+                msgs.push(tierNextTh > 0 ? ('khung giá lẻ < ' + tierFmt(tierNextTh) + 'đ: 15/50 hộp') : 'tắt khung 15/50 hộp');
+            }
             if (!tasks.length){ changeErr.textContent='Không có thay đổi nào để áp dụng.'; return; }
 
             Promise.all(tasks.map(p=>p.catch(e=>e))).then(()=>{
@@ -3330,7 +3481,7 @@ const IdecoPrice = (()=>{
         renderSelectedOnly(); 
     });
     clearSelectionBtn.addEventListener('click', ()=>{ 
-        selectedRowIdx.clear(); 
+        selectedRowIdx.clear(); tierSetFilter('', false);
         showingOnlySelected=false; 
         searchInput.value=''; 
         createTable(currentData); 
@@ -4331,7 +4482,7 @@ const IdecoPrice = (()=>{
         const term = (searchInput.value||'').trim().toLowerCase();
         const grp = groupFilter ? groupFilter.value : '';
         const gIdx = getGroupColIdx();
-        if(!term && !grp){ createTable(currentData); return; }
+        if(!term && !grp && !tierPriceFilter){ createTable(currentData); return; }
         const grpNorm = normGroup(grp);
         const filtered = [currentData[0]];
         const sourceIdx = [];
@@ -4340,7 +4491,7 @@ const IdecoPrice = (()=>{
             const row = currentData[i] || [];
             if(isGroupHeaderRow(row)){
                 curSectionGroup = extractGroupName(row.find(c=>String(c).trim().length>0)) || '';
-                if(!grp && !term){ filtered.push(row); sourceIdx.push(i); } // giữ tiêu đề khi không lọc
+                if(!grp && !term && !tierPriceFilter){ filtered.push(row); sourceIdx.push(i); } // giữ tiêu đề khi không lọc
                 continue;
             }
             let ok = true;
@@ -4352,6 +4503,10 @@ const IdecoPrice = (()=>{
             }
             if(ok && term){
                 ok = row.some(c => String(c).toLowerCase().includes(term));
+            }
+            if(ok && tierPriceFilter){
+                const el = tierEligible(row), p = tierRetailPrice(row);
+                ok = tierPriceFilter === 'low' ? el : (!el && Number.isFinite(p) && p > 0);
             }
             if(ok){ filtered.push(row); sourceIdx.push(i); }
         }
@@ -4380,7 +4535,7 @@ const IdecoPrice = (()=>{
     // Chuyển chuỗi giá "1.200.000 đ" → số nguyên VNĐ
     function parsePriceNumber(v){ return IdecoPrice.money(v); }
     // Định dạng số → "1.200.000"
-    function formatPriceVN(n){ return isNaN(n) ? '' : Math.round(n).toLocaleString('vi-VN'); }
+    function formatPriceVN(n){ return isNaN(n) ? '' : Math.round(n).toLocaleString('en-US'); }
     // Đọc % chiết khấu đã nhập
     function readCkPercent(rowIdx, n){
         if (ckDiscount[rowIdx] && ckDiscount[rowIdx][n] !== undefined && ckDiscount[rowIdx][n] !== '') {
@@ -4617,6 +4772,8 @@ const IdecoPrice = (()=>{
         const idecoSelectCol=document.createElement('col');idecoSelectCol.style.width='75px';idecoColGroup.appendChild(idecoSelectCol);
         table.appendChild(idecoColGroup);
         table.style.width=(idecoColWidths.reduce((a,b)=>a+b,0)+75)+'px';
+        const tierCols = tierEnabled() ? tierStepCols() : {};
+        const tierThTxt = tierFmt(tierPolicy.threshold);
         const thead = document.createElement("thead"); const headerRow = document.createElement("tr");
         visibleIdx.forEach((colIdx)=>{ 
             const th = document.createElement("th"); th.className = 'th-resizable col-pick'; 
@@ -4624,6 +4781,13 @@ const IdecoPrice = (()=>{
             th.textContent = hName; 
             th.dataset.colidx = colIdx;
             th.title = 'Bấm để chọn/bỏ chọn cột này cho báo giá';
+            th.dataset.hname = hName;
+            if (tierCols[colIdx]){
+                const sub = document.createElement('span'); sub.className = 'tier-sub';
+                sub.textContent = 'Giá lẻ < ' + (Number(tierPolicy.threshold) % 1000 === 0 ? (Number(tierPolicy.threshold)/1000).toLocaleString('en-US') + 'k' : tierThTxt) + ': ' + (tierCols[colIdx] === 12 ? 50 : 15) + ' hộp';
+                sub.title = 'SP giá bán lẻ dưới ' + tierThTxt + 'đ: mức này áp dụng khi mua từ ' + (tierCols[colIdx] === 12 ? 50 : 15) + ' hộp';
+                th.appendChild(sub);
+            }
             if (pickedQuoteCols.has(hName)) th.classList.add('col-picked');
             if(columnWidths[colIdx]){ th.style.width = columnWidths[colIdx] + 'px'; }
             th.addEventListener('click', (e)=>{
@@ -4662,6 +4826,10 @@ const IdecoPrice = (()=>{
                 if(columnWidths[colIdx]){ td.style.width = columnWidths[colIdx] + 'px'; }
                 if(maSpColIdx !== -1 && colIdx === maSpColIdx) td.dataset.col = 'masp';
                 if (pickedQuoteCols.has(headersCache[colIdx])) td.classList.add('col-picked-cell');
+                if (tierEnabled() && tierEligible(rowData)){
+                    if (colIdx === donGiaIdx){ td.classList.add('tier-low-price'); td.title = 'Giá bán lẻ dưới ' + tierThTxt + 'đ — áp dụng mua từ 15 / 50 hộp'; }
+                    if (tierCols[colIdx]){ const q = tierCols[colIdx] === 12 ? 50 : 15; td.dataset.tierq = String(q); td.title = 'Giá lẻ dưới ' + tierThTxt + 'đ: mức này áp dụng khi mua từ ' + q + ' hộp'; }
+                }
 
                 // ===== GIÁ BÁN / QUY CÁCH — chỉnh trực tiếp, tính lại giá mua =====
                 const editableField=['price','spec','ingredient','strength','usage','group'].find(f=>colIdx===idecoFieldCol(f));
@@ -4858,6 +5026,7 @@ const IdecoPrice = (()=>{
         updateFilteredSection();
         // Bổ sung trạng thái cập nhật/báo giá, không gắn nhãn mới vào tên thuốc.
         try { pc7DecorateTable(); } catch(e) {}
+        try { tierRenderBar(); } catch(e) {}
     }
     function renderSelectedOnly(){
         const indices = Array.from(selectedRowIdx).sort((a,b)=>a-b);
@@ -5357,7 +5526,7 @@ const IdecoPrice = (()=>{
         let keep = ths.map((th, i) => i);
         const chooseIdx = ths.findIndex(th => String(th.textContent||'').trim().toLowerCase() === 'chọn');
         if (chooseIdx !== -1) keep = keep.filter(i => i !== chooseIdx); else keep = keep.slice(0, -1);
-        const headerRow = keep.map(i => String(ths[i].textContent||'').replace(/\s*✓\s*$/,'').trim());
+        const headerRow = keep.map(i => String(ths[i].dataset.hname || ths[i].textContent||'').replace(/\s*✓\s*$/,'').trim());
 
         // 2) Dữ liệu: đọc value của ô CK thay vì textContent
         const aoa = [headerRow];
@@ -5472,6 +5641,13 @@ const IdecoPrice = (()=>{
         const _donGiaIdx = getDonGiaColIdx();
         const _ck6Idx = getCkColIdx(6), _ck12Idx = getCkColIdx(12);
         const _gm6Idx = getGiaMuaColIdx(6), _gm12Idx = getGiaMuaColIdx(12);
+        // Khung giá bán lẻ: SP dưới ngưỡng dùng 15 / 50 hộp thay cho 6 / 12 hộp
+        const _tierCols = tierEnabled() ? tierStepCols() : {};
+        const _validIdx = indices.filter(idx => currentData[idx]);
+        const _lowCount = _validIdx.filter(idx => tierEligible(currentData[idx])).length;
+        const _tierAllLow = _validIdx.length > 0 && _lowCount === _validIdx.length;
+        const _tierMixed = _lowCount > 0 && !_tierAllLow;
+        const _isChain = (currentQuoteType === 'longchau' || currentQuoteType === 'pharmacity');
         indices.forEach(idx=>{
             if(!currentData[idx]) return;
             const row = currentData[idx].slice();
@@ -5483,6 +5659,13 @@ const IdecoPrice = (()=>{
                     if (gmIdx !== -1 && !isNaN(donGia)) row[gmIdx] = formatPriceVN(donGia*(1-pct/100));
                 }
             });
+            // Ghi số hộp vào ô khi bảng trộn SP 6/12 và 15/50 hộp (hoặc tiêu đề đã đổi tên chung)
+            if ((_tierMixed || _isChain) && tierEligible(currentData[idx])) {
+                Object.keys(_tierCols).forEach(ci => {
+                    const v = String(row[ci] ?? '').trim();
+                    if (v) row[ci] = v + ' (từ ' + (_tierCols[ci] === 12 ? 50 : 15) + ' hộp)';
+                });
+            }
             aoa.push(row);
         });
         
@@ -5554,6 +5737,11 @@ const IdecoPrice = (()=>{
                 }
             }
             
+            if (_tierCols[colIdx] && _lowCount && headerName === (headersCache[colIdx] || '')) {
+                const st = _tierCols[colIdx], isCk = colIdx === _ck6Idx || colIdx === _ck12Idx;
+                if (_tierAllLow) headerName = isCk ? 'CK ≥' + (st === 12 ? 50 : 15) + ' hộp' : 'Giá mua từ ' + (st === 12 ? 50 : 15) + ' hộp (VNĐ)';
+                else headerName += ' *';
+            }
             th.textContent = headerName;
             th.contentEditable = "true";
             th.className = "th-resizable"; // Thêm class để kích hoạt resize
@@ -5599,6 +5787,19 @@ const IdecoPrice = (()=>{
         table.appendChild(tbody);
         quoteTableContainer.innerHTML = "";
         quoteTableContainer.appendChild(table);
+        // Ghi chú khung giá bán lẻ ở cuối báo giá
+        let tierNote = document.getElementById('quoteTierNote');
+        if (!tierNote){
+            const noteBox = document.querySelector('#quotePage .quote-footer > div:first-child');
+            if (noteBox){ tierNote = document.createElement('div'); tierNote.id = 'quoteTierNote'; tierNote.contentEditable = 'true'; noteBox.appendChild(tierNote); }
+        }
+        if (tierNote){
+            const thTxt = tierFmt(tierPolicy.threshold);
+            tierNote.textContent = !_lowCount ? '' : (_tierAllLow
+                ? 'Sản phẩm giá bán lẻ dưới ' + thTxt + 'đ: chiết khấu áp dụng khi mua từ 15 hộp và từ 50 hộp.'
+                : '* Sản phẩm giá bán lẻ dưới ' + thTxt + 'đ: mức chiết khấu tương ứng áp dụng khi mua từ 15 hộp và từ 50 hộp (ghi rõ trong ô).');
+            tierNote.style.display = _lowCount ? '' : 'none';
+        }
         
         // Kích hoạt tính năng kéo giãn cột cho bảng báo giá vừa tạo
         const headerCellsCount = table.querySelectorAll('thead th').length;
@@ -8525,7 +8726,7 @@ const IdecoPrice = (()=>{
                     var pn = toNum(v);
                     if (pn !== null) { out = pn; cell0.numFmt = '0.##"%"'; }
                 }
-                else if (isMoneyCol[ci] || /^-?\d[\d.,]*$/.test(v)) { var n = toNum(v); if (n !== null) out = n; }
+                else if (/^-?\d[\d.,]*\s*(đ|₫|vnđ|vnd)?$/i.test(v)) { var n = toNum(v); if (n !== null) out = n; } // ô có ghi chú '(từ 15 hộp)' giữ dạng chữ
                 cell0.value = out;
             });
             rr.height = useImg ? IMG_ROW_HEIGHT : 21;
